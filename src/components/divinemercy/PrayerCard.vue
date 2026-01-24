@@ -4,9 +4,9 @@
         <div class="bg-black/20 backdrop-blur-xl border border-white/10 p-8 md:p-14 rounded-[2.5rem] shadow-2xl shadow-black/20 text-center min-h-[300px] flex flex-col justify-center transition-all duration-500 hover:scale-[1.01]">
             
             <transition name="fade-scale" mode="out-in">
-                <div :key="currentStep.label || currentStep.content" class="space-y-6">
-                    <h3 v-if="currentStep.label" class="text-rose-200/50 uppercase tracking-[0.3em] text-xs font-bold mb-4">
-                        {{ currentStep.label }}
+                <div :key="currentStep.title || currentStep.content" class="space-y-6">
+                    <h3 v-if="currentStep.title" class="text-rose-200/50 uppercase tracking-[0.3em] text-xs font-bold mb-4">
+                        {{ currentStep.title }}
                     </h3>
                     
                     <p class="text-2xl md:text-3xl font-serif leading-relaxed text-stone-100 drop-shadow-sm whitespace-pre-line">
