@@ -1,24 +1,29 @@
 <template>
-  <div class="min-h-screen bg-stone-50 text-stone-900 selection:bg-amber-100 flex flex-col relative font-sans">
+  <div class="min-h-screen bg-stone-900 text-stone-100 selection:bg-amber-500/30 flex flex-col relative font-sans overflow-hidden">
     <!-- Back Button -->
-    <div class="absolute top-4 left-4 z-50">
-      <router-link to="/" class="flex items-center space-x-2 text-white/80 hover:text-white bg-black/20 hover:bg-black/40 backdrop-blur-sm px-4 py-2 rounded-full transition-all text-sm font-medium">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <div class="absolute top-6 left-6 z-50">
+      <router-link to="/" class="group flex items-center space-x-3 text-white/70 hover:text-white bg-black/20 hover:bg-black/40 backdrop-blur-md px-5 py-2.5 rounded-full transition-all duration-300 border border-white/10 hover:border-white/30">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:-translate-x-1 transition-transform">
           <path d="m15 18-6-6 6-6"/>
         </svg>
-        <span>Home</span>
+        <span class="font-medium tracking-wide text-sm">Return Home</span>
       </router-link>
     </div>
 
     <!-- Dynamic Background Blur -->
-    <div class="fixed inset-0 z-0 opacity-20 transition-all duration-1000 ease-in-out" :style="{
-            backgroundImage: `url('https://images.unsplash.com/photo-1569845177077-2a37322a60c7?q=80&w=2248&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            filter: 'blur(40px) scale(1.1)'
-        }"></div>
+    <transition name="bg-fade" mode="out-in">
+        <div :key="currentSetName" class="fixed inset-0 z-0 transition-all duration-1000 ease-in-out" :style="{
+                backgroundImage: `url('https://images.unsplash.com/photo-1569845177077-2a37322a60c7?q=80&w=2248&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                filter: 'brightness(0.6) blur(20px) contrast(1.1)'
+            }"></div>
+    </transition>
+    
+    <!-- Gradient Overlay -->
+    <div class="fixed inset-0 z-0 bg-gradient-to-t from-stone-900 via-stone-900/40 to-stone-900/20 pointer-events-none"></div>
 
-    <div class="relative z-10 max-w-4xl mx-auto px-4 py-8 md:py-12 flex flex-col min-h-screen w-full">
+    <div class="relative z-10 max-w-5xl mx-auto px-4 py-8 md:py-12 flex flex-col min-h-screen w-full">
 
         <RosaryHeader 
             :sets="sets" 
@@ -28,10 +33,10 @@
         />
 
         <!-- Main Content Area -->
-        <main class="flex-grow flex flex-col justify-center gap-8">
+        <main class="flex-grow flex flex-col justify-center gap-10 md:gap-14 py-8">
 
-            <transition name="fade" mode="out-in">
-                <div :key="currentSetName + mysteryIndex + beadIndex">
+            <transition name="fade-slide" mode="out-in">
+                <div :key="currentSetName + mysteryIndex + beadIndex" class="flex flex-col gap-8 md:gap-12">
                     <MysteryInfo 
                         :mysteryIndex="mysteryIndex" 
                         :currentMystery="currentMystery" 

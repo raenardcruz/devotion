@@ -1,34 +1,20 @@
 <template>
-    <div class="relative group max-w-2xl mx-auto">
-        <div class="absolute inset-0 bg-white/40 blur-2xl rounded-[2rem] -z-10"></div>
-        <div
-            class="bg-white/90 backdrop-blur-lg border border-white p-8 md:p-12 rounded-[2rem] shadow-xl text-center min-h-[320px] flex flex-col justify-center transition-all duration-500">
-
-            <div class="mb-6 flex justify-center opacity-20 text-rose-900">
-                <svg v-if="currentStep.type === 'intro'" xmlns="http://www.w3.org/2000/svg" width="48" height="48"
-                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"
-                    stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 8v8" />
-                    <path d="M8 12h8" />
-                </svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-                    <path
-                        d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                </svg>
-            </div>
-
-            <div class="space-y-6">
-                <p class="text-xl md:text-2xl font-serif leading-relaxed text-stone-800 whitespace-pre-line">
-                    {{ currentStep.content }}
-                </p>
-
-                <div v-if="currentStep.instruction"
-                    class="text-rose-800 text-xs font-bold uppercase tracking-widest pt-4">
-                    {{ currentStep.instruction }}
+    <div class="relative group max-w-2xl mx-auto w-full">
+        <div class="absolute inset-0 bg-white/5 blur-xl rounded-[2.5rem] -z-10 transition-all duration-1000 group-hover:bg-white/10"></div>
+        <div class="bg-black/20 backdrop-blur-xl border border-white/10 p-8 md:p-14 rounded-[2.5rem] shadow-2xl shadow-black/20 text-center min-h-[300px] flex flex-col justify-center transition-all duration-500 hover:scale-[1.01]">
+            
+            <transition name="fade-scale" mode="out-in">
+                <div :key="currentStep.label || currentStep.content" class="space-y-6">
+                    <h3 v-if="currentStep.label" class="text-rose-200/50 uppercase tracking-[0.3em] text-xs font-bold mb-4">
+                        {{ currentStep.label }}
+                    </h3>
+                    
+                    <p class="text-2xl md:text-3xl font-serif leading-relaxed text-stone-100 drop-shadow-sm whitespace-pre-line">
+                        {{ currentStep.content }}
+                    </p>
                 </div>
-            </div>
+            </transition>
+
         </div>
     </div>
 </template>
@@ -40,3 +26,22 @@ defineProps<{
     currentStep: Step;
 }>();
 </script>
+
+<style scoped>
+.fade-scale-enter-active,
+.fade-scale-leave-active {
+  transition: all 0.5s ease;
+}
+
+.fade-scale-enter-from {
+  opacity: 0;
+  transform: scale(0.95);
+  filter: blur(4px);
+}
+
+.fade-scale-leave-to {
+  opacity: 0;
+  transform: scale(1.05);
+  filter: blur(4px);
+}
+</style>
