@@ -26,7 +26,8 @@
         <DivineMercyHeader />
 
         <!-- Main Prayer Area -->
-        <main class="flex-grow flex flex-col justify-center gap-6 md:gap-10 py-6">
+        <main ref="swipeContainer" class="flex-grow flex flex-col justify-center gap-6 md:gap-10 py-6 touch-pan-y">
+
 
             <transition name="fade-slide" mode="out-in">
                 <div :key="currentStepIndex" class="w-full flex flex-col gap-6 md:gap-8">
@@ -63,7 +64,9 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useSwipe } from '../composables/useSwipe';
 import { DIVINE_MERCY_STEPS as steps, type Step } from '../components/divinemercy/divineMercyData';
+
 import DivineMercyHeader from '../components/divinemercy/DivineMercyHeader.vue';
 import PhaseLabel from '../components/divinemercy/PhaseLabel.vue';
 import DivineMercyBeads from '../components/divinemercy/DivineMercyBeads.vue';
@@ -72,7 +75,15 @@ import DivineMercyControls from '../components/divinemercy/DivineMercyControls.v
 
 const currentStepIndex = ref(0);
 const decadeIndex = ref(1);
+
 const beadInDecade = ref(0); // 0 is Eternal Father, 1-10 are Passion beads
+const swipeContainer = ref<HTMLElement | null>(null);
+
+useSwipe(swipeContainer, {
+    onSwipeLeft: () => next(),
+    onSwipeRight: () => prev(),
+});
+
 
 const currentStep = computed((): Step => {
     const step = steps[currentStepIndex.value];

@@ -12,7 +12,7 @@
 
     <!-- Main Content -->
     <main class="flex-grow flex items-center justify-center p-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl w-full">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl w-full">
         
         <!-- Rosary Card -->
         <router-link to="/rosary" class="group relative overflow-hidden rounded-[2rem] shadow-xl hover:shadow-2xl transition-all duration-700 hover:-translate-y-2 h-[28rem] animate-fade-in-up delay-200">
@@ -54,6 +54,30 @@
             
             <div class="flex items-center text-rose-200 text-sm font-medium tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">
               <span class="border-b border-transparent group-hover:border-rose-200 transition-all duration-300">Start Prayer</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-3 group-hover:translate-x-2 transition-transform duration-300">
+                <path d="M5 12h14"></path>
+                <path d="m12 5 7 7-7 7"></path>
+              </svg>
+            </div>
+          </div>
+        </router-link>
+
+        <!-- Prayers Gallery Card -->
+        <router-link to="/prayers" class="group relative overflow-hidden rounded-[2rem] shadow-xl hover:shadow-2xl transition-all duration-700 hover:-translate-y-2 h-[28rem] animate-fade-in-up delay-400 md:col-span-2 lg:col-span-1">
+          <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1438232992991-995b7058bbb3?q=80&w=2073&auto=format&fit=crop')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"></div>
+          <div class="absolute inset-0 bg-gradient-to-t from-cyan-950 via-cyan-900/40 to-transparent opacity-80 group-hover:opacity-70 transition-opacity duration-700"></div>
+          
+          <div class="relative h-full flex flex-col justify-end p-10 text-white">
+            <div class="mb-6 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 ease-out">
+              <span class="text-cyan-200 text-xs font-bold uppercase tracking-[0.2em] mb-3 block opacity-80">Collection</span>
+              <h2 class="text-4xl font-serif italic mb-3">Traditional Prayers</h2>
+              <p class="text-stone-200 text-sm leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 max-w-sm">
+                Explore a gallery of essential Catholic prayers for every occasion and need.
+              </p>
+            </div>
+            
+            <div class="flex items-center text-cyan-200 text-sm font-medium tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">
+              <span class="border-b border-transparent group-hover:border-cyan-200 transition-all duration-300">Open Gallery</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-3 group-hover:translate-x-2 transition-transform duration-300">
                 <path d="M5 12h14"></path>
                 <path d="m12 5 7 7-7 7"></path>

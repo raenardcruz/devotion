@@ -33,7 +33,8 @@
         />
 
         <!-- Main Content Area -->
-        <main class="flex-grow flex flex-col justify-center gap-10 md:gap-14 py-8">
+        <main ref="swipeContainer" class="flex-grow flex flex-col justify-center gap-10 md:gap-14 py-8 touch-pan-y">
+
 
             <transition name="fade-slide" mode="out-in">
                 <div :key="currentSetName + mysteryIndex + beadIndex" class="flex flex-col gap-8 md:gap-12">
@@ -64,7 +65,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useSwipe } from '../composables/useSwipe';
 import { ROSARY_DATA, type Mystery, type Verse } from '../components/rosary/rosaryData';
+
 import RosaryHeader from '../components/rosary/RosaryHeader.vue';
 import MysteryInfo from '../components/rosary/MysteryInfo.vue';
 import RosaryBeads from '../components/rosary/RosaryBeads.vue';
@@ -76,6 +79,12 @@ const mysteryIndex = ref(0);
 const beadIndex = ref(0);
 const todayMystery = ref('');
 const sets = Object.keys(ROSARY_DATA);
+const swipeContainer = ref<HTMLElement | null>(null);
+
+useSwipe(swipeContainer, {
+    onSwipeLeft: () => nextBead(),
+    onSwipeRight: () => prevBead(),
+});
 
 const getMysteryForDay = (): string => {
     const day = new Date().getDay();
