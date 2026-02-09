@@ -148,14 +148,5 @@ const changeSet = (setName: string) => {
 </script>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-    transition: all 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
-    transform: scale(0.98);
-}
+/* Transitions moved to global style.css */
 </style>

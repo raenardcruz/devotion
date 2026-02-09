@@ -3,6 +3,7 @@ import Home from '../views/Home.vue'
 import Rosary from '../views/Rosary.vue'
 import DivineMercy from '../views/DivineMercy.vue'
 import PrayersGallery from '../views/PrayersGallery.vue'
+import Catechism from '../views/Catechism.vue'
 
 const router = createRouter({
     history: createWebHistory(),
@@ -26,6 +27,11 @@ const router = createRouter({
             path: '/prayers',
             name: 'PrayersGallery',
             component: PrayersGallery
+        },
+        {
+            path: '/catechism',
+            name: 'Catechism',
+            component: Catechism
         }
     ]
 })

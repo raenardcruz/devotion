@@ -1,5 +1,25 @@
 [
     {
+        "id": "memorare",
+        "title": "The Memorare",
+        "content": "Remember, O most gracious Virgin Mary, that never was it known that anyone who fled to thy protection, implored thy help, or sought thy intercession was left unaided. Inspired by this confidence, I fly unto thee, O Virgin of virgins, my Mother; to thee do I come, before thee I stand, sinful and sorrowful. O Mother of the Word Incarnate, despise not my petitions, but in thy mercy hear and answer me. Amen."
+    },
+    {
+        "id": "angel-of-god",
+        "title": "Angel of God",
+        "content": "Angel of God, my guardian dear, to whom God's love commits me here, ever this day be at my side, to light and guard, to rule and guide. Amen."
+    },
+    {
+        "id": "st. michael-the-archangel",
+        "title": "St. Michael the Archangel",
+        "content": "St. Michael the Archangel, defend us in battle; be our protection against the wickedness and snares of the devil. May God rebuke him, we humbly pray; and do thou, O Prince of the heavenly host, by the power of God, cast into hell Satan and all the evil spirits who prowl about the world seeking the ruin of souls. Amen."
+    },
+    {
+        "id": "prayer-to-st.-joseph",
+        "title": "Prayer to St. Joseph",
+        "content": "O St. Joseph, whose protection is so great and so strong, before the throne of God, I place all my interests and desires. O St. Joseph, assist me by your powerful intercession and obtain for me from Almighty God the grace of a happy death. O St. Joseph, guard all my family from the dangers of this world and from the snares of the devil. O St. Joseph, obtain for me the grace of a pure and holy life. Amen."
+    },
+    {
         "id": "our-father",
         "title": "Our Father",
         "content": "Our Father, who art in heaven, hallowed be thy name; thy kingdom come; thy will be done on earth as it is in heaven. Give us this day our daily bread; and forgive us our trespasses as we forgive those who trespass against us; and lead us not into temptation, but deliver us from evil. Amen."
@@ -28,25 +48,5 @@
         "id": "fatima-prayer",
         "title": "Fatima Prayer",
         "content": "O my Jesus, forgive us our sins, save us from the fires of hell; lead all souls to Heaven, especially those who have most need of Thy mercy."
-    },
-    {
-        "id": "memorare",
-        "title": "The Memorare",
-        "content": "Remember, O most gracious Virgin Mary, that never was it known that anyone who fled to thy protection, implored thy help, or sought thy intercession was left unaided. Inspired by this confidence, I fly unto thee, O Virgin of virgins, my Mother; to thee do I come, before thee I stand, sinful and sorrowful. O Mother of the Word Incarnate, despise not my petitions, but in thy mercy hear and answer me. Amen."
-    },
-    {
-        "id": "angel-of-god",
-        "title": "Angel of God",
-        "content": "Angel of God, my guardian dear, to whom God's love commits me here, ever this day be at my side, to light and guard, to rule and guide. Amen."
-    },
-    {
-        "id": "st. michael-the-archangel",
-        "title": "St. Michael the Archangel",
-        "content": "St. Michael the Archangel, defend us in battle; be our protection against the wickedness and snares of the devil. May God rebuke him, we humbly pray; and do thou, O Prince of the heavenly host, by the power of God, cast into hell Satan and all the evil spirits who prowl about the world seeking the ruin of souls. Amen."
-    },
-    {
-        "id": "prayer-to-st.-joseph",
-        "title": "Prayer to St. Joseph",
-        "content": "O St. Joseph, whose protection is so great and so strong, before the throne of God, I place all my interests and desires. O St. Joseph, assist me by your powerful intercession and obtain for me from Almighty God the grace of a happy death. O St. Joseph, guard all my family from the dangers of this world and from the snares of the devil. O St. Joseph, obtain for me the grace of a pure and holy life. Amen."
     }
 ]

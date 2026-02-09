@@ -1,0 +1,208 @@
+{
+    "catechism": {
+        "title": "Catechism of the Catholic Church",
+        "structure": [
+            {
+                "part": 0,
+                "title": "The Preface",
+                "paragraph_range": "1-25",
+                "sections": [
+                    {
+                        "section": 1,
+                        "title": "The Preface",
+                        "paragraph_range": "1-25"
+                    }
+                ]
+            },
+            {
+                "part": 1,
+                "title": "The Profession of Faith",
+                "paragraph_range": "26-1065",
+                "sections": [
+                    {
+                        "section": 1,
+                        "title": "I Believe - We Believe",
+                        "paragraph_range": "26-184",
+                        "chapters": [
+                            {
+                                "chapter": 1,
+                                "title": "Man's Capacity for God",
+                                "paragraphs": "27-49"
+                            },
+                            {
+                                "chapter": 2,
+                                "title": "God Comes to Meet Man",
+                                "paragraphs": "50-141"
+                            },
+                            {
+                                "chapter": 3,
+                                "title": "Man's Response to God",
+                                "paragraphs": "142-184"
+                            }
+                        ]
+                    },
+                    {
+                        "section": 2,
+                        "title": "The Profession of the Christian Faith",
+                        "paragraph_range": "185-1065",
+                        "chapters": [
+                            {
+                                "chapter": 1,
+                                "title": "I Believe in God the Father",
+                                "paragraphs": "198-421"
+                            },
+                            {
+                                "chapter": 2,
+                                "title": "I Believe in Jesus Christ",
+                                "paragraphs": "422-682"
+                            },
+                            {
+                                "chapter": 3,
+                                "title": "I Believe in the Holy Spirit",
+                                "paragraphs": "683-1065"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "part": 2,
+                "title": "The Celebration of the Christian Mystery",
+                "paragraph_range": "1066-1690",
+                "sections": [
+                    {
+                        "section": 1,
+                        "title": "The Sacramental Economy",
+                        "paragraph_range": "1076-1209",
+                        "chapters": [
+                            {
+                                "chapter": 1,
+                                "title": "The Paschal Mystery in the Age of the Church",
+                                "paragraphs": "1077-1112"
+                            },
+                            {
+                                "chapter": 2,
+                                "title": "The Sacramental Celebration of the Paschal Mystery",
+                                "paragraphs": "1135-1209"
+                            }
+                        ]
+                    },
+                    {
+                        "section": 2,
+                        "title": "The Seven Sacraments of the Church",
+                        "paragraph_range": "1210-1690",
+                        "chapters": [
+                            {
+                                "chapter": 1,
+                                "title": "The Sacraments of Christian Initiation",
+                                "paragraphs": "1212-1419"
+                            },
+                            {
+                                "chapter": 2,
+                                "title": "The Sacraments of Healing",
+                                "paragraphs": "1420-1532"
+                            },
+                            {
+                                "chapter": 3,
+                                "title": "Sacraments at the Service of Communion",
+                                "paragraphs": "1533-1666"
+                            },
+                            {
+                                "chapter": 4,
+                                "title": "Other Liturgical Celebrations",
+                                "paragraphs": "1667-1690"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "part": 3,
+                "title": "Life in Christ",
+                "paragraph_range": "1691-2557",
+                "sections": [
+                    {
+                        "section": 1,
+                        "title": "Man's Vocation: Life in the Spirit",
+                        "paragraph_range": "1699-2051",
+                        "chapters": [
+                            {
+                                "chapter": 1,
+                                "title": "The Dignity of the Human Person",
+                                "paragraphs": "1700-1876"
+                            },
+                            {
+                                "chapter": 2,
+                                "title": "The Human Community",
+                                "paragraphs": "1877-1948"
+                            },
+                            {
+                                "chapter": 3,
+                                "title": "God's Salvation: Law and Grace",
+                                "paragraphs": "1949-2051"
+                            }
+                        ]
+                    },
+                    {
+                        "section": 2,
+                        "title": "The Ten Commandments",
+                        "paragraph_range": "2052-2557",
+                        "chapters": [
+                            {
+                                "chapter": 1,
+                                "title": "You Shall Love the Lord Your God",
+                                "paragraphs": "2083-2195"
+                            },
+                            {
+                                "chapter": 2,
+                                "title": "You Shall Love Your Neighbor as Yourself",
+                                "paragraphs": "2196-2557"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "part": 4,
+                "title": "Christian Prayer",
+                "paragraph_range": "2558-2865",
+                "sections": [
+                    {
+                        "section": 1,
+                        "title": "Prayer in the Christian Life",
+                        "paragraph_range": "2566-2758",
+                        "chapters": [
+                            {
+                                "chapter": 1,
+                                "title": "The Revelation of Prayer",
+                                "paragraphs": "2566-2649"
+                            },
+                            {
+                                "chapter": 2,
+                                "title": "The Tradition of Prayer",
+                                "paragraphs": "2650-2696"
+                            },
+                            {
+                                "chapter": 3,
+                                "title": "The Life of Prayer",
+                                "paragraphs": "2697-2758"
+                            }
+                        ]
+                    },
+                    {
+                        "section": 2,
+                        "title": "The Lord's Prayer: 'Our Father'",
+                        "paragraph_range": "2759-2865",
+                        "chapters": [
+                            {
+                                "chapter": 1,
+                                "title": "The Summary of the Whole Gospel",
+                                "paragraphs": "2761-2865"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

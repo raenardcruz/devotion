@@ -62,8 +62,32 @@
           </div>
         </router-link>
 
+        <!-- Catechism Card -->
+        <router-link to="/catechism" class="group relative overflow-hidden rounded-[2rem] shadow-xl hover:shadow-2xl transition-all duration-700 hover:-translate-y-2 h-[28rem] animate-fade-in-up delay-400 md:col-span-2 lg:col-span-1">
+          <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1544253328-910f17122115?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"></div>
+          <div class="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-900/40 to-transparent opacity-80 group-hover:opacity-70 transition-opacity duration-700"></div>
+          
+          <div class="relative h-full flex flex-col justify-end p-10 text-white">
+            <div class="mb-6 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 ease-out">
+              <span class="text-emerald-200 text-xs font-bold uppercase tracking-[0.2em] mb-3 block opacity-80">Teaching</span>
+              <h2 class="text-4xl font-serif italic mb-3">Catechism</h2>
+              <p class="text-stone-200 text-sm leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 max-w-sm">
+                Explore the Catechism of the Catholic Church by paragraph or structure.
+              </p>
+            </div>
+            
+            <div class="flex items-center text-emerald-200 text-sm font-medium tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">
+              <span class="border-b border-transparent group-hover:border-emerald-200 transition-all duration-300">Read Now</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-3 group-hover:translate-x-2 transition-transform duration-300">
+                <path d="M5 12h14"></path>
+                <path d="m12 5 7 7-7 7"></path>
+              </svg>
+            </div>
+          </div>
+        </router-link>
+
         <!-- Prayers Gallery Card -->
-        <router-link to="/prayers" class="group relative overflow-hidden rounded-[2rem] shadow-xl hover:shadow-2xl transition-all duration-700 hover:-translate-y-2 h-[28rem] animate-fade-in-up delay-400 md:col-span-2 lg:col-span-1">
+        <router-link to="/prayers" class="group relative overflow-hidden rounded-[2rem] shadow-xl hover:shadow-2xl transition-all duration-700 hover:-translate-y-2 h-[28rem] animate-fade-in-up delay-500 md:col-span-2 lg:col-span-1">
           <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1438232992991-995b7058bbb3?q=80&w=2073&auto=format&fit=crop')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"></div>
           <div class="absolute inset-0 bg-gradient-to-t from-cyan-950 via-cyan-900/40 to-transparent opacity-80 group-hover:opacity-70 transition-opacity duration-700"></div>
           
@@ -96,47 +120,5 @@
 </script>
 
 <style scoped>
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.8s ease-out forwards;
-  opacity: 0; /* Star hidden */
-}
-
-.animate-fade-in-down {
-  animation: fadeInDown 0.8s ease-out forwards;
-  opacity: 0; /* Start hidden */
-}
-
-.delay-100 {
-  animation-delay: 0.1s;
-}
-
-.delay-200 {
-  animation-delay: 0.2s;
-}
-
-.delay-300 {
-  animation-delay: 0.3s;
-}
+/* Animations moved to global style.css */
 </style>

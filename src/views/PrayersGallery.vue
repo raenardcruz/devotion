@@ -115,27 +115,4 @@ const closePrayer = () => {
   opacity: 0;
   transform: scale(0.95);
 }
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.8s ease-out forwards;
-  opacity: 0;
-}
-
-.animate-fade-in-down {
-  animation: fadeInDown 0.8s ease-out forwards;
-  opacity: 0;
-}
-
-.delay-100 { animation-delay: 0.1s; }
-.delay-200 { animation-delay: 0.2s; }
 </style>
