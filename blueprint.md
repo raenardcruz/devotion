@@ -5,6 +5,10 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
 
 ## Recent Features
 
+### System
+1.  **Routing**:
+    -   Switched from HTML5 History Mode to Hash Mode for better compatibility with static hosting environments.
+
 ### Catechism
 1.  **Reading Progress Tracking**:
     -   Implemented `localStorage` persistence to track read paragraphs.
@@ -24,7 +28,7 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
 ## Architecture
 -   **Framework**: Vue 3 (Composition API)
 -   **Tooling**: Vite, TypeScript
--   **Routing**: Vue Router 4
+-   **Routing**: Vue Router 4 (Hash Mode)
 -   **State Management**: Composition API + LocalStorage (for simple persistence)
 
 ## Component Structure

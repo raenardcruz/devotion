@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import Rosary from '../views/Rosary.vue'
 import DivineMercy from '../views/DivineMercy.vue'
@@ -6,7 +6,7 @@ import PrayersGallery from '../views/PrayersGallery.vue'
 import Catechism from '../views/Catechism.vue'
 
 const router = createRouter({
-    history: createWebHistory(),
+    history: createWebHashHistory(),
     routes: [
         {
             path: '/',
