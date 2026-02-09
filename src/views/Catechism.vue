@@ -127,7 +127,7 @@
                     </span>
                     <div class="prose prose-invert prose-lg max-w-none">
                       <div class="text-xs text-stone-500 mb-2 font-bold tracking-wider uppercase opacity-60">{{ getBreadcrumb(paragraph.id) }}</div>
-                      <p class="whitespace-pre-line leading-loose text-stone-300 group-hover/card:text-stone-100 transition-colors">{{ paragraph.text }}</p>
+                      <CatechismText :text="paragraph.text" :paragraphs="paragraphs" @show-reference="openModal" />
                     </div>
                   </div>
                 </div>
@@ -151,6 +151,42 @@
           </div>
         </div>
     </main>
+    <!-- Reference Modal -->
+    <transition enter-active-class="transition duration-300 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-200 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
+        <div v-if="showModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4" @click="showModal = false">
+            <!-- Backdrop -->
+            <div class="absolute inset-0 bg-black/80 backdrop-blur-md"></div>
+            
+            <!-- Modal Content -->
+            <div class="relative w-full max-w-2xl bg-stone-900 border border-emerald-500/20 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]" @click.stop>
+                <!-- Header -->
+                <div class="p-6 border-b border-white/5 flex justify-between items-center bg-black/20">
+                    <h3 class="text-xl font-serif text-emerald-100">Referenced Paragraphs</h3>
+                    <button @click="showModal = false" class="p-2 hover:bg-white/10 rounded-full transition-colors text-stone-400 hover:text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="p-8 overflow-y-auto custom-scrollbar space-y-6">
+                    <div v-for="p in modalContent" :key="p.id" class="p-6 rounded-2xl bg-white/5 border border-white/5">
+                        <div class="flex items-start gap-4">
+                            <span class="text-emerald-500 font-bold text-lg font-serif mt-1 opacity-80 select-none">§{{ p.id }}</span>
+                            <p class="text-stone-200 leading-relaxed text-lg">{{ p.text }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Footer (optional) -->
+                <div class="p-4 bg-black/20 text-center border-t border-white/5">
+                     <span class="text-xs text-stone-500 uppercase tracking-widest font-medium">Catechism of the Catholic Church</span>
+                </div>
+            </div>
+        </div>
+    </transition>
     </div>
   </div>
 </template>
@@ -159,6 +195,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import catechismData from '../components/catechism/catechism.json';
 import structureData from '../components/catechism/catechism-sections.json';
+import CatechismText from '../components/catechism/CatechismText.vue';
 
 // Types
 interface Paragraph {
@@ -205,6 +242,15 @@ const selectedChapter = ref<Chapter | null>(null);
 
 // Progress Tracking
 const readParagraphs = ref<Set<number>>(new Set());
+
+// Modal State
+const showModal = ref(false);
+const modalContent = ref<Paragraph[]>([]);
+
+const openModal = (paragraphs: Paragraph[]) => {
+    modalContent.value = paragraphs;
+    showModal.value = true;
+};
 
 onMounted(() => {
     const saved = localStorage.getItem('catechism-read-progress');
@@ -316,10 +362,43 @@ const getBreadcrumb = (id: number): string => {
 const filteredParagraphs = computed(() => {
   // 1. Search filter (highest priority) - if there is a search query, ignore navigation
   if (searchQuery.value.trim()) {
-    const queryNum = parseInt(searchQuery.value);
-    if (!isNaN(queryNum)) {
-      return paragraphs.value.filter(p => p.id === queryNum);
+    // Advanced search parsing: supports comma-separated values and ranges (e.g. "1, 5-10, 20")
+    const query = searchQuery.value.trim();
+    const desiredIds = new Set<number>();
+    
+    // Split by comma
+    const parts = query.split(',');
+    
+    for (const part of parts) {
+        const trimmed = part.trim();
+        if (!trimmed) continue;
+        
+        // check for range
+        if (trimmed.includes('-')) {
+            const rangeParts = trimmed.split('-').map(s => s.trim());
+            if (rangeParts.length === 2) {
+                const start = parseInt(rangeParts[0]);
+                const end = parseInt(rangeParts[1]);
+                
+                if (!isNaN(start) && !isNaN(end) && start <= end) {
+                    for (let i = start; i <= end; i++) {
+                        desiredIds.add(i);
+                    }
+                }
+            }
+        } else {
+            // single number
+            const num = parseInt(trimmed);
+            if (!isNaN(num)) {
+                desiredIds.add(num);
+            }
+        }
     }
+    
+    if (desiredIds.size > 0) {
+        return paragraphs.value.filter(p => desiredIds.has(p.id));
+    }
+    
     return [];
   }
 
@@ -327,11 +406,11 @@ const filteredParagraphs = computed(() => {
   let range = { start: 0, end: 0 };
 
   if (selectedChapter.value) {
-      range = parseRange(selectedChapter.value.paragraphs);
+      range = parseRange(selectedChapter.value.paragraphs || '');
   } else if (selectedSection.value) {
-      range = parseRange(selectedSection.value.paragraph_range);
+      range = parseRange(selectedSection.value.paragraph_range || '');
   } else if (selectedPart.value) {
-      range = parseRange(selectedPart.value.paragraph_range);
+      range = parseRange(selectedPart.value.paragraph_range || '');
   } else {
       return []; 
   }
@@ -355,4 +434,17 @@ watch(searchQuery, (newVal) => {
 
 <style scoped>
 /* Transitions moved to global style.css */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 99px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
 </style>

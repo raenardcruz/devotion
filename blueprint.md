@@ -1,23 +1,33 @@
 # Project Blueprint
 
 ## Overview
-This is a Vue.js application using Vite, TypeScript, and Vue Router. The current goal is to resolve a reported syntax error in the router configuration.
+This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on devotion and prayer.
 
-## Current Plan
-The user wants to track reading progress in the Catechism view.
+## Recent Features
 
-1.  **Goal**: Allow users to mark paragraphs as read and persist this state.
-2.  **Implementation**:
-    -   Use `localStorage` to store a list of read paragraph IDs.
-    -   Update `Catechism.vue` to include toggle buttons and visual indicators.
-3.  **Goal**: Standardize styling across all pages for a consistent, premium feel.
-    -   **Implementation**:
-        -   Consolidate animations into global CSS.
-        -   Update `Catechism.vue` header to match glassmorphic style.
-        -   Ensure consistent border-radius and shadows.
-4.  **Status**: Planning phase. `implementation_plan.md` created.
+### Catechism
+1.  **Reading Progress Tracking**:
+    -   Implemented `localStorage` persistence to track read paragraphs.
+    -   Added toggle buttons (checkmarks) to paragraphs for easy tracking.
+    -   Added visual indicators (grayed out) for read content.
+
+2.  **Interactive References**:
+    -   Replaced plain text references `(843)` with interactive components.
+    -   Clicking a reference opens a modal displaying the content of the referenced paragraph(s).
+    -   Supports single IDs and ranges (e.g., `2095-2109`).
+
+3.  **Styling**:
+    -   Consolidated animations into global CSS.
+    -   Implemented glassmorphic header and modal styles.
+    -   Added custom scrollbars for modal content.
 
 ## Architecture
-- **Framework**: Vue 3 (Composition API)
-- **Tooling**: Vite, TypeScript
-- **Routing**: Vue Router 4
+-   **Framework**: Vue 3 (Composition API)
+-   **Tooling**: Vite, TypeScript
+-   **Routing**: Vue Router 4
+-   **State Management**: Composition API + LocalStorage (for simple persistence)
+
+## Component Structure
+-   `Catechism.vue`: Main view, handles state and modal logic.
+-   `CatechismText.vue`: Parsers paragraph text to inject interactive references.
+-   `CatechismReference.vue`: Handles individual reference logic and click events.
