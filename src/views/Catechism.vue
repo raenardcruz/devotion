@@ -377,8 +377,8 @@ const filteredParagraphs = computed(() => {
         if (trimmed.includes('-')) {
             const rangeParts = trimmed.split('-').map(s => s.trim());
             if (rangeParts.length === 2) {
-                const start = parseInt(rangeParts[0]);
-                const end = parseInt(rangeParts[1]);
+                const start = parseInt(rangeParts[0]!);
+                const end = parseInt(rangeParts[1]!);
                 
                 if (!isNaN(start) && !isNaN(end) && start <= end) {
                     for (let i = start; i <= end; i++) {
