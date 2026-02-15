@@ -32,6 +32,11 @@ const router = createRouter({
             path: '/catechism',
             name: 'Catechism',
             component: Catechism
+        },
+        {
+            path: '/mass-reading',
+            name: 'MassReading',
+            component: () => import('../views/MassReading.vue')
         }
     ]
 })
