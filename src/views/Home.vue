@@ -16,7 +16,7 @@
         
         <!-- Daily Mass Readings Card -->
         <router-link to="/daily-readings" class="group relative overflow-hidden rounded-[2rem] shadow-xl hover:shadow-2xl transition-all duration-700 hover:-translate-y-2 h-[28rem] animate-fade-in-up delay-150">
-          <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1507434965515-61970f2bd2c6?q=80&w=770&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"></div>
+          <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1497621122273-f5cfb6065c56?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"></div>
           <div class="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/40 to-transparent opacity-80 group-hover:opacity-70 transition-opacity duration-700"></div>
           
           <div class="relative h-full flex flex-col justify-end p-10 text-white">
