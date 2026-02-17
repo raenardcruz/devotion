@@ -4,10 +4,16 @@ import Rosary from '../views/Rosary.vue'
 import DivineMercy from '../views/DivineMercy.vue'
 import PrayersGallery from '../views/PrayersGallery.vue'
 import Catechism from '../views/Catechism.vue'
+import DailyMassReadings from '../views/DailyMassReadings.vue'
 
 const router = createRouter({
     history: createWebHashHistory(),
     routes: [
+        {
+            path: '/daily-readings',
+            name: 'DailyMassReadings',
+            component: DailyMassReadings
+        },
         {
             path: '/',
             name: 'Home',
