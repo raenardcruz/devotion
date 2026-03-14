@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useDate } from '../composables/useDate';
 
 interface Reading {
   citation: string;
@@ -15,6 +16,7 @@ interface ResponsorialPsalm {
 interface MassReadings {
   first_reading: Reading;
   responsorial_psalm: ResponsorialPsalm;
+  second_reading: Reading;
   gospel: Reading;
 }
 
@@ -22,9 +24,11 @@ const readings = ref<MassReadings | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 
+const { getLocalISOString } = useDate();
+
 const fetchReadings = async () => {
   try {
-    const response = await fetch('https://devotionapi.raenardcruz.com/devotion');
+    const response = await fetch('https://devotionapi.raenardcruz.com/devotion?date=' + getLocalISOString());
     if (!response.ok) {
         // Construct a more informative error message
         const message = `Failed to fetch readings: ${response.status} ${response.statusText}`;
@@ -84,7 +88,7 @@ onMounted(() => {
             </header>
             
             <div class="prose prose-stone max-w-none mb-8">
-                 <p class="whitespace-pre-line text-lg leading-relaxed text-stone-700">{{ readings.first_reading.text }}</p>
+                 <div class="whitespace-pre-line text-lg leading-relaxed text-stone-700" v-html="readings.first_reading.text"></div>
             </div>
 
              <div class="bg-stone-50 rounded-xl p-6 border-l-4 border-amber-200">
@@ -103,7 +107,26 @@ onMounted(() => {
             </header>
             
             <div class="prose prose-stone max-w-none text-center">
-                 <p class="whitespace-pre-line text-xl font-serif italic text-stone-700 leading-loose">{{ readings.responsorial_psalm.text }}</p>
+                 <div class="whitespace-pre-line text-xl font-serif italic text-stone-700 leading-loose" v-html="readings.responsorial_psalm.text"></div>
+            </div>
+        </section>
+
+        <!-- Second reading -->
+         <section class="bg-white rounded-[2rem] shadow-sm p-8 md:p-12">
+            <header class="mb-8 border-b border-stone-100 pb-6">
+                <span class="text-amber-600 text-xs font-bold uppercase tracking-[0.2em] mb-2 block">Second Reading</span>
+                <h2 class="text-3xl font-serif text-stone-800">{{ readings.second_reading.citation }}</h2>
+            </header>
+            
+            <div class="prose prose-stone max-w-none mb-8">
+                 <div class="whitespace-pre-line text-lg leading-relaxed text-stone-700" v-html="readings.second_reading.text"></div>
+            </div>
+
+             <div class="bg-stone-50 rounded-xl p-6 border-l-4 border-amber-200">
+                <h3 class="text-stone-500 text-xs font-bold uppercase tracking-wider mb-2">Context</h3>
+                <p class="text-stone-600 italic text-sm leading-relaxed">
+                    {{ readings.second_reading.context }}
+                </p>
             </div>
         </section>
 
@@ -119,7 +142,7 @@ onMounted(() => {
             </header>
             
             <div class="prose prose-stone max-w-none mb-8 relative z-10">
-                 <p class="whitespace-pre-line text-lg leading-relaxed text-stone-800">{{ readings.gospel.text }}</p>
+                 <div class="whitespace-pre-line text-lg leading-relaxed text-stone-800" v-html="readings.gospel.text"></div>
             </div>
 
              <div class="bg-amber-50 rounded-xl p-6 border-l-4 border-amber-600 relative z-10">
@@ -139,7 +162,6 @@ onMounted(() => {
 .animate-fade-in-up {
   animation: fadeInUp 0.8s ease-out forwards;
 }
-
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -149,5 +171,13 @@ onMounted(() => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+</style>
+
+<style>
+.v {
+  font-size: 12px;
+  color: grey;
+  margin-right: 4px;
 }
 </style>
