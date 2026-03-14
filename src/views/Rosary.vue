@@ -66,6 +66,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useSwipe } from '../composables/useSwipe';
+import { useDate } from '../composables/useDate';
 import { ROSARY_DATA, type Mystery, type Verse } from '../components/rosary/rosaryData';
 
 import RosaryHeader from '../components/rosary/RosaryHeader.vue';
@@ -81,13 +82,15 @@ const todayMystery = ref('');
 const sets = Object.keys(ROSARY_DATA);
 const swipeContainer = ref<HTMLElement | null>(null);
 
+const { getLocalDay } = useDate();
+
 useSwipe(swipeContainer, {
     onSwipeLeft: () => nextBead(),
     onSwipeRight: () => prevBead(),
 });
 
 const getMysteryForDay = (): string => {
-    const day = new Date().getDay();
+    const day = getLocalDay();
     switch (day) {
         case 0: return 'Glorious'; // Sunday
         case 1: return 'Joyful';   // Monday
