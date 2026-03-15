@@ -81,7 +81,7 @@ onMounted(() => {
       <div v-else-if="readings" class="space-y-12 animate-fade-in-up">
         
         <!-- First Reading -->
-        <section class="bg-white rounded-[2rem] shadow-sm p-8 md:p-12">
+        <section class="bg-white rounded-[2rem] shadow-sm p-8 md:p-12" v-if="!!readings.first_reading">
             <header class="mb-8 border-b border-stone-100 pb-6">
                 <span class="text-amber-600 text-xs font-bold uppercase tracking-[0.2em] mb-2 block">First Reading</span>
                 <h2 class="text-3xl font-serif text-stone-800">{{ readings.first_reading.citation }}</h2>
@@ -100,7 +100,7 @@ onMounted(() => {
         </section>
 
         <!-- Responsorial Psalm -->
-         <section class="bg-stone-100 rounded-[2rem] p-8 md:p-12 shadow-inner">
+         <section class="bg-stone-100 rounded-[2rem] p-8 md:p-12 shadow-inner" v-if="!!readings.responsorial_psalm">
             <header class="mb-6 text-center">
                 <span class="text-stone-500 text-xs font-bold uppercase tracking-[0.2em] mb-2 block">Responsorial Psalm</span>
                 <h2 class="text-2xl font-serif text-stone-800">{{ readings.responsorial_psalm.citation }}</h2>
@@ -112,7 +112,7 @@ onMounted(() => {
         </section>
 
         <!-- Second reading -->
-         <section class="bg-white rounded-[2rem] shadow-sm p-8 md:p-12">
+         <section class="bg-white rounded-[2rem] shadow-sm p-8 md:p-12" v-if="!!readings.second_reading">
             <header class="mb-8 border-b border-stone-100 pb-6">
                 <span class="text-amber-600 text-xs font-bold uppercase tracking-[0.2em] mb-2 block">Second Reading</span>
                 <h2 class="text-3xl font-serif text-stone-800">{{ readings.second_reading.citation }}</h2>
@@ -131,7 +131,7 @@ onMounted(() => {
         </section>
 
         <!-- Gospel -->
-        <section class="bg-white rounded-[2rem] shadow-xl p-8 md:p-12 relative overflow-hidden border border-stone-100">
+        <section class="bg-white rounded-[2rem] shadow-xl p-8 md:p-12 relative overflow-hidden border border-stone-100" v-if="!!readings.gospel">
              <div class="absolute top-0 right-0 p-8 opacity-5">
                 <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 24 24" fill="currentColor" class="text-amber-900"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-1.07 3.97-2.9 5.34z"></path></svg>
             </div>
