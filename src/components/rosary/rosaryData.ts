@@ -13,6 +13,20 @@ export type RosaryData = {
     [key: string]: Mystery[];
 };
 
+export type RosaryStepType = 'intro' | 'mystery-header' | 'decade-bead' | 'decade-start' | 'decade-end' | 'closing' | 'opening';
+
+export type RosaryStep = {
+    type: RosaryStepType;
+    prayerId: string;
+    title?: string;
+    content?: string;
+    latin?: string;
+    verse?: Verse;
+    mysteryTitle?: string;
+    beadNumber?: number;
+    decadeNumber?: number;
+};
+
 export const ROSARY_DATA: RosaryData = {
     "Joyful": [
         {
@@ -942,4 +956,57 @@ export const ROSARY_DATA: RosaryData = {
             ]
         }
     ]
+};
+
+export const generateRosarySteps = (mysterySet: string): RosaryStep[] => {
+    const steps: RosaryStep[] = [];
+    const mysteries = ROSARY_DATA[mysterySet] || [];
+
+    // 1. Intro
+    steps.push({ type: 'opening', prayerId: 'sign-of-the-cross' });
+    steps.push({ type: 'intro', prayerId: 'apostles-creed' });
+    steps.push({ type: 'intro', prayerId: 'our-father' });
+    steps.push({ type: 'intro', prayerId: 'hail-mary', beadNumber: 1 });
+    steps.push({ type: 'intro', prayerId: 'hail-mary', beadNumber: 2 });
+    steps.push({ type: 'intro', prayerId: 'hail-mary', beadNumber: 3 });
+    steps.push({ type: 'intro', prayerId: 'glory-be' });
+
+    // 2. Mysteries
+    mysteries.forEach((mystery, index) => {
+        const decadeNum = index + 1;
+        
+        // Mystery Announcement
+        steps.push({ 
+            type: 'mystery-header', 
+            prayerId: '', 
+            mysteryTitle: mystery.title,
+            decadeNumber: decadeNum,
+            content: mystery.focus
+        });
+
+        // Our Father
+        steps.push({ type: 'decade-start', prayerId: 'our-father', decadeNumber: decadeNum });
+
+        // 10 Hail Marys
+        for (let i = 0; i < 10; i++) {
+            steps.push({ 
+                type: 'decade-bead', 
+                prayerId: 'hail-mary', 
+                beadNumber: i + 1,
+                decadeNumber: decadeNum,
+                verse: mystery.verses[i]
+            });
+        }
+
+        // Glory Be + Fatima
+        steps.push({ type: 'decade-end', prayerId: 'glory-be', decadeNumber: decadeNum });
+        steps.push({ type: 'decade-end', prayerId: 'fatima-prayer', decadeNumber: decadeNum });
+    });
+
+    // 3. Closing
+    steps.push({ type: 'closing', prayerId: 'hail-holy-queen' });
+    steps.push({ type: 'closing', prayerId: 'rosary-closing-prayer' });
+    steps.push({ type: 'opening', prayerId: 'sign-of-the-cross' });
+
+    return steps;
 };

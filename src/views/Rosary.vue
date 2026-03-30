@@ -10,6 +10,26 @@
       </router-link>
     </div>
 
+    <!-- Latin Toggle -->
+    <div class="absolute top-6 right-6 z-50">
+      <div class="flex items-center bg-black/20 backdrop-blur-md p-1 rounded-full border border-white/10">
+        <button 
+          @click="showLatin = false"
+          :class="[!showLatin ? 'bg-amber-500/20 text-amber-100 border-amber-500/30' : 'text-stone-400 hover:text-stone-200']"
+          class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 border border-transparent"
+        >
+          EN
+        </button>
+        <button 
+          @click="showLatin = true"
+          :class="[showLatin ? 'bg-amber-500/20 text-amber-100 border-amber-500/30' : 'text-stone-400 hover:text-stone-200']"
+          class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 border border-transparent"
+        >
+          LA
+        </button>
+      </div>
+    </div>
+
     <!-- Dynamic Background Blur -->
     <transition name="bg-fade" mode="out-in">
         <div :key="currentSetName" class="fixed inset-0 z-0 transition-all duration-1000 ease-in-out" :style="{
@@ -37,26 +57,27 @@
 
 
             <transition name="fade-slide" mode="out-in">
-                <div :key="currentSetName + mysteryIndex + beadIndex" class="flex flex-col gap-8 md:gap-12">
+                <div :key="currentSetName + currentStepIndex + (showLatin ? '-la' : '-en')" class="flex flex-col gap-8 md:gap-12 w-full">
                     <MysteryInfo 
-                        :mysteryIndex="mysteryIndex" 
-                        :currentMystery="currentMystery" 
+                        :mysteryIndex="currentStep.decadeNumber ? currentStep.decadeNumber - 1 : 0" 
+                        :currentMystery="getCurrentMystery(currentStep)"
+                        v-if="currentStep.type !== 'intro' && currentStep.type !== 'opening' && currentStep.type !== 'closing'"
                     />
 
-                    <RosaryBeads :beadIndex="beadIndex" />
+                    <RosaryBeads :beadIndex="currentStep.beadNumber || 0" :stepType="currentStep.type" />
 
-                    <VerseCard 
-                        :currentVerse="currentVerse" 
-                        :beadIndex="beadIndex" 
+                    <RosaryCard 
+                        :currentStep="currentStep" 
+                        :showLatin="showLatin"
                     />
                 </div>
             </transition>
 
             <RosaryControls 
-                :mysteryIndex="mysteryIndex" 
-                :beadIndex="beadIndex" 
-                @next="nextBead" 
-                @prev="prevBead" 
+                :totalSteps="steps.length"
+                :currentStepIndex="currentStepIndex"
+                @next="nextStep" 
+                @prev="prevStep" 
             />
         </main>
     </div>
@@ -64,20 +85,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useSwipe } from '../composables/useSwipe';
 import { useDate } from '../composables/useDate';
-import { ROSARY_DATA, type Mystery, type Verse } from '../components/rosary/rosaryData';
+import { ROSARY_DATA, generateRosarySteps, type Mystery, type RosaryStep } from '../components/rosary/rosaryData';
+import prayerData from '../data/prayers.json';
 
 import RosaryHeader from '../components/rosary/RosaryHeader.vue';
 import MysteryInfo from '../components/rosary/MysteryInfo.vue';
 import RosaryBeads from '../components/rosary/RosaryBeads.vue';
-import VerseCard from '../components/rosary/VerseCard.vue';
+import RosaryCard from '../components/rosary/VerseCard.vue'; // Renaming for better context
 import RosaryControls from '../components/rosary/RosaryControls.vue';
 
 const currentSetName = ref('Joyful');
-const mysteryIndex = ref(0);
-const beadIndex = ref(0);
+const currentStepIndex = ref(0);
+const showLatin = ref(false);
 const todayMystery = ref('');
 const sets = Object.keys(ROSARY_DATA);
 const swipeContainer = ref<HTMLElement | null>(null);
@@ -85,8 +107,8 @@ const swipeContainer = ref<HTMLElement | null>(null);
 const { getLocalDay } = useDate();
 
 useSwipe(swipeContainer, {
-    onSwipeLeft: () => nextBead(),
-    onSwipeRight: () => prevBead(),
+    onSwipeLeft: () => nextStep(),
+    onSwipeRight: () => prevStep(),
 });
 
 const getMysteryForDay = (): string => {
@@ -109,47 +131,62 @@ onMounted(() => {
     currentSetName.value = daily;
 });
 
-const currentMystery = computed((): Mystery => {
-    const set = ROSARY_DATA[currentSetName.value];
-    if (set && set[mysteryIndex.value]) {
-        return set[mysteryIndex.value]!;
+const steps = computed(() => generateRosarySteps(currentSetName.value));
+
+const currentStep = computed((): RosaryStep => {
+    const step = steps.value[currentStepIndex.value];
+    if (!step) return steps.value[0]!;
+
+    // Enrich with prayer data
+    if (step.prayerId) {
+        const prayer = prayerData.find(p => p.id === step.prayerId);
+        if (prayer) {
+            return {
+                ...step,
+                title: step.title || prayer.name,
+                content: step.content || prayer.default,
+                latin: step.latin || prayer.latin
+            };
+        }
     }
-    // Fallback or safe return
-    return ROSARY_DATA['Joyful']![0]!;
+    
+    return step;
 });
 
-const currentVerse = computed((): Verse => {
-    if (currentMystery.value?.verses?.[beadIndex.value]) {
-        return currentMystery.value.verses[beadIndex.value]!;
+const getCurrentMystery = (step: RosaryStep): Mystery => {
+    const mysteries = ROSARY_DATA[currentSetName.value];
+    if (step.decadeNumber && mysteries && mysteries[step.decadeNumber - 1]) {
+        return mysteries[step.decadeNumber - 1]!;
     }
-    return { text: '', ref: '' };
-});
+    return mysteries![0]!;
+};
 
-const nextBead = () => {
-    if (beadIndex.value < 9) {
-        beadIndex.value++;
-    } else if (mysteryIndex.value < 4) {
-        mysteryIndex.value++;
-        beadIndex.value = 0;
+const nextStep = () => {
+    if (currentStepIndex.value < steps.value.length - 1) {
+        currentStepIndex.value++;
+    } else {
+        // Reset
+        currentStepIndex.value = 0;
     }
 };
 
-const prevBead = () => {
-    if (beadIndex.value > 0) {
-        beadIndex.value--;
-    } else if (mysteryIndex.value > 0) {
-        mysteryIndex.value--;
-        beadIndex.value = 9;
+const prevStep = () => {
+    if (currentStepIndex.value > 0) {
+        currentStepIndex.value--;
     }
 };
 
 const changeSet = (setName: string) => {
     currentSetName.value = setName;
-    mysteryIndex.value = 0;
-    beadIndex.value = 0;
+    currentStepIndex.value = 0;
 };
+
+// Reset index when set changes
+watch(currentSetName, () => {
+    currentStepIndex.value = 0;
+});
 </script>
 
 <style scoped>
 /* Transitions moved to global style.css */
-</style>
+</style>

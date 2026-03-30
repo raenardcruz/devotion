@@ -28,8 +28,8 @@
           class="group bg-stone-800/40 backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:bg-stone-800/60 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-cyan-500/30 cursor-pointer"
           @click="openPrayer(prayer)"
         >
-          <h3 class="text-2xl font-serif text-cyan-200 mb-3 group-hover:text-cyan-100 transition-colors">{{ prayer.title }}</h3>
-          <p class="text-stone-300 text-sm line-clamp-3 leading-relaxed">{{ prayer.content }}</p>
+          <h3 class="text-2xl font-serif text-cyan-200 mb-3 group-hover:text-cyan-100 transition-colors">{{ prayer.name }}</h3>
+          <p class="text-stone-300 text-sm line-clamp-3 leading-relaxed">{{ prayer.default }}</p>
           <div class="mt-4 flex items-center text-cyan-400/80 text-xs font-bold uppercase tracking-wider group-hover:text-cyan-300">
             <span>Read Prayer</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2 group-hover:translate-x-1 transition-transform">
@@ -49,14 +49,37 @@
           <button @click="closePrayer" class="absolute top-4 right-4 text-stone-400 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M18 6 6 18"></path>
-              <path d="m6 6 18 18"></path>
+              <path d="m6 6 12 12"></path>
             </svg>
           </button>
           
-          <h2 class="text-3xl md:text-4xl font-serif text-cyan-100 mb-6 text-center">{{ selectedPrayer.title }}</h2>
-          <div class="prose prose-invert prose-lg mx-auto text-stone-200 leading-loose">
-            <p class="whitespace-pre-line">{{ selectedPrayer.content }}</p>
+          <div class="flex flex-col items-center mb-8">
+            <h2 class="text-3xl md:text-4xl font-serif text-cyan-100 mb-6 text-center">{{ selectedPrayer.name }}</h2>
+            
+            <!-- Latin/English Toggle -->
+            <div v-if="selectedPrayer.latin" class="flex items-center bg-black/30 p-1 rounded-full border border-white/10">
+              <button 
+                @click="showLatin = false"
+                :class="[!showLatin ? 'bg-cyan-500/20 text-cyan-100 border-cyan-500/30' : 'text-stone-400 hover:text-stone-200']"
+                class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 border border-transparent"
+              >
+                English
+              </button>
+              <button 
+                @click="showLatin = true"
+                :class="[showLatin ? 'bg-cyan-500/20 text-cyan-100 border-cyan-500/30' : 'text-stone-400 hover:text-stone-200']"
+                class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 border border-transparent"
+              >
+                Latin
+              </button>
+            </div>
           </div>
+
+          <transition name="fade-content" mode="out-in">
+            <div :key="showLatin ? 'latin' : 'english'" class="prose prose-invert prose-lg mx-auto text-stone-200 leading-loose italic-on-latin">
+              <p :class="{ 'font-serif': showLatin }" class="whitespace-pre-line">{{ showLatin ? selectedPrayer.latin : selectedPrayer.default }}</p>
+            </div>
+          </transition>
         </div>
       </div>
     </transition>
@@ -65,19 +88,22 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import prayersData from '../components/prayers/prayers.json';
+import prayersData from '../data/prayers.json';
 
 interface Prayer {
   id: string;
-  title: string;
-  content: string;
+  name: string;
+  default: string;
+  latin?: string;
 }
 
 const prayers = ref<Prayer[]>(prayersData);
 const selectedPrayer = ref<Prayer | null>(null);
+const showLatin = ref(false);
 
 const openPrayer = (prayer: Prayer) => {
   selectedPrayer.value = prayer;
+  showLatin.value = false;
   document.body.style.overflow = 'hidden';
 };
 
@@ -91,8 +117,13 @@ const closePrayer = () => {
 .line-clamp-3 {
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.italic-on-latin :deep(.font-serif) {
+  font-style: italic;
 }
 
 .modal-enter-active,
@@ -114,5 +145,16 @@ const closePrayer = () => {
 .modal-leave-to .transform {
   opacity: 0;
   transform: scale(0.95);
+}
+
+.fade-content-enter-active,
+.fade-content-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-content-enter-from,
+.fade-content-leave-to {
+  opacity: 0;
+  transform: translateY(5px);
 }
 </style>
