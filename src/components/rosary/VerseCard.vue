@@ -1,35 +1,48 @@
 <template>
-    <div class="relative group mx-auto">
-        <div class="absolute inset-0 bg-white/30 blur-2xl rounded-[3rem] -z-10 transition-all duration-1000 group-hover:bg-white/40"></div>
-        <div
-            class="bg-white/70 backdrop-blur-xl border border-white/60 p-10 md:p-16 rounded-[3rem] shadow-2xl text-center min-h-[320px] flex flex-col justify-center transition-all duration-500 hover:shadow-amber-900/5">
-
+    <div class="relative group max-w-2xl mx-auto w-full">
+        <div class="absolute inset-0 bg-white/5 blur-xl rounded-[2.5rem] -z-10 transition-all duration-1000 group-hover:bg-white/10"></div>
+        <div class="bg-black/20 backdrop-blur-xl border border-white/10 p-8 md:p-14 rounded-[2.5rem] shadow-2xl shadow-black/20 text-center min-h-[350px] flex flex-col justify-center transition-all duration-500 hover:scale-[1.01]">
+            
             <transition name="fade-scale" mode="out-in">
-                <blockquote :key="currentVerse.text" class="space-y-6">
-                    <p class="text-2xl md:text-3xl font-serif leading-relaxed text-stone-800 drop-shadow-sm">
-                        {{ currentVerse.text }}
+                <div :key="(currentStep.title || currentStep.content) + (showLatin ? '-la' : '-en')" class="space-y-6">
+                    <h3 v-if="currentStep.title" class="text-amber-200/50 uppercase tracking-[0.3em] text-xs font-bold mb-4">
+                        {{ currentStep.title }}
+                        <span v-if="currentStep.beadNumber && currentStep.type === 'decade-bead'" class="ml-2 text-amber-200/30">
+                            {{ currentStep.beadNumber }}
+                        </span>
+                    </h3>
+                    
+                    <!-- Prayer Text -->
+                    <p 
+                        v-if="currentStep.content"
+                        class="text-2xl md:text-3xl font-serif leading-relaxed text-stone-100 drop-shadow-sm whitespace-pre-line transition-all duration-500"
+                        :class="{ 'italic text-amber-100/90': showLatin && currentStep.latin }"
+                    >
+                        {{ (showLatin && currentStep.latin) ? currentStep.latin : currentStep.content }}
                     </p>
-                    <footer class="text-amber-700 font-medium tracking-[0.15em] text-sm uppercase opacity-80">
-                        — {{ currentVerse.ref }}
-                    </footer>
-                </blockquote>
+
+                    <!-- Scripture Verse (Always English) -->
+                    <div v-if="currentStep.verse" class="mt-8 pt-8 border-t border-white/5 space-y-4">
+                        <p class="text-lg md:text-xl font-serif italic text-amber-100/60 leading-relaxed italic">
+                            "{{ currentStep.verse.text }}"
+                        </p>
+                        <footer class="text-amber-200/40 font-medium tracking-[0.15em] text-xs uppercase">
+                            — {{ currentStep.verse.ref }}
+                        </footer>
+                    </div>
+                </div>
             </transition>
 
-            <div class="mt-10 flex items-center justify-center gap-3 text-stone-400 text-[10px] font-bold tracking-[0.3em] uppercase opacity-60">
-                <span class="h-px w-8 bg-stone-300"></span>
-                Hail Mary {{ beadIndex + 1 }}
-                <span class="h-px w-8 bg-stone-300"></span>
-            </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import type { Verse } from './rosaryData';
+import type { RosaryStep } from './rosaryData';
 
 defineProps<{
-    currentVerse: Verse;
-    beadIndex: number;
+    currentStep: RosaryStep;
+    showLatin?: boolean;
 }>();
 </script>
 

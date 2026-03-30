@@ -1,38 +1,37 @@
 <template>
-    <div class="flex justify-center items-center gap-3 mb-10 perspective-1000">
-        <div v-for="i in 10" :key="i" :class="[
+    <div v-if="shouldShow" class="flex justify-center items-center gap-4 mb-2 md:mb-6 h-10">
+        <div v-for="i in maxBeads" :key="i" :class="[
                 'rounded-full transition-all duration-700 ease-out relative',
-                (i - 1) <= beadIndex 
-                    ? 'w-5 h-5 md:w-6 md:h-6 bg-gradient-to-br from-amber-400 to-amber-700 shadow-lg shadow-amber-900/40 transform scale-110' 
-                    : 'w-3 h-3 md:w-4 md:h-4 bg-gradient-to-br from-stone-200 to-stone-400 opacity-60',
-                (i - 1) === beadIndex ? 'ring-offset-4 ring-offset-transparent ring-2 ring-amber-300 animate-pulse-slow' : ''
+                i <= beadIndex 
+                    ? 'w-4 h-4 md:w-5 md:h-5 bg-gradient-to-br from-amber-300 to-amber-600 shadow-lg shadow-amber-900/40 transform scale-110' 
+                    : 'w-2 h-2 md:w-3 md:h-3 bg-white/10 border border-white/5',
+                i === beadIndex ? 'ring-offset-4 ring-offset-stone-900 ring-2 ring-amber-400/50' : ''
             ]">
-            <div v-if="(i - 1) === beadIndex" class="absolute inset-0 rounded-full bg-amber-400 animate-ping opacity-20"></div>
+            <div v-if="i === beadIndex" class="absolute inset-0 rounded-full bg-amber-400 animate-ping opacity-25"></div>
         </div>
     </div>
+    <div v-else class="h-10 mb-2 md:mb-6"></div> <!-- Spacer to prevent layout shift -->
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue';
+
+const props = defineProps<{
     beadIndex: number;
+    stepType?: string;
 }>();
+
+const shouldShow = computed(() => {
+    return props.stepType === 'decade-bead' || 
+           (props.stepType === 'intro' && props.beadIndex > 0);
+});
+
+const maxBeads = computed(() => {
+    if (props.stepType === 'intro') return 3;
+    return 10;
+});
 </script>
 
 <style scoped>
-.perspective-1000 {
-    perspective: 1000px;
-}
-.animate-pulse-slow {
-    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-    box-shadow: 0 0 0 0px rgba(245, 158, 11, 0.7);
-  }
-  50% {
-    opacity: .8;
-    box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
-  }
-}
+/* Keeping it simple with Tailwind and inline classes for reactivity */
 </style>

@@ -10,6 +10,45 @@
       </router-link>
     </div>
 
+    <!-- Latin & Version Toggles -->
+    <div class="absolute top-6 right-6 z-50 flex items-center gap-3">
+      <!-- Short Version Toggle -->
+      <div class="flex items-center bg-black/20 backdrop-blur-md p-1 rounded-full border border-white/10">
+        <button 
+          @click="isShortVersion = false"
+          :class="[!isShortVersion ? 'bg-rose-500/20 text-rose-100 border-rose-500/30' : 'text-stone-400 hover:text-stone-200']"
+          class="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 border border-transparent whitespace-nowrap"
+        >
+          Full
+        </button>
+        <button 
+          @click="isShortVersion = true"
+          :class="[isShortVersion ? 'bg-rose-500/20 text-rose-100 border-rose-500/30' : 'text-stone-400 hover:text-stone-200']"
+          class="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 border border-transparent whitespace-nowrap"
+        >
+          Short
+        </button>
+      </div>
+
+      <!-- Latin Toggle -->
+      <div class="flex items-center bg-black/20 backdrop-blur-md p-1 rounded-full border border-white/10">
+        <button 
+          @click="showLatin = false"
+          :class="[!showLatin ? 'bg-rose-500/20 text-rose-100 border-rose-500/30' : 'text-stone-400 hover:text-stone-200']"
+          class="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 border border-transparent"
+        >
+          EN
+        </button>
+        <button 
+          @click="showLatin = true"
+          :class="[showLatin ? 'bg-rose-500/20 text-rose-100 border-rose-500/30' : 'text-stone-400 hover:text-stone-200']"
+          class="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 border border-transparent"
+        >
+          LA
+        </button>
+      </div>
+    </div>
+
     <!-- Meditative Background -->
     <div class="fixed inset-0 z-0 transition-all duration-1000 ease-in-out" :style="{
                 backgroundImage: `url('https://images.unsplash.com/photo-1621610212025-da775e84bea9?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')`,
@@ -30,9 +69,9 @@
 
 
             <transition name="fade-slide" mode="out-in">
-                <div :key="currentStepIndex" class="w-full flex flex-col gap-6 md:gap-8">
+                <div :key="currentStepIndex + (showLatin ? '-la' : '-en') + (isShortVersion ? '-short' : '-full')" class="w-full flex flex-col gap-6 md:gap-8">
 
-                    <PhaseLabel :currentStep="currentStep" />
+                    <PhaseLabel :currentStep="currentStep" :isShort="isShortVersion" />
 
                     <div class="min-h-[60px] flex items-center justify-center">
                          <DivineMercyBeads 
@@ -41,7 +80,7 @@
                         />
                     </div>
 
-                    <PrayerCard :currentStep="currentStep" />
+                    <PrayerCard :currentStep="currentStep" :showLatin="showLatin" />
                 </div>
             </transition>
 
@@ -50,6 +89,7 @@
                 :currentStep="currentStep" 
                 :decadeIndex="decadeIndex" 
                 :totalSteps="steps.length" 
+                :isShort="isShortVersion"
                 @next="next" 
                 @prev="prev" 
             />
@@ -75,6 +115,8 @@ import DivineMercyControls from '../components/divinemercy/DivineMercyControls.v
 
 const currentStepIndex = ref(0);
 const decadeIndex = ref(1);
+const showLatin = ref(false);
+const isShortVersion = ref(false);
 
 const beadInDecade = ref(0); // 0 is Eternal Father, 1-10 are Passion beads
 const swipeContainer = ref<HTMLElement | null>(null);
@@ -107,12 +149,13 @@ const next = () => {
         if (beadInDecade.value < 10) {
             beadInDecade.value++;
         } else {
-            if (decadeIndex.value < 5) {
+            // Check short version
+            if (isShortVersion.value || decadeIndex.value >= 5) {
+                // Done with decades
+                currentStepIndex.value = 8;
+            } else {
                 decadeIndex.value++;
                 beadInDecade.value = 0;
-            } else {
-                // Decades finished, move to closing
-                currentStepIndex.value = 8;
             }
         }
     } else {
@@ -134,13 +177,24 @@ const next = () => {
 const prev = () => {
     if (beadInDecade.value > 0) {
         beadInDecade.value--;
-    } else if (decadeIndex.value > 1) {
+    } else if (decadeIndex.value > 1 && !isShortVersion.value) {
         decadeIndex.value--;
         beadInDecade.value = 10;
     } else {
         if (currentStepIndex.value > 0) {
-            currentStepIndex.value--;
-            if (currentStepIndex.value === 7) currentStepIndex.value = 5; // Skip placeholder decade steps backward
+            // If going back from closing to decades
+            if (currentStepIndex.value === 8) {
+                currentStepIndex.value = 6;
+                // In short version, going back from closing means going to bead 10 of first decade
+                // Else it's bead 10 of 5th decade
+                decadeIndex.value = isShortVersion.value ? 1 : 5;
+                beadInDecade.value = 10;
+            } else if (currentStepIndex.value === 6) {
+                // Going back from decades to intro
+                currentStepIndex.value = 5; // Apostles creed
+            } else {
+                currentStepIndex.value--;
+            }
         }
     }
 };
@@ -148,4 +202,4 @@ const prev = () => {
 
 <style scoped>
 /* Transitions moved to global style.css */
-</style>
+</style>
