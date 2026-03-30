@@ -13,12 +13,26 @@
                     </h3>
                     
                     <!-- Prayer Text -->
+                    <InterlinearText 
+                        v-if="interlinearWords" 
+                        :words="interlinearWords" 
+                        latin-class="text-amber-100/90"
+                    />
+
                     <p 
-                        v-if="currentStep.content"
+                        v-else-if="currentStep.content"
                         class="text-2xl md:text-3xl font-serif leading-relaxed text-stone-100 drop-shadow-sm whitespace-pre-line transition-all duration-500"
                         :class="{ 'italic text-amber-100/90': showLatin && currentStep.latin }"
                     >
                         {{ (showLatin && currentStep.latin) ? currentStep.latin : currentStep.content }}
+                    </p>
+ 
+                    <!-- Latin Translation Reference (Hidden if interlinear is active) -->
+                    <p 
+                        v-if="showLatin && currentStep.latin && !interlinearWords"
+                        class="mt-4 text-sm font-sans text-stone-400 opacity-60 italic"
+                    >
+                        {{ currentStep.content }}
                     </p>
 
                     <!-- Scripture Verse (Always English) -->
@@ -38,12 +52,20 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { RosaryStep } from './rosaryData';
+import { getInterlinearPairs } from '../../utils/interlinearMappers';
+import InterlinearText from '../common/InterlinearText.vue';
 
-defineProps<{
+const props = defineProps<{
     currentStep: RosaryStep;
     showLatin?: boolean;
 }>();
+
+const interlinearWords = computed(() => {
+    if (!props.showLatin || !props.currentStep.latin) return null;
+    return getInterlinearPairs(props.currentStep.latin);
+});
 </script>
 
 <style scoped>
