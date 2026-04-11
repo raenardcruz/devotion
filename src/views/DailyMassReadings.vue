@@ -11,6 +11,7 @@ interface Reading {
 interface ResponsorialPsalm {
   citation: string;
   text: string;
+  context?: string;
 }
 
 interface MassReadings {
@@ -108,6 +109,12 @@ onMounted(() => {
             
             <div class="prose prose-stone max-w-none text-center">
                  <div class="whitespace-pre-line text-xl font-serif italic text-stone-700 leading-loose" v-html="readings.responsorial_psalm.text"></div>
+            </div>
+            <div class="bg-stone-50 rounded-xl p-6 border-l-4 border-amber-200">
+                <h3 class="text-stone-500 text-xs font-bold uppercase tracking-wider mb-2">Context</h3>
+                <p class="text-stone-600 italic text-sm leading-relaxed">
+                    {{ readings.responsorial_psalm.context }}
+                </p>
             </div>
         </section>
 
