@@ -160,6 +160,9 @@ onMounted(() => {
             </div>
         </section>
 
+        <section>
+          <div class="text-center text-stone-400 text-xs tracking-[0.2em] mb-2">Holy Bible, New Living Translation Catholic Edition, copyright © 2016 by Tyndale House Foundation. All rights reserved. Used by permission of Tyndale House Publishers, Carol Stream, Illinois 60188. All rights reserved.</div>
+        </section>
       </div>
     </main>
   </div>
