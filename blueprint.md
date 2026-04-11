@@ -19,6 +19,9 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
     -   **UI Indicators**: Added "Short Version" badges and persistent decade progress tracking.
     -   **Bilingual Display**: Automatically displays English reference text below Latin prayers when the Latin toggle is active.
 
+3.  **Expanded Prayer Library**:
+    -   Added Act of Contrition (English & Latin) to the centralized data store.
+
 ### Catechism & Study
 1.  **Reading Progress Tracking**:
     -   Implemented `localStorage` persistence to track read paragraphs.

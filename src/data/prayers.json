@@ -106,5 +106,11 @@
     "name": "Jesus, I Trust In You",
     "default": "Jesus, I trust in You!",
     "latin": "Iesu, in te confido!"
+  },
+  {
+    "id": "act-of-contrition",
+    "name": "Act of Contrition",
+    "default": "O my God, I am heartily sorry for having offended Thee, and I detest all my sins because of thy just punishments, but most of all because they offend Thee, my God, who art all good and deserving of all my love. I firmly resolve with the help of Thy grace to sin no more and to avoid the near occasion of sin. Amen.",
+    "latin": "Deus meus, ex toto corde paenitet me omnium meorum peccatorum, eaque detestor, quia peccando, non solum poenas a Te iuste statutas promeritus sum, sed praesertim quia offendi Te, summum bonum, ac dignum qui super omnia diligaris. Ideo firmiter propono, adiuvante gratia Tua, de cetero me non peccaturum peccandique occasiones proximas fugiturum. Amen."
   }
 ]
