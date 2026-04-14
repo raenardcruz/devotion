@@ -19,6 +19,7 @@ interface MassReadings {
   responsorial_psalm: ResponsorialPsalm;
   second_reading: Reading;
   gospel: Reading;
+  pope_quote: string;
 }
 
 const readings = ref<MassReadings | null>(null);
@@ -158,6 +159,23 @@ onMounted(() => {
                     {{ readings.gospel.context }}
                 </p>
             </div>
+        </section>
+
+        <!-- Words of the Popes -->
+        <section class="bg-white rounded-[2rem] shadow-xl p-8 md:p-12 relative overflow-hidden border border-stone-100" v-if="!!readings.pope_quote">
+             <div class="absolute top-0 right-0 p-8 opacity-5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 24 24" fill="currentColor" class="text-amber-900"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-1.07 3.97-2.9 5.34z"></path></svg>
+            </div>
+
+            <header class="mb-8 border-b border-stone-100 pb-6 relative z-10">
+                <span class="text-amber-600 text-xs font-bold uppercase tracking-[0.2em] mb-2 block">Words of the Popes</span>
+            </header>
+
+            <div class="prose prose-stone max-w-none mb-8 relative z-10">
+                 <div class="whitespace-pre-line text-lg leading-relaxed text-stone-800" v-html="readings.pope_quote"></div>
+            </div>
+
+            <div class="text-center text-stone-400 text-xs tracking-[0.2em] mb-2">https://www.vaticannews.va/en/word-of-the-day</div>
         </section>
 
         <section>
