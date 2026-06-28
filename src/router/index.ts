@@ -5,6 +5,7 @@ import DivineMercy from '../views/DivineMercy.vue'
 import PrayersGallery from '../views/PrayersGallery.vue'
 import Catechism from '../views/Catechism.vue'
 import DailyMassReadings from '../views/DailyMassReadings.vue'
+import Resources from '../views/Resources.vue'
 
 const router = createRouter({
     history: createWebHashHistory(),
@@ -38,6 +39,11 @@ const router = createRouter({
             path: '/catechism',
             name: 'Catechism',
             component: Catechism
+        },
+        {
+            path: '/resources',
+            name: 'Resources',
+            component: Resources
         }
     ]
 })
