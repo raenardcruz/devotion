@@ -59,3 +59,6 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
     -   `PhaseLabel.vue`: Dynamic header showing the current prayer category and version.
 -   **Catechism**:
     -   `Catechism.vue`, `CatechismText.vue`, `CatechismReference.vue`: Logic for the interactive Catechism explorer.
+-   **Resources**:
+    -   `Resources.vue`: Interactive markdown resource reader with chapter navigation, searching, and progress tracking saved to `localStorage`.
+    -   `src/components/resources/letter_of_ignatius.md` & `src/components/resources/apology_of_justin_martyr.md`: Formatted early Church fathers writings.
