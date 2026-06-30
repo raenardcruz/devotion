@@ -1,163 +1,263 @@
 <template>
-  <div class="min-h-screen bg-stone-50 text-stone-900 font-sans selection:bg-amber-100 flex flex-col overflow-hidden">
-    <!-- Header -->
-    <header class="pt-20 pb-12 text-center px-4">
-      <h1 class="text-5xl md:text-7xl font-serif text-stone-800 tracking-tight mb-6 animate-fade-in-down">
-        Devotion
-      </h1>
-      <p class="text-stone-500 text-sm md:text-base uppercase tracking-[0.2em] font-medium animate-fade-in-up delay-100">
-        Daily Catholic Prayers & Meditations
-      </p>
-    </header>
+  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-24 selection:bg-parchment-primary/20">
+    <!-- Global Header -->
+    <TopNav />
 
     <!-- Main Content -->
-    <main class="flex-grow flex items-center justify-center p-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl w-full">
-        
-        <!-- Daily Mass Readings Card -->
-        <router-link to="/daily-readings" class="group relative overflow-hidden rounded-[2rem] shadow-xl hover:shadow-2xl transition-all duration-700 hover:-translate-y-2 h-[28rem] animate-fade-in-up delay-150">
-          <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1497621122273-f5cfb6065c56?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"></div>
-          <div class="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/40 to-transparent opacity-80 group-hover:opacity-70 transition-opacity duration-700"></div>
-          
-          <div class="relative h-full flex flex-col justify-end p-10 text-white">
-            <div class="mb-6 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 ease-out">
-              <span class="text-amber-200 text-xs font-bold uppercase tracking-[0.2em] mb-3 block opacity-80">Liturgy</span>
-              <h2 class="text-4xl font-serif italic mb-3">Daily Readings</h2>
-              <p class="text-stone-200 text-sm leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 max-w-sm">
-                Read and meditate on today's Mass readings: First Reading, Psalm, and Gospel.
-              </p>
+    <main class="flex-grow max-w-2xl mx-auto w-full px-4 pt-12 pb-8 flex flex-col items-center">
+      <!-- Word of the Day Hero -->
+      <div class="text-center mb-10 w-full animate-fade-in-down">
+        <span class="text-parchment-primary font-bold tracking-[0.25em] text-xs uppercase block mb-3">
+          The Word of the Day
+        </span>
+        <h2 class="font-serif text-2xl md:text-3xl text-parchment-neutral italic mb-3 leading-snug">
+          "Abide in My love."
+        </h2>
+        <p class="text-parchment-neutral/70 italic text-sm leading-relaxed max-w-md mx-auto">
+          Reflect on the sacred rhythms of the liturgical year and find peace in the quiet moments of the day.
+        </p>
+      </div>
+
+      <!-- Devotionals List -->
+      <div class="w-full space-y-4 animate-fade-in-up delay-150">
+        <!-- Daily Mass Readings -->
+        <router-link to="/daily-readings" class="block">
+          <ParchmentCard hover-effect class="!p-5 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 rounded-xl bg-parchment-neutral-light/80 flex items-center justify-center text-parchment-primary-dark shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+                  <path d="M6 6h10"></path>
+                  <path d="M6 10h10"></path>
+                </svg>
+              </div>
+              <div class="text-left">
+                <h3 class="font-serif text-base md:text-lg font-bold text-parchment-neutral">Daily Mass Readings</h3>
+                <p class="text-xs md:text-sm text-parchment-neutral/60 mt-0.5 leading-snug max-w-md">
+                  Follow the universal Church in its daily scriptural cycle. Today: Memorial of St. Polycarp.
+                </p>
+              </div>
             </div>
-            
-            <div class="flex items-center text-amber-200 text-sm font-medium tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">
-              <span class="border-b border-transparent group-hover:border-amber-200 transition-all duration-300">Read Now</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-3 group-hover:translate-x-2 transition-transform duration-300">
-                <path d="M5 12h14"></path>
-                <path d="m12 5 7 7-7 7"></path>
+            <div class="text-parchment-neutral/30 group-hover:text-parchment-neutral/60 transition-colors pl-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m9 18 6-6-6-6"></path>
               </svg>
             </div>
-          </div>
+          </ParchmentCard>
         </router-link>
 
-        <!-- Rosary Card -->
-        <router-link to="/rosary" class="group relative overflow-hidden rounded-[2rem] shadow-xl hover:shadow-2xl transition-all duration-700 hover:-translate-y-2 h-[28rem] animate-fade-in-up delay-200">
-          <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1554089638-52a6a0c7b2a1?q=80&w=772&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"></div>
-          <div class="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/40 to-transparent opacity-80 group-hover:opacity-70 transition-opacity duration-700"></div>
-          
-          <div class="relative h-full flex flex-col justify-end p-10 text-white">
-            <div class="mb-6 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 ease-out">
-              <span class="text-amber-200 text-xs font-bold uppercase tracking-[0.2em] mb-3 block opacity-80">Meditation</span>
-              <h2 class="text-4xl font-serif italic mb-3">Scriptural Rosary</h2>
-              <p class="text-stone-200 text-sm leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 max-w-sm">
-                Meditate on the mysteries of Christ's life with scriptural verses for each Hail Mary.
-              </p>
+        <!-- Scriptural Rosary -->
+        <router-link to="/rosary" class="block">
+          <ParchmentCard hover-effect class="!p-5 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 rounded-xl bg-parchment-neutral-light/80 flex items-center justify-center text-parchment-primary-dark shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-11-7-11S5 10.7 5 15a7 7 0 0 0 7 7z"></path>
+                  <circle cx="12" cy="15" r="2"></circle>
+                </svg>
+              </div>
+              <div class="text-left">
+                <h3 class="font-serif text-base md:text-lg font-bold text-parchment-neutral">Scriptural Rosary</h3>
+                <p class="text-xs md:text-sm text-parchment-neutral/60 mt-0.5 leading-snug max-w-md">
+                  Meditate on the life of Christ through the mysteries of the most holy Rosary, accompanied by scripture.
+                </p>
+              </div>
             </div>
-            
-            <div class="flex items-center text-amber-200 text-sm font-medium tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">
-              <span class="border-b border-transparent group-hover:border-amber-200 transition-all duration-300">Start Prayer</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-3 group-hover:translate-x-2 transition-transform duration-300">
-                <path d="M5 12h14"></path>
-                <path d="m12 5 7 7-7 7"></path>
+            <div class="text-parchment-neutral/30 group-hover:text-parchment-neutral/60 transition-colors pl-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m9 18 6-6-6-6"></path>
               </svg>
             </div>
-          </div>
+          </ParchmentCard>
         </router-link>
 
-        <!-- Divine Mercy Card -->
-        <router-link to="/divine-mercy" class="group relative overflow-hidden rounded-[2rem] shadow-xl hover:shadow-2xl transition-all duration-700 hover:-translate-y-2 h-[28rem] animate-fade-in-up delay-300">
-          <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1696261803619-9cae57748d90?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"></div>
-          <div class="absolute inset-0 bg-gradient-to-t from-rose-950 via-rose-900/40 to-transparent opacity-80 group-hover:opacity-70 transition-opacity duration-700"></div>
-          
-          <div class="relative h-full flex flex-col justify-end p-10 text-white">
-            <div class="mb-6 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 ease-out">
-              <span class="text-rose-200 text-xs font-bold uppercase tracking-[0.2em] mb-3 block opacity-80">Chaplet</span>
-              <h2 class="text-4xl font-serif italic mb-3">Divine Mercy</h2>
-              <p class="text-stone-200 text-sm leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 max-w-sm">
-                Pray the Chaplet of Divine Mercy for grace and mercy upon the whole world.
-              </p>
+        <!-- Divine Mercy -->
+        <router-link to="/divine-mercy" class="block">
+          <ParchmentCard hover-effect class="!p-5 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 rounded-xl bg-parchment-neutral-light/80 flex items-center justify-center text-parchment-primary-dark shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+                </svg>
+              </div>
+              <div class="text-left">
+                <h3 class="font-serif text-base md:text-lg font-bold text-parchment-neutral">Divine Mercy</h3>
+                <p class="text-xs md:text-sm text-parchment-neutral/60 mt-0.5 leading-snug max-w-md">
+                  Pray the Chaplet and enter into the depths of God's unfathomable mercy. Ideal for the 3:00 PM hour.
+                </p>
+              </div>
             </div>
-            
-            <div class="flex items-center text-rose-200 text-sm font-medium tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">
-              <span class="border-b border-transparent group-hover:border-rose-200 transition-all duration-300">Start Prayer</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-3 group-hover:translate-x-2 transition-transform duration-300">
-                <path d="M5 12h14"></path>
-                <path d="m12 5 7 7-7 7"></path>
+            <div class="text-parchment-neutral/30 group-hover:text-parchment-neutral/60 transition-colors pl-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m9 18 6-6-6-6"></path>
               </svg>
             </div>
-          </div>
+          </ParchmentCard>
         </router-link>
 
-        <!-- Catechism Card -->
-        <router-link to="/catechism" class="group relative overflow-hidden rounded-[2rem] shadow-xl hover:shadow-2xl transition-all duration-700 hover:-translate-y-2 h-[28rem] animate-fade-in-up delay-400 md:col-span-2 lg:col-span-1">
-          <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1633963792796-8e35bb51675a?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"></div>
-          <div class="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-900/40 to-transparent opacity-80 group-hover:opacity-70 transition-opacity duration-700"></div>
-          
-          <div class="relative h-full flex flex-col justify-end p-10 text-white">
-            <div class="mb-6 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 ease-out">
-              <span class="text-emerald-200 text-xs font-bold uppercase tracking-[0.2em] mb-3 block opacity-80">Teaching</span>
-              <h2 class="text-4xl font-serif italic mb-3">Catechism</h2>
-              <p class="text-stone-200 text-sm leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 max-w-sm">
-                Explore the Catechism of the Catholic Church by paragraph or structure.
-              </p>
+        <!-- Catechism -->
+        <router-link to="/catechism" class="block">
+          <ParchmentCard hover-effect class="!p-5 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 rounded-xl bg-parchment-neutral-light/80 flex items-center justify-center text-parchment-primary-dark shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"></path>
+                  <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path>
+                </svg>
+              </div>
+              <div class="text-left">
+                <h3 class="font-serif text-base md:text-lg font-bold text-parchment-neutral">Catechism</h3>
+                <p class="text-xs md:text-sm text-parchment-neutral/60 mt-0.5 leading-snug max-w-md">
+                  Explore the pillar of faith through a searchable and navigable treasury of Church teaching.
+                </p>
+              </div>
             </div>
-            
-            <div class="flex items-center text-emerald-200 text-sm font-medium tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">
-              <span class="border-b border-transparent group-hover:border-emerald-200 transition-all duration-300">Read Now</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-3 group-hover:translate-x-2 transition-transform duration-300">
-                <path d="M5 12h14"></path>
-                <path d="m12 5 7 7-7 7"></path>
+            <div class="text-parchment-neutral/30 group-hover:text-parchment-neutral/60 transition-colors pl-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m9 18 6-6-6-6"></path>
               </svg>
             </div>
-          </div>
+          </ParchmentCard>
         </router-link>
 
-        <!-- Prayers Gallery Card -->
-        <router-link to="/prayers" class="group relative overflow-hidden rounded-[2rem] shadow-xl hover:shadow-2xl transition-all duration-700 hover:-translate-y-2 h-[28rem] animate-fade-in-up delay-500 md:col-span-2 lg:col-span-1">
-          <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1437603568260-1950d3ca6eab?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"></div>
-          <div class="absolute inset-0 bg-gradient-to-t from-cyan-950 via-cyan-900/40 to-transparent opacity-80 group-hover:opacity-70 transition-opacity duration-700"></div>
-          
-          <div class="relative h-full flex flex-col justify-end p-10 text-white">
-            <div class="mb-6 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 ease-out">
-              <span class="text-cyan-200 text-xs font-bold uppercase tracking-[0.2em] mb-3 block opacity-80">Collection</span>
-              <h2 class="text-4xl font-serif italic mb-3">Traditional Prayers</h2>
-              <p class="text-stone-200 text-sm leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 max-w-sm">
-                Explore a gallery of essential Catholic prayers for every occasion and need.
-              </p>
+        <!-- Traditional Prayers -->
+        <router-link to="/prayers" class="block">
+          <ParchmentCard hover-effect class="!p-5 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 rounded-xl bg-parchment-neutral-light/80 flex items-center justify-center text-parchment-primary-dark shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m12 3-1.912 5.886L4.2 9.08l4.956 3.6L7.243 18.57 12 15l4.757 3.57-1.913-5.887 4.957-3.6-5.887-.193Z"></path>
+                </svg>
+              </div>
+              <div class="text-left">
+                <h3 class="font-serif text-base md:text-lg font-bold text-parchment-neutral">Traditional Prayers</h3>
+                <p class="text-xs md:text-sm text-parchment-neutral/60 mt-0.5 leading-snug max-w-md">
+                  An anthology of ancient prayers, novenas, and litanies passed down through generations.
+                </p>
+              </div>
             </div>
-            
-            <div class="flex items-center text-cyan-200 text-sm font-medium tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">
-              <span class="border-b border-transparent group-hover:border-cyan-200 transition-all duration-300">Open Gallery</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-3 group-hover:translate-x-2 transition-transform duration-300">
-                <path d="M5 12h14"></path>
-                <path d="m12 5 7 7-7 7"></path>
+            <div class="text-parchment-neutral/30 group-hover:text-parchment-neutral/60 transition-colors pl-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m9 18 6-6-6-6"></path>
               </svg>
             </div>
-          </div>
+          </ParchmentCard>
         </router-link>
 
-        <!-- Early Church Resources Card -->
-        <router-link to="/resources" class="group relative overflow-hidden rounded-[2rem] shadow-xl hover:shadow-2xl transition-all duration-700 hover:-translate-y-2 h-[28rem] animate-fade-in-up delay-600 md:col-span-2 lg:col-span-1">
-          <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1457369804613-52c61a468e7d?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"></div>
-          <div class="absolute inset-0 bg-gradient-to-t from-amber-950 via-amber-900/40 to-transparent opacity-80 group-hover:opacity-70 transition-opacity duration-700"></div>
-          
-          <div class="relative h-full flex flex-col justify-end p-10 text-white">
-            <div class="mb-6 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 ease-out">
-              <span class="text-amber-200 text-xs font-bold uppercase tracking-[0.2em] mb-3 block opacity-80">Writings</span>
-              <h2 class="text-4xl font-serif italic mb-3">Early Church Resources</h2>
-              <p class="text-stone-200 text-sm leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 max-w-sm">
-                Read the letters of Ignatius, the apologies of Justin Martyr, and other early writings.
-              </p>
+        <!-- Early Church Resources -->
+        <router-link to="/resources" class="block">
+          <ParchmentCard hover-effect class="!p-5 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 rounded-xl bg-parchment-neutral-light/80 flex items-center justify-center text-parchment-primary-dark shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                </svg>
+              </div>
+              <div class="text-left">
+                <h3 class="font-serif text-base md:text-lg font-bold text-parchment-neutral">Early Church Resources</h3>
+                <p class="text-xs md:text-sm text-parchment-neutral/60 mt-0.5 leading-snug max-w-md">
+                  Read the letters of Ignatius, the apologies of Justin Martyr, and other early writings.
+                </p>
+              </div>
             </div>
-            
-            <div class="flex items-center text-amber-200 text-sm font-medium tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">
-              <span class="border-b border-transparent group-hover:border-amber-200 transition-all duration-300">Read Now</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-3 group-hover:translate-x-2 transition-transform duration-300">
-                <path d="M5 12h14"></path>
-                <path d="m12 5 7 7-7 7"></path>
+            <div class="text-parchment-neutral/30 group-hover:text-parchment-neutral/60 transition-colors pl-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m9 18 6-6-6-6"></path>
               </svg>
             </div>
-          </div>
+          </ParchmentCard>
         </router-link>
       </div>
+
+      <!-- Floating Action Button (FAB) -->
+      <button 
+        @click="openQuickDevotion"
+        class="fixed bottom-20 right-6 md:right-12 w-14 h-14 bg-parchment-primary-dark hover:bg-[#4a3c1d] text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 active:scale-95 border-none outline-none z-50 group hover:-translate-y-1"
+        title="Quick Devotion Selector"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:rotate-90">
+          <line x1="12" x2="12" y1="5" y2="19"></line>
+          <line x1="5" x2="19" y1="12" y2="12"></line>
+        </svg>
+      </button>
     </main>
+
+    <!-- Global Footer Navigation -->
+    <BottomNav />
   </div>
 </template>
+
+<script setup lang="ts">
+import { useRouter } from 'vue-router';
+import TopNav from '../components/common/TopNav.vue';
+import BottomNav from '../components/common/BottomNav.vue';
+import ParchmentCard from '../components/common/ParchmentCard.vue';
+
+const router = useRouter();
+
+const openQuickDevotion = () => {
+  const choice = prompt(
+    "Where would you like to pray?\n1. Daily Readings\n2. Scriptural Rosary\n3. Divine Mercy\n4. Catechism\n5. Traditional Prayers\n6. Early Church Resources\n\nEnter number (1-6):"
+  );
+  
+  switch (choice?.trim()) {
+    case '1':
+      router.push('/daily-readings');
+      break;
+    case '2':
+      router.push('/rosary');
+      break;
+    case '3':
+      router.push('/divine-mercy');
+      break;
+    case '4':
+      router.push('/catechism');
+      break;
+    case '5':
+      router.push('/prayers');
+      break;
+    case '6':
+      router.push('/resources');
+      break;
+    default:
+      if (choice) alert("Invalid selection. Please choose a number from 1 to 6.");
+  }
+};
+</script>
+
+<style scoped>
+/* Page Animations */
+.animate-fade-in-down {
+  animation: fadeInDown 0.6s ease-out forwards;
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+.delay-150 {
+  animation-delay: 0.15s;
+  animation-fill-mode: both;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

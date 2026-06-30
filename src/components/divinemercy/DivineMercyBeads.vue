@@ -1,32 +1,24 @@
 <template>
     <div v-if="currentStep.type === 'decade'"
-        class="flex justify-center items-center gap-2 mb-10 flex-wrap max-w-lg mx-auto perspective-1000">
+        class="flex justify-center items-center gap-3 mb-4 flex-wrap max-w-lg mx-auto">
         
-        <!-- Large Bead for Eternal Father -->
+        <!-- Large Bead for Eternal Father (Crimson accent) -->
         <div :class="[
-                'w-6 h-6 rounded-full border border-white/20 transition-all duration-700 relative z-10',
-                beadInDecade >= 0 
-                    ? 'bg-gradient-to-br from-rose-700 to-rose-950 shadow-lg shadow-rose-900/50 scale-110' 
-                    : 'bg-gradient-to-br from-stone-600 to-stone-800 shadow-inner'
+                'w-6 h-6 rounded-full border-2 border-parchment-secondary bg-parchment-bg flex items-center justify-center transition-all duration-300',
+                beadInDecade >= 0 ? 'ring-2 ring-parchment-secondary/20 ring-offset-2' : ''
             ]">
-            <div v-if="beadInDecade >= 0" class="absolute inset-0 bg-rose-500 rounded-full blur-sm opacity-50 animate-pulse"></div>
+            <div v-if="beadInDecade >= 0" class="w-2.5 h-2.5 rounded-full bg-parchment-secondary"></div>
         </div>
         
-        <div class="w-8 h-px bg-white/20"></div>
+        <!-- Divider Line -->
+        <div class="w-6 h-0.5 bg-parchment-border"></div>
         
-        <!-- Small Beads for Passion -->
+        <!-- Small Beads for Passion (Slate Blue accent) -->
         <div v-for="i in 10" :key="i" :class="[
-                'w-3.5 h-3.5 rounded-full transition-all duration-500 relative',
-                i <= beadInDecade 
-                    ? 'bg-gradient-to-br from-blue-500 to-blue-700 shadow-[0_0_10px_rgba(59,130,246,0.5)] transform scale-110' 
-                    : 'bg-stone-700 opacity-60',
-                i === beadInDecade ? 'ring-2 ring-blue-300 ring-offset-2 ring-offset-transparent animate-pulse-fast' : ''
+                'w-4 h-4 rounded-full border-2 border-parchment-tertiary bg-parchment-bg flex items-center justify-center transition-all duration-300',
+                i === beadInDecade ? 'ring-2 ring-parchment-tertiary/30 ring-offset-2' : ''
             ]">
-             <!-- Ray effects -->
-             <div v-if="i <= beadInDecade" :class="[
-                'absolute -inset-1 blur-md rounded-full opacity-40',
-                i % 2 === 0 ? 'bg-rose-400' : 'bg-blue-300' 
-             ]"></div>
+             <div v-if="i <= beadInDecade" class="w-1.5 h-1.5 rounded-full bg-parchment-tertiary"></div>
         </div>
     </div>
 </template>

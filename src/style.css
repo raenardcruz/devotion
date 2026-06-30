@@ -1,14 +1,23 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
 :root {
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Source Sans 3', 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.6;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.9);
-  background-color: #1c1917;
-  /* Stone 900 for dark mode base */
+  color-scheme: light;
+  color: #2D2926;
+  background-color: #FDFBF7;
+
+  /* Custom variables matching Sacred Parchment style guide */
+  --parchment-primary: #C5A059;
+  --parchment-primary-dark: #5C4B25;
+  --parchment-secondary: #8B2635;
+  --parchment-tertiary: #8FA5D8;
+  --parchment-neutral: #2D2926;
+  --parchment-neutral-light: #F5EFE6;
+  --parchment-bg: #FDFBF7;
+  --parchment-border: #E8DFD3;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -18,7 +27,7 @@
 
 /* Serif font utility */
 .font-serif {
-  font-family: 'Cinzel', serif;
+  font-family: 'Libre Caslon Text', 'Cinzel', serif;
 }
 
 body {
@@ -44,21 +53,20 @@ h1 {
 
 button {
   border-radius: 9999px;
-  /* Pill shape is more modern */
-  border: 1px solid transparent;
+  border: 1px solid var(--parchment-border);
   padding: 0.6em 1.4em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #292524;
-  /* Stone 800 */
+  background-color: var(--parchment-neutral-light);
+  color: var(--parchment-neutral);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 button:hover {
-  border-color: #d6d3d1;
-  /* Stone 300 */
+  border-color: var(--parchment-primary);
+  background-color: #ECE4D8;
   transform: translateY(-1px);
 }
 
@@ -83,18 +91,13 @@ button:focus-visible {
   transform: translateY(-10px);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #57534e;
-    /* Stone 600 */
-    background-color: #fafaf9;
-    /* Stone 50 */
-  }
-
-  button {
-    background-color: #e7e5e4;
-    /* Stone 200 */
-  }
+/* Custom button classes to override default button styling */
+button.btn-primary {
+  background-color: var(--parchment-primary-dark);
+  color: #ffffff;
+}
+button.btn-primary:hover {
+  background-color: #4a3c1d;
 }
 
 /* Global Animations */
