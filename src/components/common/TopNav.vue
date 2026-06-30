@@ -139,10 +139,6 @@ const closeSidebar = () => {
   isSidebarOpen.value = false;
 };
 
-const showCalendarToast = () => {
-  alert('Liturgical Calendar feature is coming soon!');
-};
-
 const navItems = [
   {
     path: '/',
