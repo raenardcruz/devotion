@@ -2,6 +2,10 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import ignatiusRaw from '../components/resources/letter_of_ignatius.md?raw';
 import apologyRaw from '../components/resources/apology_of_justin_martyr.md?raw';
+import TopNav from '../components/common/TopNav.vue';
+import BottomNav from '../components/common/BottomNav.vue';
+import AppButton from '../components/common/AppButton.vue';
+import AppTabs from '../components/common/AppTabs.vue';
 
 interface Chapter {
   id: string;
@@ -43,15 +47,12 @@ const parseMarkdown = (docId: string, rawText: string): Document => {
     const line = rawLine.trim();
     if (!line) continue;
 
-    // Document Title (#)
     if (line.startsWith('# ')) {
       title = line.substring(2).trim();
       continue;
     }
 
-    // Section (##)
     if (line.startsWith('## ')) {
-      // If we have an active chapter, save it
       if (currentChapter && currentSection) {
         currentSection.chapters.push(currentChapter);
         currentChapter = null;
@@ -69,12 +70,10 @@ const parseMarkdown = (docId: string, rawText: string): Document => {
       continue;
     }
 
-    // Chapter (#### Chapter)
     const chapMatch = line.match(/^#### Chapter\s+([IVXLCDM\d]+):\s*(.*)/i);
     if (chapMatch) {
       if (currentChapter) {
         if (!currentSection) {
-          // If no section yet (like Justin Martyr), create a default section
           currentSection = {
             id: 'default',
             title: title || 'Content',
@@ -98,13 +97,11 @@ const parseMarkdown = (docId: string, rawText: string): Document => {
       continue;
     }
 
-    // Paragraph
     if (currentChapter) {
       currentChapter.content.push(line);
     }
   }
 
-  // Flush remaining
   if (currentChapter) {
     if (!currentSection) {
       currentSection = {
@@ -131,7 +128,6 @@ onMounted(() => {
     parseMarkdown('justin', apologyRaw)
   ];
   
-  // Set default active chapter
   if (documents.value.length > 0) {
     const firstDoc = documents.value[0];
     if (firstDoc && firstDoc.sections.length > 0) {
@@ -145,7 +141,6 @@ onMounted(() => {
     }
   }
 
-  // Load reading progress from localStorage
   const stored = localStorage.getItem('resource_read_progress');
   if (stored) {
     try {
@@ -170,12 +165,10 @@ watch(selectedDocId, (newDocId) => {
   }
 });
 
-// Selected document computed
 const activeDoc = computed(() => {
   return documents.value.find(d => d.id === selectedDocId.value) || null;
 });
 
-// All chapters in current document for search and stats
 const allDocChapters = computed(() => {
   if (!activeDoc.value) return [];
   const list: Chapter[] = [];
@@ -185,7 +178,6 @@ const allDocChapters = computed(() => {
   return list;
 });
 
-// Selected chapter computed
 const activeChapter = computed(() => {
   if (!activeDoc.value) return null;
   for (const s of activeDoc.value.sections) {
@@ -195,7 +187,6 @@ const activeChapter = computed(() => {
   return null;
 });
 
-// Flat list of chapters for navigation (next/prev)
 const flatChapters = computed(() => {
   return allDocChapters.value;
 });
@@ -204,7 +195,6 @@ const currentChapterIndex = computed(() => {
   return flatChapters.value.findIndex(c => c.id === selectedChapterId.value);
 });
 
-// Filtered sections and chapters based on search query
 const filteredSections = computed(() => {
   if (!activeDoc.value) return [];
   if (!searchQuery.value.trim()) return activeDoc.value.sections;
@@ -222,7 +212,6 @@ const filteredSections = computed(() => {
   }).filter(s => s.chapters.length > 0);
 });
 
-// Stats
 const docProgress = computed(() => {
   const chapters = allDocChapters.value;
   if (chapters.length === 0) return 0;
@@ -244,7 +233,6 @@ const toggleReadStatus = (chapterId: string) => {
 
 const selectChapter = (chapterId: string) => {
   selectedChapterId.value = chapterId;
-  // Scroll reader pane to top
   const reader = document.getElementById('reader-content');
   if (reader) {
     reader.scrollTop = 0;
@@ -270,100 +258,69 @@ const nextChapter = () => {
     }
   }
 };
+
+const docTabs = [
+  { id: 'ignatius', label: 'Letters of Ignatius' },
+  { id: 'justin', label: 'First Apology of Justin' }
+];
 </script>
 
 <template>
-  <div class="min-h-screen bg-stone-900 text-stone-100 selection:bg-amber-500/30 flex flex-col relative font-sans overflow-hidden">
-    <!-- Back Button -->
-    <div class="absolute top-6 left-6 z-50">
-      <router-link to="/" class="group flex items-center space-x-3 text-white/70 hover:text-white bg-black/20 hover:bg-black/40 backdrop-blur-md px-5 py-2.5 rounded-full transition-all duration-300 border border-white/10 hover:border-white/30">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:-translate-x-1 transition-transform">
-          <path d="m15 18-6-6 6-6"/>
-        </svg>
-        <span class="font-medium tracking-wide text-sm">Return Home</span>
-      </router-link>
-    </div>
+  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-24 selection:bg-parchment-primary/20">
+    <!-- Global Header -->
+    <TopNav />
 
-    <!-- Background Image -->
-    <div class="fixed inset-0 z-0 transition-all duration-1000 ease-in-out" :style="{
-      backgroundImage: `url('https://images.unsplash.com/photo-1457369804613-52c61a468e7d?q=80&w=2070&auto=format&fit=crop')`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      filter: 'brightness(0.3) blur(8px) contrast(1.1)'
-    }"></div>
-
-    <!-- Gradient Overlay -->
-    <div class="fixed inset-0 z-0 bg-gradient-to-t from-stone-900 via-stone-900/60 to-stone-900/40 pointer-events-none"></div>
-
+    <!-- Main Container -->
     <div class="relative z-10 max-w-7xl mx-auto px-4 py-8 md:py-12 flex flex-col min-h-screen w-full">
       <!-- Header Area -->
-      <header class="text-center mb-8 mt-16 animate-fade-in-down">
-        <h1 class="text-4xl md:text-5xl font-serif text-amber-100 mb-2 drop-shadow-lg">Early Church Resources</h1>
-        <p class="text-stone-400 text-sm uppercase tracking-[0.2em] font-medium">Timeless writings of faith and theology</p>
+      <header class="text-center mb-8 animate-fade-in-down">
+        <h1 class="text-3xl md:text-5xl font-serif text-parchment-primary-dark mb-1">Early Church Resources</h1>
+        <p class="text-parchment-neutral/50 text-xs uppercase tracking-[0.25em] font-bold">Timeless writings of faith and theology</p>
       </header>
 
-      <!-- Document Switcher Tabs -->
-      <div class="flex justify-center space-x-2 md:space-x-4 mb-8">
-        <button 
-          @click="selectedDocId = 'ignatius'"
-          class="px-6 py-3 rounded-full text-sm font-semibold transition-all border duration-300"
-          :class="selectedDocId === 'ignatius' 
-            ? 'bg-amber-500/20 text-amber-200 border-amber-500/40 shadow-lg shadow-amber-500/10' 
-            : 'bg-black/20 text-stone-400 border-white/10 hover:text-stone-200 hover:bg-black/35'"
-        >
-          Letters of Ignatius
-        </button>
-        <button 
-          @click="selectedDocId = 'justin'"
-          class="px-6 py-3 rounded-full text-sm font-semibold transition-all border duration-300"
-          :class="selectedDocId === 'justin' 
-            ? 'bg-amber-500/20 text-amber-200 border-amber-500/40 shadow-lg shadow-amber-500/10' 
-            : 'bg-black/20 text-stone-400 border-white/10 hover:text-stone-200 hover:bg-black/35'"
-        >
-          First Apology of Justin Martyr
-        </button>
-      </div>
+      <!-- Document Switcher Tabs using AppTabs -->
+      <AppTabs :tabs="docTabs" v-model="selectedDocId" class="animate-fade-in-down" />
 
       <!-- Main Layout -->
       <main class="flex-grow grid grid-cols-1 lg:grid-cols-4 gap-8">
         <!-- Sidebar Navigation -->
-        <aside class="lg:col-span-1 h-fit sticky top-8 flex flex-col gap-6">
+        <aside class="lg:col-span-1 h-fit sticky top-24 flex flex-col gap-6 animate-fade-in-up delay-100">
           <!-- Search & Progress Card -->
-          <div class="bg-black/20 backdrop-blur-md rounded-3xl p-6 border border-white/10 flex flex-col gap-4">
+          <div class="bg-parchment-neutral-light border border-parchment-border rounded-3xl p-6 shadow-sm flex flex-col gap-4">
             <!-- Progress Tracker -->
-            <div class="border-b border-white/5 pb-4">
-              <h3 class="font-serif text-sm text-amber-200/80 tracking-wider uppercase font-bold mb-2">Reading Progress</h3>
-              <div class="flex justify-between text-xs text-stone-400 mb-1">
+            <div class="border-b border-parchment-border/40 pb-4">
+              <h3 class="font-serif text-xs text-parchment-primary-dark/80 tracking-widest uppercase font-bold mb-2">Reading Progress</h3>
+              <div class="flex justify-between text-[11px] text-parchment-neutral/60 mb-1.5">
                 <span>Completed</span>
                 <span>{{ readCountText }} ({{ docProgress }}%)</span>
               </div>
-              <div class="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
-                <div class="bg-amber-400 h-1.5 rounded-full transition-all duration-500" :style="{ width: `${docProgress}%` }"></div>
+              <div class="w-full bg-parchment-bg border border-parchment-border/60 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-parchment-primary h-1.5 rounded-full transition-all duration-500" :style="{ width: `${docProgress}%` }"></div>
               </div>
             </div>
 
             <!-- Search -->
             <div>
-              <h3 class="font-serif text-sm text-stone-400 tracking-wider uppercase font-bold mb-2">Search Chapters</h3>
+              <h3 class="font-serif text-xs text-parchment-neutral/50 tracking-widest uppercase font-bold mb-2">Search Chapters</h3>
               <div class="relative">
                 <input 
                   v-model="searchQuery" 
                   type="text" 
                   placeholder="Type title..." 
-                  class="w-full pl-3 pr-4 py-2.5 rounded-xl border border-white/10 bg-black/20 text-stone-200 focus:bg-black/40 focus:border-amber-500/50 shadow-md transition-all outline-none text-xs"
+                  class="w-full pl-3 pr-4 py-2.5 rounded-xl border border-parchment-border bg-parchment-bg text-parchment-neutral placeholder-parchment-neutral/30 focus:bg-parchment-neutral-light focus:border-parchment-primary shadow-inner transition-all outline-none text-xs"
                 >
               </div>
             </div>
           </div>
 
           <!-- Table of Contents List -->
-          <div class="bg-black/20 backdrop-blur-md rounded-3xl p-6 border border-white/10 max-h-[50vh] overflow-y-auto scrollbar-hide">
-            <h3 class="font-serif text-sm mb-4 text-amber-200/80 tracking-wider uppercase font-bold border-b border-white/5 pb-2">Chapters</h3>
+          <div class="bg-parchment-neutral-light border border-parchment-border rounded-3xl p-6 shadow-sm max-h-[50vh] overflow-y-auto scrollbar-hide">
+            <h3 class="font-serif text-xs mb-4 text-parchment-primary-dark/80 tracking-widest uppercase font-bold border-b border-parchment-border/40 pb-2.5">Chapters</h3>
             
             <div class="space-y-4">
               <div v-for="section in filteredSections" :key="section.id" class="space-y-2">
                 <!-- Section Header (if not default) -->
-                <h4 v-if="section.id !== 'default'" class="text-xs font-bold text-stone-400 mt-3 font-serif italic border-l-2 border-amber-500/20 pl-2">
+                <h4 v-if="section.id !== 'default'" class="text-[11px] font-bold text-parchment-neutral/70 mt-3 font-serif italic border-l-2 border-parchment-primary/30 pl-2">
                   {{ section.title.replace('The Epistle of Ignatius to the ', '') }}
                 </h4>
                 
@@ -372,13 +329,13 @@ const nextChapter = () => {
                     v-for="chapter in section.chapters"
                     :key="chapter.id"
                     @click="selectChapter(chapter.id)"
-                    class="w-full text-left text-xs transition-colors py-2 px-3 rounded-lg flex items-center justify-between group hover:bg-white/5"
+                    class="w-full text-left text-xs transition-colors py-2 px-3 rounded-lg flex items-center justify-between group hover:bg-parchment-bg border-none shadow-none"
                     :class="selectedChapterId === chapter.id 
-                      ? 'bg-amber-500/10 text-amber-300 font-semibold border-l-4 border-amber-400 pl-2' 
-                      : readChapters[chapter.id] ? 'text-stone-500 hover:text-stone-300' : 'text-stone-300 hover:text-white'"
+                      ? 'bg-parchment-primary/10 text-parchment-primary-dark font-semibold border-l-4 border-parchment-primary pl-2' 
+                      : readChapters[chapter.id] ? 'text-parchment-neutral/40 hover:text-parchment-neutral/60' : 'text-parchment-neutral/80 hover:text-parchment-neutral'"
                   >
                     <span class="truncate flex-1">
-                      <span class="font-serif font-bold text-stone-400 group-hover:text-amber-300 mr-1.5">{{ chapter.numeral }}</span>
+                      <span class="font-serif font-bold text-parchment-neutral/40 group-hover:text-parchment-primary-dark mr-1.5">{{ chapter.numeral }}</span>
                       {{ chapter.title }}
                     </span>
                     <!-- Read Checkbox -->
@@ -386,8 +343,8 @@ const nextChapter = () => {
                       @click.stop="toggleReadStatus(chapter.id)" 
                       class="ml-2 w-4 h-4 rounded border transition-colors flex items-center justify-center cursor-pointer"
                       :class="readChapters[chapter.id] 
-                        ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' 
-                        : 'border-white/10 hover:border-white/30 text-transparent'"
+                        ? 'bg-parchment-primary/20 border-parchment-primary text-parchment-primary-dark' 
+                        : 'border-parchment-border hover:border-parchment-primary text-transparent'"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
@@ -401,75 +358,78 @@ const nextChapter = () => {
         </aside>
 
         <!-- Content Area -->
-        <div class="lg:col-span-3 flex flex-col gap-6">
-          <div class="bg-black/20 backdrop-blur-md rounded-3xl p-6 md:p-8 border border-white/10 flex-grow flex flex-col min-h-[60vh] relative">
+        <div class="lg:col-span-3 flex flex-col gap-6 animate-fade-in-up delay-150">
+          <div class="bg-parchment-neutral-light border border-parchment-border rounded-3xl p-6 md:p-8 flex-grow flex flex-col min-h-[60vh] relative shadow-sm">
             <!-- Reader Area -->
             <div v-if="activeChapter" id="reader-content" class="flex-grow overflow-y-auto space-y-6 pr-2">
-              <div class="border-b border-white/5 pb-4 mb-6">
-                <div class="text-xs text-amber-400 font-semibold tracking-widest uppercase mb-1">
+              <div class="border-b border-parchment-border/40 pb-4 mb-6">
+                <div class="text-[10px] text-parchment-primary font-bold tracking-widest uppercase mb-1">
                   Chapter {{ activeChapter.numeral }}
                 </div>
-                <h2 class="text-2xl md:text-3xl font-serif text-stone-100 leading-tight">
+                <h2 class="text-2xl md:text-3xl font-serif text-parchment-neutral font-medium">
                   {{ activeChapter.title }}
                 </h2>
               </div>
 
               <!-- Main text paragraphs -->
-              <div class="space-y-6 text-stone-300 leading-relaxed font-serif text-sm md:text-base selection:bg-amber-500/20">
+              <div class="space-y-6 text-parchment-neutral/90 leading-relaxed font-serif text-base md:text-lg">
                 <p v-for="(para, idx) in activeChapter.content" :key="idx" class="indent-6 text-justify">
                   {{ para }}
                 </p>
               </div>
 
               <!-- Checkbox Mark as Read -->
-              <div class="pt-8 border-t border-white/5 mt-8 flex justify-center">
-                <button
+              <div class="pt-8 border-t border-parchment-border/30 mt-8 flex justify-center">
+                <AppButton
+                  :variant="readChapters[activeChapter.id] ? 'primary' : 'outlined'"
                   @click="toggleReadStatus(activeChapter.id)"
-                  class="flex items-center space-x-2.5 px-6 py-3 rounded-full text-xs font-semibold tracking-wider uppercase transition-all duration-300 border"
-                  :class="readChapters[activeChapter.id]
-                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
-                    : 'bg-amber-500/10 text-amber-200 border-amber-500/30 hover:bg-amber-500/20'"
+                  custom-class="!px-6 !py-2.5 flex items-center gap-2.5"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300" :class="{'scale-110': readChapters[activeChapter.id]}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300" :class="{'scale-110': readChapters[activeChapter.id]}">
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
                   <span>{{ readChapters[activeChapter.id] ? 'Completed' : 'Mark as Read' }}</span>
-                </button>
+                </AppButton>
               </div>
             </div>
 
-            <div v-else class="flex-grow flex items-center justify-center text-stone-500 font-serif italic">
+            <div v-else class="flex-grow flex items-center justify-center text-parchment-neutral/40 font-serif italic text-base">
               Select a chapter to begin reading
             </div>
 
             <!-- Navigation Buttons -->
-            <div class="mt-8 pt-6 border-t border-white/5 flex justify-between items-center text-xs">
-              <button 
+            <div class="mt-8 pt-6 border-t border-parchment-border/40 flex justify-between items-center text-xs">
+              <AppButton 
+                variant="outlined"
                 @click="prevChapter" 
                 :disabled="currentChapterIndex <= 0"
-                class="flex items-center space-x-2 text-stone-400 hover:text-white transition-colors disabled:opacity-30 disabled:hover:text-stone-400"
+                custom-class="!px-4 !py-1.5"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <path d="m15 18-6-6 6-6"/>
                 </svg>
                 <span>Previous</span>
-              </button>
+              </AppButton>
 
-              <button 
+              <AppButton 
+                variant="outlined"
                 @click="nextChapter" 
                 :disabled="currentChapterIndex >= flatChapters.length - 1"
-                class="flex items-center space-x-2 text-stone-400 hover:text-white transition-colors disabled:opacity-30 disabled:hover:text-stone-400"
+                custom-class="!px-4 !py-1.5"
               >
                 <span>Next</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <path d="m9 18 6-6-6-6"/>
                 </svg>
-              </button>
+              </AppButton>
             </div>
           </div>
         </div>
       </main>
     </div>
+
+    <!-- Global Footer -->
+    <BottomNav />
   </div>
 </template>
 
@@ -483,5 +443,41 @@ const nextChapter = () => {
 }
 .indent-6 {
   text-indent: 1.5rem;
+}
+.animate-fade-in-down {
+  animation: fadeInDown 0.6s ease-out forwards;
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+.delay-100 {
+  animation-delay: 0.1s;
+  animation-fill-mode: both;
+}
+.delay-150 {
+  animation-delay: 0.15s;
+  animation-fill-mode: both;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

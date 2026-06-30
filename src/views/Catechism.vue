@@ -1,77 +1,57 @@
 <template>
-  <div class="min-h-screen bg-stone-900 text-stone-100 selection:bg-emerald-500/30 flex flex-col relative font-sans overflow-hidden">
-    <!-- Back Button -->
-    <div class="absolute top-6 left-6 z-50">
-      <router-link to="/" class="group flex items-center space-x-3 text-white/70 hover:text-white bg-black/20 hover:bg-black/40 backdrop-blur-md px-5 py-2.5 rounded-full transition-all duration-300 border border-white/10 hover:border-white/30">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:-translate-x-1 transition-transform">
-          <path d="m15 18-6-6 6-6"/>
-        </svg>
-        <span class="font-medium tracking-wide text-sm">Return Home</span>
-      </router-link>
-    </div>
+  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-24 selection:bg-parchment-primary/20">
+    <!-- Global Header -->
+    <TopNav />
 
-    <!-- Background Image -->
-    <div class="fixed inset-0 z-0 transition-all duration-1000 ease-in-out" :style="{
-                backgroundImage: `url('https://images.unsplash.com/photo-1544253328-910f17122115?q=80&w=2070&auto=format&fit=crop')`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                filter: 'brightness(0.4) blur(10px) contrast(1.1)'
-            }"></div>
-
-    <!-- Gradient Overlay -->
-    <div class="fixed inset-0 z-0 bg-gradient-to-t from-stone-900 via-stone-900/60 to-stone-900/40 pointer-events-none"></div>
-
+    <!-- Main Content -->
     <div class="relative z-10 max-w-7xl mx-auto px-4 py-8 md:py-12 flex flex-col min-h-screen w-full">
       
       <!-- Header Area -->
-      <header class="text-center mb-12 mt-16 animate-fade-in-down">
-          <h1 class="text-4xl md:text-5xl font-serif text-emerald-100 mb-2 drop-shadow-lg">Catechism</h1>
-          <p class="text-stone-400 text-sm uppercase tracking-[0.2em] font-medium">Of The Catholic Church</p>
+      <header class="text-center mb-8 animate-fade-in-down">
+          <h1 class="text-3xl md:text-5xl font-serif text-parchment-primary-dark mb-1">Catechism</h1>
+          <p class="text-parchment-neutral/50 text-xs uppercase tracking-[0.25em] font-bold">Of The Catholic Church</p>
       </header>
 
       <main class="flex-grow grid grid-cols-1 lg:grid-cols-4 gap-8">
         
-        <!-- Search Bar (Mobile: top, Desktop: sidebar top or content top?) -->
-        <!-- Placing search in content area for now to match layout sort of, or maybe simplified -->
-        
-        <!-- Sidebar Navigation -->
-        <aside class="lg:col-span-1 h-fit sticky top-8 overflow-y-auto max-h-[calc(100vh-4rem)] animate-fade-in-up delay-100 scrollbar-hide">
-          <div class="bg-black/20 backdrop-blur-md rounded-3xl p-6 border border-white/10">
-            <h3 class="font-serif text-lg mb-6 text-emerald-200/80 tracking-wider uppercase text-xs font-bold border-b border-white/5 pb-2">Structure</h3>
+        <!-- Sidebar Navigation (Structure) -->
+        <aside class="lg:col-span-1 h-fit sticky top-24 overflow-y-auto max-h-[calc(100vh-8rem)] animate-fade-in-up delay-100 scrollbar-hide">
+          <div class="bg-parchment-neutral-light border border-parchment-border rounded-3xl p-6 shadow-sm">
+            <h3 class="font-serif text-sm mb-6 text-parchment-primary-dark/80 tracking-widest uppercase font-bold border-b border-parchment-border/40 pb-2.5">Structure</h3>
             
             <div class="space-y-4">
               <div v-for="part in structure.catechism.structure" :key="part.part" class="space-y-2">
                 <!-- Part Header -->
                 <button 
                   @click="togglePart(part)"
-                  class="w-full text-left font-medium text-sm text-stone-400 hover:text-emerald-300 transition-all flex justify-between items-start group p-2 rounded-lg hover:bg-white/5"
-                  :class="{'bg-white/10 text-emerald-300': selectedPart?.part === part.part}"
+                  class="w-full text-left font-medium text-sm text-parchment-neutral/70 hover:text-parchment-neutral transition-all flex justify-between items-start group p-2 rounded-lg hover:bg-parchment-bg border-none shadow-none"
+                  :class="{'bg-parchment-primary/10 text-parchment-primary-dark border border-parchment-primary/20': selectedPart?.part === part.part}"
                 >
-                  <span class="font-serif font-bold mr-2 text-stone-500 group-hover:text-emerald-400 transition-colors">Part {{ part.part }}</span>
+                  <span class="font-serif font-bold mr-2 text-parchment-primary group-hover:text-parchment-primary-dark transition-colors">Part {{ part.part }}</span>
                   <span class="flex-1">{{ part.title }}</span>
                 </button>
                 
                 <!-- Sections (only if part selected) -->
                 <transition name="fade-slide">
-                  <div v-if="selectedPart?.part === part.part" class="pl-4 space-y-2 border-l-2 border-emerald-500/20 ml-3 mt-2">
+                  <div v-if="selectedPart?.part === part.part" class="pl-4 space-y-2 border-l-2 border-parchment-primary/30 ml-3 mt-2">
                     <div v-for="section in part.sections" :key="section.section">
                        <button 
                         @click="toggleSection(section)"
-                        class="w-full text-left text-xs text-stone-500 hover:text-emerald-200 transition-colors py-1.5 px-2 rounded block hover:bg-white/5"
-                        :class="{'text-emerald-300 font-medium bg-white/5': selectedSection?.section === section.section}"
+                        class="w-full text-left text-xs text-parchment-neutral/70 hover:text-parchment-neutral transition-colors py-1.5 px-2 rounded block hover:bg-parchment-bg border-none shadow-none"
+                        :class="{'text-parchment-primary-dark font-medium bg-parchment-primary/5': selectedSection?.section === section.section}"
                       >
                         {{ section.title }}
                       </button>
   
                       <!-- Chapters (only if section selected) -->
                       <transition name="fade-slide">
-                        <div v-if="selectedSection?.section === section.section" class="pl-3 mt-1 space-y-1 border-l border-emerald-500/10 ml-1.5">
+                        <div v-if="selectedSection?.section === section.section" class="pl-3 mt-1 space-y-1 border-l border-parchment-primary/10 ml-1.5">
                             <button
                                 v-for="chapter in section.chapters"
                                 :key="chapter.chapter"
                                 @click="toggleChapter(chapter)"
-                                class="w-full text-left text-[11px] text-stone-600 hover:text-emerald-200 transition-colors py-1 px-2 rounded block hover:bg-white/5"
-                                :class="{'text-emerald-300 font-medium bg-white/5': selectedChapter?.chapter === chapter.chapter}"
+                                class="w-full text-left text-[11px] text-parchment-neutral/50 hover:text-parchment-neutral transition-colors py-1 px-2 rounded block hover:bg-parchment-bg border-none shadow-none"
+                                :class="{'text-parchment-primary font-bold bg-parchment-primary/5': selectedChapter?.chapter === chapter.chapter}"
                             >
                                 {{ chapter.title }}
                             </button>
@@ -86,37 +66,44 @@
         </aside>
 
         <!-- Content Area -->
-        <div class="lg:col-span-3 flex flex-col gap-6 animate-fade-in-up delay-200">
+        <div class="lg:col-span-3 flex flex-col gap-6 animate-fade-in-up delay-150">
             
-            <!-- Search -->
+            <!-- Search Input -->
             <div class="relative group">
                 <input 
                     v-model="searchQuery" 
                     type="text" 
-                    placeholder="Search paragraph number..." 
-                    class="w-full pl-12 pr-4 py-4 rounded-2xl border border-white/10 bg-black/20 backdrop-blur-md text-stone-200 focus:bg-black/40 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 shadow-lg transition-all outline-none"
+                    placeholder="Search paragraph number (e.g. 5-10, 20)..." 
+                    class="w-full pl-12 pr-4 py-4 rounded-2xl border border-parchment-border bg-parchment-neutral-light/50 text-parchment-neutral placeholder-parchment-neutral/40 focus:bg-parchment-neutral-light focus:border-parchment-primary focus:ring-1 focus:ring-parchment-primary shadow-sm transition-all outline-none"
                 >
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-parchment-neutral/30">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
+                  </svg>
+                </div>
             </div>
 
-            <!-- Active Path Display -->
-            <div v-if="!searchQuery && (selectedPart || selectedSection || selectedChapter)" class="bg-emerald-950/30 backdrop-blur-sm border border-emerald-500/20 rounded-2xl p-6 text-sm flex flex-wrap gap-2 items-center shadow-sm">
-                <span v-if="selectedPart" class="font-bold text-emerald-400 text-lg">Part {{ selectedPart.part }}: {{ selectedPart.title }}</span>
-                <span v-if="selectedSection" class="text-stone-600 mx-2">/</span>
-                <span v-if="selectedSection" class="font-medium text-emerald-200/80">{{ selectedSection.title }}</span>
-                <span v-if="selectedChapter" class="text-stone-600 mx-2">/</span>
-                <span v-if="selectedChapter" class="text-stone-400">{{ selectedChapter.title }}</span>
+            <!-- Active Path Display (Breadcrumbs) -->
+            <div v-if="!searchQuery && (selectedPart || selectedSection || selectedChapter)" class="bg-parchment-neutral-light/40 backdrop-blur-sm border border-parchment-border rounded-2xl p-5 text-sm flex flex-wrap gap-2 items-center shadow-sm">
+                <span v-if="selectedPart" class="font-serif font-bold text-parchment-primary-dark text-base">Part {{ selectedPart.part }}: {{ selectedPart.title }}</span>
+                <span v-if="selectedSection" class="text-parchment-neutral/30 mx-1">/</span>
+                <span v-if="selectedSection" class="font-medium text-parchment-neutral/80">{{ selectedSection.title }}</span>
+                <span v-if="selectedChapter" class="text-parchment-neutral/30 mx-1">/</span>
+                <span v-if="selectedChapter" class="text-parchment-neutral/60">{{ selectedChapter.title }}</span>
             </div>
 
           <!-- Paragraphs List -->
           <div class="space-y-6">
             <template v-if="filteredParagraphs.length > 0">
                 <div v-for="(paragraph, index) in filteredParagraphs" :key="paragraph.id" 
-                     class="bg-black/20 backdrop-blur-md rounded-3xl p-8 shadow-xl border border-white/5 hover:bg-black/30 hover:border-emerald-500/20 transition-all duration-500 group/card"
-                     :class="{ 'opacity-50 grayscale': readParagraphs.has(paragraph.id) }"
+                     class="bg-parchment-neutral-light border border-parchment-border rounded-3xl p-6 md:p-8 shadow-sm transition-all duration-300 group/card"
+                     :class="{ 'opacity-60': readParagraphs.has(paragraph.id) }"
                      :style="{ animationDelay: `${index * 50}ms` }">
-                  <div class="flex items-start gap-6">
-                    <span class="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-900/50 text-emerald-400 flex items-center justify-center font-serif font-bold text-sm ring-2 ring-emerald-500/20 relative cursor-pointer transition-all duration-300 hover:bg-emerald-500 hover:text-white hover:shadow-[0_0_15px_rgba(16,185,129,0.5)]"
-                        :class="{ '!bg-green-500 !text-white !ring-green-400 shadow-[0_0_10px_rgba(34,197,94,0.4)]': readParagraphs.has(paragraph.id) }"
+                  <div class="flex items-start gap-5">
+                    <!-- Read Checkbox Circle -->
+                    <span class="flex-shrink-0 w-10 h-10 rounded-full border-2 border-parchment-primary text-parchment-primary-dark flex items-center justify-center font-serif font-bold text-sm bg-parchment-bg relative cursor-pointer transition-all duration-300 hover:bg-parchment-primary hover:text-white"
+                        :class="{ '!bg-parchment-primary !text-white': readParagraphs.has(paragraph.id) }"
                         @click="toggleRead(paragraph.id)">
                       <span class="transition-opacity duration-200" :class="{ 'opacity-0': readParagraphs.has(paragraph.id) }">{{ paragraph.id }}</span>
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" 
@@ -125,8 +112,10 @@
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
                     </span>
-                    <div class="prose prose-invert prose-lg max-w-none">
-                      <div class="text-xs text-stone-500 mb-2 font-bold tracking-wider uppercase opacity-60">{{ getBreadcrumb(paragraph.id) }}</div>
+                    
+                    <div class="prose max-w-none flex-1">
+                      <div class="text-[10px] text-parchment-neutral/40 mb-1.5 font-bold tracking-wider uppercase select-none">{{ getBreadcrumb(paragraph.id) }}</div>
+                      <!-- Paragraph text rendering with reference helper link -->
                       <CatechismText :text="paragraph.text" :paragraphs="paragraphs" @show-reference="openModal" />
                     </div>
                   </div>
@@ -134,68 +123,76 @@
             </template>
 
             <!-- Empty State / Instructions -->
-             <div v-else class="text-center py-32 bg-black/10 backdrop-blur-sm rounded-[3rem] border-2 border-dashed border-white/5">
-                <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-stone-600">
+             <div v-else class="text-center py-24 bg-parchment-neutral-light/30 rounded-3xl border border-dashed border-parchment-border">
+                <div class="w-16 h-16 bg-parchment-neutral-light rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-parchment-neutral/40">
                         <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
                         <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                     </svg>
                 </div>
-                <h3 class="text-xl font-serif text-stone-300 mb-2">
+                <h3 class="text-lg font-serif text-parchment-neutral font-medium mb-1.5">
                     {{ searchQuery ? `No paragraph found for "${searchQuery}"` : 'Begin Your Study' }}
                 </h3>
-                <p class="text-stone-500 max-w-sm mx-auto leading-relaxed">
+                <p class="text-parchment-neutral/50 max-w-sm mx-auto leading-relaxed text-xs md:text-sm">
                     {{ searchQuery ? 'Try searching for a valid paragraph number.' : 'Select a section from the structure on the left or search for a specific paragraph number above.' }}
                 </p>
              </div>
           </div>
         </div>
-    </main>
+      </main>
+    </div>
+
     <!-- Reference Modal -->
     <transition enter-active-class="transition duration-300 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-200 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
         <div v-if="showModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4" @click="showModal = false">
             <!-- Backdrop -->
-            <div class="absolute inset-0 bg-black/80 backdrop-blur-md"></div>
+            <div class="absolute inset-0 bg-parchment-neutral/30 backdrop-blur-sm"></div>
             
             <!-- Modal Content -->
-            <div class="relative w-full max-w-2xl bg-stone-900 border border-emerald-500/20 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]" @click.stop>
+            <div class="relative w-full max-w-2xl bg-parchment-bg border border-parchment-border rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]" @click.stop>
                 <!-- Header -->
-                <div class="p-6 border-b border-white/5 flex justify-between items-center bg-black/20">
-                    <h3 class="text-xl font-serif text-emerald-100">Referenced Paragraphs</h3>
-                    <button @click="showModal = false" class="p-2 hover:bg-white/10 rounded-full transition-colors text-stone-400 hover:text-white">
+                <div class="p-5 border-b border-parchment-border flex justify-between items-center bg-parchment-neutral-light/50">
+                    <h3 class="text-lg font-serif text-parchment-primary-dark font-medium">Referenced Paragraphs</h3>
+                    <button @click="showModal = false" class="p-2 hover:bg-parchment-neutral-light rounded-full transition-colors text-parchment-neutral/50 hover:text-parchment-neutral border-none shadow-none">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                            <line x1="18" x2="6" y1="6" y2="18"></line>
+                            <line x1="6" x2="18" y1="6" y2="18"></line>
                         </svg>
                     </button>
                 </div>
 
                 <!-- Body -->
-                <div class="p-8 overflow-y-auto custom-scrollbar space-y-6">
-                    <div v-for="p in modalContent" :key="p.id" class="p-6 rounded-2xl bg-white/5 border border-white/5">
+                <div class="p-6 overflow-y-auto space-y-4">
+                    <div v-for="p in modalContent" :key="p.id" class="p-5 rounded-2xl bg-parchment-neutral-light/55 border border-parchment-border">
                         <div class="flex items-start gap-4">
-                            <span class="text-emerald-500 font-bold text-lg font-serif mt-1 opacity-80 select-none">§{{ p.id }}</span>
-                            <p class="text-stone-200 leading-relaxed text-lg">{{ p.text }}</p>
+                            <span class="text-parchment-secondary font-bold text-lg font-serif opacity-85 select-none">§{{ p.id }}</span>
+                            <p class="text-parchment-neutral font-serif leading-relaxed text-sm md:text-base">{{ p.text }}</p>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Footer (optional) -->
-                <div class="p-4 bg-black/20 text-center border-t border-white/5">
-                     <span class="text-xs text-stone-500 uppercase tracking-widest font-medium">Catechism of the Catholic Church</span>
+                <!-- Footer -->
+                <div class="p-4 bg-parchment-neutral-light/50 text-center border-t border-parchment-border">
+                     <span class="text-[10px] text-parchment-neutral/40 uppercase tracking-widest font-semibold">Catechism of the Catholic Church</span>
                 </div>
             </div>
         </div>
     </transition>
-    </div>
+
+    <!-- Global Footer -->
+    <BottomNav />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import catechismData from '../components/catechism/catechism.json';
 import structureData from '../components/catechism/catechism-sections.json';
 import CatechismText from '../components/catechism/CatechismText.vue';
+
+import TopNav from '../components/common/TopNav.vue';
+import BottomNav from '../components/common/BottomNav.vue';
 
 // Types
 interface Paragraph {
@@ -230,8 +227,9 @@ interface Structure {
     }
 }
 
+const route = useRoute();
+
 // State
-// Explicitly cast imported JSON to types
 const structure = ref<Structure>(structureData as unknown as Structure);
 const paragraphs = ref<Paragraph[]>(catechismData as unknown as Paragraph[]);
 const searchQuery = ref('');
@@ -253,6 +251,11 @@ const openModal = (paragraphs: Paragraph[]) => {
 };
 
 onMounted(() => {
+    // Sync initial search from router query if present (from BottomNav search query)
+    if (route.query.q) {
+        searchQuery.value = String(route.query.q);
+    }
+
     const saved = localStorage.getItem('catechism-read-progress');
     if (saved) {
         try {
@@ -285,7 +288,7 @@ const togglePart = (part: Part) => {
     selectedChapter.value = null;
   } else {
     selectedPart.value = part;
-    selectedSection.value = null; // Reset child selections when changing parent
+    selectedSection.value = null; 
     selectedChapter.value = null;
   }
 };
@@ -312,7 +315,6 @@ const toggleChapter = (chapter: Chapter) => {
 const parseRange = (rangeStr: string): { start: number, end: number } => {
   if (!rangeStr) return { start: 0, end: 0 };
   
-  // Handle single numbers or malformed strings if necessary, though data seems consistent "X-Y"
   const parts = rangeStr.split('-');
   if (parts.length === 2) {
     const startStr = parts[0];
@@ -360,20 +362,15 @@ const getBreadcrumb = (id: number): string => {
 
 // Computed
 const filteredParagraphs = computed(() => {
-  // 1. Search filter (highest priority) - if there is a search query, ignore navigation
   if (searchQuery.value.trim()) {
-    // Advanced search parsing: supports comma-separated values and ranges (e.g. "1, 5-10, 20")
     const query = searchQuery.value.trim();
     const desiredIds = new Set<number>();
-    
-    // Split by comma
     const parts = query.split(',');
     
     for (const part of parts) {
         const trimmed = part.trim();
         if (!trimmed) continue;
         
-        // check for range
         if (trimmed.includes('-')) {
             const rangeParts = trimmed.split('-').map(s => s.trim());
             if (rangeParts.length === 2) {
@@ -387,7 +384,6 @@ const filteredParagraphs = computed(() => {
                 }
             }
         } else {
-            // single number
             const num = parseInt(trimmed);
             if (!isNaN(num)) {
                 desiredIds.add(num);
@@ -402,7 +398,6 @@ const filteredParagraphs = computed(() => {
     return [];
   }
 
-  // 2. Navigation filter
   let range = { start: 0, end: 0 };
 
   if (selectedChapter.value) {
@@ -420,31 +415,56 @@ const filteredParagraphs = computed(() => {
   return paragraphs.value.filter(p => p.id >= range.start && p.id <= range.end);
 });
 
-// Watch inputs to auto-expand navigation if possible? 
-// For now, let's just make sure state is consistent
-watch(searchQuery, (newVal) => {
-    if (newVal) {
-        // defined behavior: search overrides navigation, so we don't necessarily need to clear selection,
-        // but user might find it confusing if selection remains highlighted while content shows search result.
-        // Let's keep selection state for now, as clearing it might be annoying if they just typed a number to check something quick.
+// Watch query from query params
+watch(() => route.query.q, (newVal) => {
+    if (newVal !== undefined) {
+        searchQuery.value = String(newVal);
     }
 });
-
 </script>
 
 <style scoped>
-/* Transitions moved to global style.css */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 99px;
+.animate-fade-in-down {
+  animation: fadeInDown 0.6s ease-out forwards;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+.delay-100 {
+  animation-delay: 0.1s;
+  animation-fill-mode: both;
+}
+.delay-150 {
+  animation-delay: 0.15s;
+  animation-fill-mode: both;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
