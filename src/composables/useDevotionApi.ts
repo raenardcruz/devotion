@@ -5,8 +5,14 @@ export function useDevotionApi() {
   const error = ref<string | null>(null);
 
   const fetchWithAuth = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://devotionapi.raenardcruz.com';
+    let baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://devotionapi.raenardcruz.com';
     const apiToken = import.meta.env.VITE_API_TOKEN;
+
+    // Validate and fall back if VITE_API_BASE_URL is invalid (e.g. set to the API token value)
+    if (!baseUrl || (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://') && !baseUrl.startsWith('/'))) {
+      console.warn(`Invalid VITE_API_BASE_URL "${baseUrl}" provided. Falling back to default.`);
+      baseUrl = 'https://devotionapi.raenardcruz.com';
+    }
 
     // Build absolute URL
     const url = endpoint.startsWith('http') ? endpoint : `${baseUrl.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;

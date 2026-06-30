@@ -16,7 +16,7 @@
     <!-- Center Title -->
     <router-link to="/" class="absolute left-1/2 -translate-x-1/2 flex items-center">
       <span class="font-serif text-parchment-primary-dark text-lg md:text-xl font-medium tracking-[0.1em] hover:opacity-80 transition-opacity">
-        Digital Liturgy
+        Faith and Devotion
       </span>
     </router-link>
 
@@ -67,7 +67,7 @@
         <!-- Header -->
         <div class="p-6 border-b border-parchment-border flex items-center justify-between">
           <span class="font-serif text-parchment-primary-dark text-lg font-bold tracking-[0.1em]">
-            Digital Liturgy
+            Faith and Devotion
           </span>
           <button 
             @click="closeSidebar"
