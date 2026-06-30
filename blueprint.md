@@ -52,41 +52,33 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
     -   Cloudflare Functions integration with Gemini API for dynamic daily readings and context.
 2.  **Global Design System**:
     -   Unified glassmorphic theme across all views.
-    -   Responsive navigation and interactive controls.
 3.  **Routing**:
     -   Hash-based routing for static hosting compatibility.
+4.  **API Authentication Integration**:
+    -   Secure Bearer token-based client authentication logic implemented in `useDevotionApi.ts`.
+5.  **Bible Study & Context Explorer**:
+    -   Implemented a page for selecting Bible book, chapter, and verse.
+    -   Integrated authentication token logic to fetch scripture and contextual explanations from backend APIs.
+    -   Added persistent search history with expandable/collapsible commentary cards and option to clear history.
 
 ---
 
-## Active Plan: Centralized "Sacred Parchment" Theme & Reusable Components
+## Active Plan: Page Navigation Menu
 
-The objective of this plan is to unify the design of all pages under the "Sacred Parchment" style guide.
+Implement a responsive, elegant sidebar drawer menu accessible via the left menu button in the header (`TopNav.vue`) to allow users to navigate through all pages of the application.
 
 ### Step-by-Step Action Plan:
-1.  **Configure index.html & style.css**:
-    -   Import `Libre Caslon Text` and `Source Sans 3` in `index.html`.
-    -   Add custom color extensions (`parchment-*`) and font configurations to the Tailwind CDN setup inside `index.html`.
-    -   Set page background and default styling in `src/style.css`.
-2.  **Implement Central Reusable Components**:
-    -   Create `src/components/common/TopNav.vue` (Global Header).
-    -   Create `src/components/common/BottomNav.vue` (Global Footer / Tabs).
-    -   Create `src/components/common/ParchmentCard.vue` (Base Card container).
-    -   Create `src/components/common/AppButton.vue` (Base Button).
-    -   Create `src/components/common/AppTabs.vue` (Segmented Tabs control).
-3.  **Apply Central Layout and Components to Views**:
-    -   **Home.vue**: Align layout with Image 2 (Word of the Day, structured list of devotions/readings, floating button).
-    -   **Rosary.vue**: Align with Image 3 (2-column layout, left card with Luke ref, Annunciation title, blockquote, 10 bead tracker; right column with classical image and meditation quote card).
-    -   **DailyMassReadings.vue**: Align with Image 4 (Ordinary Time heading, large date, switchable readings tabs, floating Meditate button).
-    -   **DivineMercy.vue**: Clean up layout and apply warm parchment colors, custom buttons, and bottom nav.
-    -   **Catechism.vue**: Apply warm styling to paragraph items and sidebar navigation, utilizing Libre Caslon Text and gold checkmarks.
-    -   **PrayersGallery.vue**: Restyle list of cards and prayer detail modal.
-    -   **Resources.vue**: Restyle documents reader with sidebar navigation and search bar.
-4.  **Verification**:
-    -   Run local development server.
-    -   Test all pages on different screens for visual correctness and alignment.
-    -   Verify production build output via `npm run build`.
-
----
+1.  **Modify `TopNav.vue`**:
+    - Add `isSidebarOpen` ref state to handle sidebar visibility.
+    - Add `<Teleport to="body">` section containing:
+      - A blurred dark overlay backdrop.
+      - A left-aligned slide-out sidebar drawer with a refined glassmorphic style.
+    - Define a list of navigation routes (Home, Daily Mass Readings, Scriptural Rosary, Divine Mercy, Catechism, Traditional Prayers, Early Church Resources, Bible Study) and render them with descriptive labels, subtitles, and standard SVG icons matching the theme.
+    - Set up event handlers to close the sidebar upon selecting a route or clicking the backdrop.
+2.  **Verification**:
+    - Verify menu toggle functionality on both desktop and mobile viewports.
+    - Ensure correct navigation, smooth drawer slide animations, and backdrop blur.
+    - Run production build command (`npm run build`) to guarantee code compilation and type checking.
 
 ## Architecture
 -   **Framework**: Vue 3 (Composition API)
@@ -95,6 +87,7 @@ The objective of this plan is to unify the design of all pages under the "Sacred
     -   `src/data/prayers.json`: Centralized prayer database.
     -   `src/components/rosary/rosaryData.ts`: Logic for generating full Rosary sequences.
     -   `src/components/divinemercy/divineMercyData.ts`: Sequence definitions for the Chaplet.
+    -   `localStorage`: Bible study history persistence.
 
 ## Component Structure
 -   **Common/Global**:
@@ -115,3 +108,5 @@ The objective of this plan is to unify the design of all pages under the "Sacred
     -   `Catechism.vue`, `CatechismText.vue`, `CatechismReference.vue`: Logic for the interactive Catechism explorer.
 -   **Resources**:
     -   `Resources.vue`: Interactive markdown resource reader.
+-   **Views**:
+    -   `BibleStudy.vue` [NEW]: Bible verse context explorer with client-side markdown conversion and local history caching.

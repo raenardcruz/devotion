@@ -6,6 +6,7 @@ import PrayersGallery from '../views/PrayersGallery.vue'
 import Catechism from '../views/Catechism.vue'
 import DailyMassReadings from '../views/DailyMassReadings.vue'
 import Resources from '../views/Resources.vue'
+import BibleStudy from '../views/BibleStudy.vue'
 
 const router = createRouter({
     history: createWebHashHistory(),
@@ -44,6 +45,11 @@ const router = createRouter({
             path: '/resources',
             name: 'Resources',
             component: Resources
+        },
+        {
+            path: '/bible-study',
+            name: 'BibleStudy',
+            component: BibleStudy
         }
     ]
 })

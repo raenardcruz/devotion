@@ -235,7 +235,13 @@ const selectChapter = (chapterId: string) => {
   selectedChapterId.value = chapterId;
   const reader = document.getElementById('reader-content');
   if (reader) {
-    reader.scrollTop = 0;
+    if (window.innerWidth < 1024) {
+      setTimeout(() => {
+        reader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    } else {
+      reader.scrollTop = 0;
+    }
   }
 };
 
@@ -284,7 +290,7 @@ const docTabs = [
       <!-- Main Layout -->
       <main class="flex-grow grid grid-cols-1 lg:grid-cols-4 gap-8">
         <!-- Sidebar Navigation -->
-        <aside class="lg:col-span-1 h-fit sticky top-24 flex flex-col gap-6 animate-fade-in-up delay-100">
+        <aside class="lg:col-span-1 h-fit lg:sticky lg:top-24 flex flex-col gap-6 animate-fade-in-up delay-100">
           <!-- Search & Progress Card -->
           <div class="bg-parchment-neutral-light border border-parchment-border rounded-3xl p-6 shadow-sm flex flex-col gap-4">
             <!-- Progress Tracker -->
@@ -314,7 +320,7 @@ const docTabs = [
           </div>
 
           <!-- Table of Contents List -->
-          <div class="bg-parchment-neutral-light border border-parchment-border rounded-3xl p-6 shadow-sm max-h-[50vh] overflow-y-auto scrollbar-hide">
+          <div class="bg-parchment-neutral-light border border-parchment-border rounded-3xl p-6 shadow-sm lg:max-h-[50vh] lg:overflow-y-auto scrollbar-hide">
             <h3 class="font-serif text-xs mb-4 text-parchment-primary-dark/80 tracking-widest uppercase font-bold border-b border-parchment-border/40 pb-2.5">Chapters</h3>
             
             <div class="space-y-4">
@@ -361,7 +367,7 @@ const docTabs = [
         <div class="lg:col-span-3 flex flex-col gap-6 animate-fade-in-up delay-150">
           <div class="bg-parchment-neutral-light border border-parchment-border rounded-3xl p-6 md:p-8 flex-grow flex flex-col min-h-[60vh] relative shadow-sm">
             <!-- Reader Area -->
-            <div v-if="activeChapter" id="reader-content" class="flex-grow overflow-y-auto space-y-6 pr-2">
+            <div v-if="activeChapter" id="reader-content" class="flex-grow lg:overflow-y-auto space-y-6 pr-2">
               <div class="border-b border-parchment-border/40 pb-4 mb-6">
                 <div class="text-[10px] text-parchment-primary font-bold tracking-widest uppercase mb-1">
                   Chapter {{ activeChapter.numeral }}

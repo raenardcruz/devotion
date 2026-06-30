@@ -168,19 +168,31 @@
             </div>
           </ParchmentCard>
         </router-link>
-      </div>
 
-      <!-- Floating Action Button (FAB) -->
-      <button 
-        @click="openQuickDevotion"
-        class="fixed bottom-20 right-6 md:right-12 w-14 h-14 bg-parchment-primary-dark hover:bg-[#4a3c1d] text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 active:scale-95 border-none outline-none z-50 group hover:-translate-y-1"
-        title="Quick Devotion Selector"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:rotate-90">
-          <line x1="12" x2="12" y1="5" y2="19"></line>
-          <line x1="5" x2="19" y1="12" y2="12"></line>
-        </svg>
-      </button>
+        <!-- Scripture Context Explorer -->
+        <router-link to="/bible-study" class="block">
+          <ParchmentCard hover-effect class="!p-5 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 rounded-xl bg-parchment-neutral-light/80 flex items-center justify-center text-parchment-primary-dark shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
+              </div>
+              <div class="text-left">
+                <h3 class="font-serif text-base md:text-lg font-bold text-parchment-neutral">Bible Study</h3>
+                <p class="text-xs md:text-sm text-parchment-neutral/60 mt-0.5 leading-snug max-w-md">
+                  Retrieve original Bible texts alongside historical and theological Catholic commentary.
+                </p>
+              </div>
+            </div>
+            <div class="text-parchment-neutral/30 group-hover:text-parchment-neutral/60 transition-colors pl-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m9 18 6-6-6-6"></path>
+              </svg>
+            </div>
+          </ParchmentCard>
+        </router-link>
+      </div>
     </main>
 
     <!-- Global Footer Navigation -->
@@ -189,41 +201,9 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
 import TopNav from '../components/common/TopNav.vue';
 import BottomNav from '../components/common/BottomNav.vue';
 import ParchmentCard from '../components/common/ParchmentCard.vue';
-
-const router = useRouter();
-
-const openQuickDevotion = () => {
-  const choice = prompt(
-    "Where would you like to pray?\n1. Daily Readings\n2. Scriptural Rosary\n3. Divine Mercy\n4. Catechism\n5. Traditional Prayers\n6. Early Church Resources\n\nEnter number (1-6):"
-  );
-  
-  switch (choice?.trim()) {
-    case '1':
-      router.push('/daily-readings');
-      break;
-    case '2':
-      router.push('/rosary');
-      break;
-    case '3':
-      router.push('/divine-mercy');
-      break;
-    case '4':
-      router.push('/catechism');
-      break;
-    case '5':
-      router.push('/prayers');
-      break;
-    case '6':
-      router.push('/resources');
-      break;
-    default:
-      if (choice) alert("Invalid selection. Please choose a number from 1 to 6.");
-  }
-};
 </script>
 
 <style scoped>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useDate } from '../composables/useDate';
+import { useDevotionApi } from '../composables/useDevotionApi';
 import TopNav from '../components/common/TopNav.vue';
 import BottomNav from '../components/common/BottomNav.vue';
 import ParchmentCard from '../components/common/ParchmentCard.vue';
@@ -28,21 +29,18 @@ interface MassReadings {
 }
 
 const readings = ref<MassReadings | null>(null);
-const loading = ref(true);
-const error = ref<string | null>(null);
 const activeTab = ref('first_reading');
 const showMeditationModal = ref(false);
 
 const { getLocalISOString } = useDate();
+const { getDevotion, loading, error } = useDevotionApi();
+
+// Set initial loading to true for onMounted fetch
+loading.value = true;
 
 const fetchReadings = async () => {
   try {
-    const response = await fetch('https://devotionapi.raenardcruz.com/devotion?date=' + getLocalISOString());
-    if (!response.ok) {
-        const message = `Failed to fetch readings: ${response.status} ${response.statusText}`;
-        throw new Error(message);
-    }
-    const data = await response.json();
+    const data = await getDevotion<MassReadings>(getLocalISOString());
     readings.value = data;
     
     // Set default active tab based on what's available
@@ -52,10 +50,7 @@ const fetchReadings = async () => {
       activeTab.value = 'gospel';
     }
   } catch (err: any) {
-    error.value = err.message || 'Failed to load readings.';
     console.error("Error fetching readings:", err);
-  } finally {
-    loading.value = false;
   }
 };
 

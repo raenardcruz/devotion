@@ -15,7 +15,7 @@
       <main class="flex-grow grid grid-cols-1 lg:grid-cols-4 gap-8">
         
         <!-- Sidebar Navigation (Structure) -->
-        <aside class="lg:col-span-1 h-fit sticky top-24 overflow-y-auto max-h-[calc(100vh-8rem)] animate-fade-in-up delay-100 scrollbar-hide">
+        <aside class="lg:col-span-1 h-fit lg:sticky lg:top-24 lg:overflow-y-auto lg:max-h-[calc(100vh-8rem)] animate-fade-in-up delay-100 scrollbar-hide">
           <div class="bg-parchment-neutral-light border border-parchment-border rounded-3xl p-6 shadow-sm">
             <h3 class="font-serif text-sm mb-6 text-parchment-primary-dark/80 tracking-widest uppercase font-bold border-b border-parchment-border/40 pb-2.5">Structure</h3>
             
@@ -66,7 +66,7 @@
         </aside>
 
         <!-- Content Area -->
-        <div class="lg:col-span-3 flex flex-col gap-6 animate-fade-in-up delay-150">
+        <div id="catechism-content" class="lg:col-span-3 flex flex-col gap-6 animate-fade-in-up delay-150">
             
             <!-- Search Input -->
             <div class="relative group">
@@ -281,6 +281,17 @@ const toggleRead = (id: number) => {
 };
 
 // Methods
+const scrollToContent = () => {
+  if (window.innerWidth < 1024) {
+    setTimeout(() => {
+      const contentArea = document.getElementById('catechism-content');
+      if (contentArea) {
+        contentArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  }
+};
+
 const togglePart = (part: Part) => {
   if (selectedPart.value?.part === part.part) {
     selectedPart.value = null;
@@ -290,6 +301,7 @@ const togglePart = (part: Part) => {
     selectedPart.value = part;
     selectedSection.value = null; 
     selectedChapter.value = null;
+    scrollToContent();
   }
 };
 
@@ -300,6 +312,9 @@ const toggleSection = (section: Section) => {
     } else {
         selectedSection.value = section;
         selectedChapter.value = null;
+        if (!section.chapters || section.chapters.length === 0) {
+            scrollToContent();
+        }
     }
 }
 
@@ -308,6 +323,7 @@ const toggleChapter = (chapter: Chapter) => {
         selectedChapter.value = null;
     } else {
         selectedChapter.value = chapter;
+        scrollToContent();
     }
 }
 
