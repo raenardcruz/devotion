@@ -63,22 +63,16 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
 
 ---
 
-## Active Plan: Page Navigation Menu
+## Active Plan: Fix GitHub Actions Workflow
 
-Implement a responsive, elegant sidebar drawer menu accessible via the left menu button in the header (`TopNav.vue`) to allow users to navigate through all pages of the application.
+Ensure the GitHub Actions build and deploy workflow runs successfully with correct Node.js versions, environment variables, and structure.
 
 ### Step-by-Step Action Plan:
-1.  **Modify `TopNav.vue`**:
-    - Add `isSidebarOpen` ref state to handle sidebar visibility.
-    - Add `<Teleport to="body">` section containing:
-      - A blurred dark overlay backdrop.
-      - A left-aligned slide-out sidebar drawer with a refined glassmorphic style.
-    - Define a list of navigation routes (Home, Daily Mass Readings, Scriptural Rosary, Divine Mercy, Catechism, Traditional Prayers, Early Church Resources, Bible Study) and render them with descriptive labels, subtitles, and standard SVG icons matching the theme.
-    - Set up event handlers to close the sidebar upon selecting a route or clicking the backdrop.
+1.  **Modify `.github/workflows/build.yml`**:
+    - Update `node-version` from `25.x` to `20.x` to match the project runtime environment (Node 20).
+    - Align environment variables between jobs or consolidate the workflow.
 2.  **Verification**:
-    - Verify menu toggle functionality on both desktop and mobile viewports.
-    - Ensure correct navigation, smooth drawer slide animations, and backdrop blur.
-    - Run production build command (`npm run build`) to guarantee code compilation and type checking.
+    - Push to remote branch to verify workflow execution.
 
 ## Architecture
 -   **Framework**: Vue 3 (Composition API)
