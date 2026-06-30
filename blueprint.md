@@ -60,19 +60,14 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
     -   Implemented a page for selecting Bible book, chapter, and verse.
     -   Integrated authentication token logic to fetch scripture and contextual explanations from backend APIs.
     -   Added persistent search history with expandable/collapsible commentary cards and option to clear history.
+6.  **GitHub Actions Workflow**:
+    - Fixed build and deploy workflow by setting correct Node.js version to 20.x and structuring environment variables.
+7.  **API Base URL Validation & Fallback**:
+    - Added validation to fallback `baseUrl` to `https://devotionapi.raenardcruz.com` if `VITE_API_BASE_URL` is misconfigured (e.g., set to the token value).
 
 ---
 
-## Active Plan: Fix GitHub Actions Workflow
-
-Ensure the GitHub Actions build and deploy workflow runs successfully with correct Node.js versions, environment variables, and structure.
-
-### Step-by-Step Action Plan:
-1.  **Modify `.github/workflows/build.yml`**:
-    - Update `node-version` from `25.x` to `20.x` to match the project runtime environment (Node 20).
-    - Align environment variables between jobs or consolidate the workflow.
-2.  **Verification**:
-    - Push to remote branch to verify workflow execution.
+## Active Plan: None (All current items completed)
 
 ## Architecture
 -   **Framework**: Vue 3 (Composition API)
