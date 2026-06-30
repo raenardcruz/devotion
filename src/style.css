@@ -96,6 +96,7 @@ button.btn-primary {
   background-color: var(--parchment-primary-dark);
   color: #ffffff;
 }
+
 button.btn-primary:hover {
   background-color: #4a3c1d;
 }
@@ -106,6 +107,7 @@ button.btn-primary:hover {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -117,6 +119,7 @@ button.btn-primary:hover {
     opacity: 0;
     transform: translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -146,11 +149,11 @@ button.btn-primary:hover {
 }
 
 .delay-400 {
-    animation-delay: 0.4s;
+  animation-delay: 0.4s;
 }
 
 .delay-500 {
-    animation-delay: 0.5s;
+  animation-delay: 0.5s;
 }
 
 /* Global Transitions */
@@ -184,4 +187,9 @@ button.btn-primary:hover {
 .scale-leave-to {
   opacity: 0;
   transform: scale(0.95);
+}
+
+.v {
+  font-size: 12px !important;
+  color: grey !important;
 }
