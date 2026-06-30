@@ -37,12 +37,13 @@
         >
           Devotions
         </router-link>
-        <button 
-          @click="showCalendarToast"
-          class="text-sm font-medium tracking-wider uppercase text-parchment-neutral/60 hover:text-parchment-neutral bg-transparent border-none p-0 outline-none shadow-none hover:bg-transparent hover:translate-y-0"
+        <router-link 
+          to="/bible-study" 
+          class="text-sm font-medium tracking-wider uppercase transition-colors"
+          :class="[route.path !== '/' ? 'text-parchment-primary-dark font-bold' : 'text-parchment-neutral/60 hover:text-parchment-neutral']"
         >
-          Calendar
-        </button>
+          Bible Study
+        </router-link>
       </nav>
     </div>
   </header>

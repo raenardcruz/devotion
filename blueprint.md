@@ -47,6 +47,12 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
     -   Clicking a reference opens a modal displaying the content of the referenced paragraph(s).
     -   Supports single IDs and ranges (e.g., `2095-2109`).
 
+3.  **Catechism Quick Lookup Bubble**:
+    -   Created `CatechismBubble.vue` floating widget visible on the Bible Study and Daily Mass Readings pages.
+    -   Allows looking up any Catechism paragraph (1-2865).
+    -   Integrated interactive nested cross-references that automatically load inside the popover on click.
+    -   Implements back button tracking for reference navigation history.
+
 ### System & Infrastructure
 1.  **Daily Mass Readings**:
     -   Cloudflare Functions integration with Gemini API for dynamic daily readings and context.
@@ -94,7 +100,7 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
     -   `DivineMercyBeads.vue`: Progress indicator for the 10-bead cycle.
     -   `PhaseLabel.vue`: Dynamic header showing the current prayer category and version.
 -   **Catechism**:
-    -   `Catechism.vue`, `CatechismText.vue`, `CatechismReference.vue`: Logic for the interactive Catechism explorer.
+    -   `Catechism.vue`, `CatechismText.vue`, `CatechismReference.vue`, `CatechismBubble.vue` [NEW]: Logic for the interactive Catechism explorer and floating quick lookup.
 -   **Resources**:
     -   `Resources.vue`: Interactive markdown resource reader.
 -   **Views**:

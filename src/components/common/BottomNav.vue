@@ -56,40 +56,11 @@
         Study
       </span>
     </router-link>
-
-    <!-- Search Tab -->
-    <button 
-      @click="triggerSearch"
-      class="flex flex-col items-center group transition-all duration-300 bg-transparent border-none p-0 outline-none shadow-none hover:bg-transparent hover:translate-y-0"
-    >
-      <div 
-        class="w-12 h-10 flex items-center justify-center rounded-xl text-parchment-neutral/50 group-hover:text-parchment-neutral transition-all duration-300"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
-        </svg>
-      </div>
-      <span 
-        class="text-[11px] font-medium uppercase tracking-wider mt-1 text-parchment-neutral/50 group-hover:text-parchment-neutral transition-all duration-300"
-      >
-        Search
-      </span>
-    </button>
   </footer>
 </template>
 
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 
 const route = useRoute();
-const router = useRouter();
-
-const triggerSearch = () => {
-  const query = prompt('What devotional or paragraph are you looking for?');
-  if (query) {
-    router.push({ path: '/catechism', query: { q: query.trim() } });
-  }
-};
-
 </script>
