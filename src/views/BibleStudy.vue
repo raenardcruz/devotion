@@ -6,6 +6,7 @@ import BottomNav from '../components/common/BottomNav.vue';
 import ParchmentCard from '../components/common/ParchmentCard.vue';
 import AppButton from '../components/common/AppButton.vue';
 import AppTabs from '../components/common/AppTabs.vue';
+import CatechismBubble from '../components/catechism/CatechismBubble.vue';
 
 interface SavedVerse {
   id: string;
@@ -628,6 +629,9 @@ const renderMarkdown = (markdown: string): string => {
 
     <!-- Global Footer -->
     <BottomNav />
+
+    <!-- Floating Catechism Bubble -->
+    <CatechismBubble />
   </div>
 </template>
 
