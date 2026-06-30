@@ -1,5 +1,5 @@
 <template>
-  <span class="leading-loose text-stone-300 group-hover/card:text-stone-100 transition-colors">
+  <span class="leading-loose text-stone-700 group-hover/card:text-stone-700 transition-colors">
     <template v-for="(part, index) in parsedContent" :key="index">
       <template v-if="part.type === 'text'">{{ part.content }}</template>
       <CatechismReference 
