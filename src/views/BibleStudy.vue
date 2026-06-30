@@ -597,7 +597,7 @@ const renderMarkdown = (markdown: string): string => {
                   <div>
                     <h4 class="text-[9px] font-bold text-parchment-neutral/40 uppercase tracking-widest mb-2">Scripture Text</h4>
                     <div class="prose max-w-none">
-                      <blockquote class="border-l-2 border-parchment-border pl-4 font-serif italic text-base md:text-lg text-parchment-neutral/95 leading-relaxed whitespace-pre-line" v-html="item.content"></blockquote>
+                      <blockquote class="border-l-2 border-parchment-border pl-4 font-serif text-base md:text-lg text-parchment-neutral/95 leading-relaxed whitespace-pre-line" v-html="item.content"></blockquote>
                       <p v-if="item.copyright" class="text-[9px] text-parchment-neutral/35 mt-2 ml-4">
                         {{ item.copyright }}
                       </p>
