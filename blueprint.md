@@ -70,6 +70,9 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
     - Fixed build and deploy workflow by setting correct Node.js version to 20.x and structuring environment variables.
 7.  **API Base URL Validation & Fallback**:
     - Added validation to fallback `baseUrl` to `https://devotionapi.raenardcruz.com` if `VITE_API_BASE_URL` is misconfigured (e.g., set to the token value).
+8.  **Daily Readings Context Markdown Rendering**:
+    - Extracted the local markdown parsing function to a reusable shared utility `src/utils/markdown.ts`.
+    - Integrated Markdown parsing for the contextual meditation overlays in the Daily Mass Readings view (`DailyMassReadings.vue`), rendering headers, bold, italics, and lists beautifully.
 
 ---
 
