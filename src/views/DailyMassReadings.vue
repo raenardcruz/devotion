@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useDate } from '../composables/useDate';
 import { useDevotionApi } from '../composables/useDevotionApi';
+import { renderMarkdown } from '../utils/markdown';
 import TopNav from '../components/common/TopNav.vue';
 import BottomNav from '../components/common/BottomNav.vue';
 import ParchmentCard from '../components/common/ParchmentCard.vue';
@@ -35,6 +36,12 @@ const showMeditationModal = ref(false);
 
 const { getLocalISOString } = useDate();
 const { getDevotion, loading, error } = useDevotionApi();
+
+const contextMarkdownOptions = {
+  paragraphClass: 'mb-2 last:mb-0',
+  listClass: 'list-disc pl-4 space-y-1 my-2',
+  listItemClass: 'mb-1 last:mb-0',
+};
 
 // Set initial loading to true for onMounted fetch
 loading.value = true;
@@ -155,9 +162,7 @@ const availableTabs = computed(() => {
 
               <div v-if="readings.first_reading.context" class="bg-parchment-bg border-l-4 border-parchment-primary rounded-xl p-5 shadow-sm mt-6">
                   <h3 class="text-parchment-primary-dark text-[10px] font-bold uppercase tracking-wider mb-2">Contextual Meditation</h3>
-                  <p class="text-parchment-neutral/70 italic text-xs md:text-sm leading-relaxed">
-                      {{ readings.first_reading.context }}
-                  </p>
+                  <div class="text-parchment-neutral/70 italic text-xs md:text-sm leading-relaxed" v-html="renderMarkdown(readings.first_reading.context, contextMarkdownOptions)"></div>
               </div>
             </ParchmentCard>
 
@@ -174,9 +179,7 @@ const availableTabs = computed(() => {
 
               <div v-if="readings.second_reading.context" class="bg-parchment-bg border-l-4 border-parchment-primary rounded-xl p-5 shadow-sm mt-6">
                   <h3 class="text-parchment-primary-dark text-[10px] font-bold uppercase tracking-wider mb-2">Contextual Meditation</h3>
-                  <p class="text-parchment-neutral/70 italic text-xs md:text-sm leading-relaxed">
-                      {{ readings.second_reading.context }}
-                  </p>
+                  <div class="text-parchment-neutral/70 italic text-xs md:text-sm leading-relaxed" v-html="renderMarkdown(readings.second_reading.context, contextMarkdownOptions)"></div>
               </div>
             </ParchmentCard>
 
@@ -193,9 +196,7 @@ const availableTabs = computed(() => {
 
               <div v-if="readings.responsorial_psalm.context" class="bg-parchment-bg border-l-4 border-parchment-primary rounded-xl p-5 shadow-sm mt-6">
                   <h3 class="text-parchment-primary-dark text-[10px] font-bold uppercase tracking-wider mb-2">Psalm Context</h3>
-                  <p class="text-parchment-neutral/70 italic text-xs md:text-sm leading-relaxed">
-                      {{ readings.responsorial_psalm.context }}
-                  </p>
+                  <div class="text-parchment-neutral/70 italic text-xs md:text-sm leading-relaxed" v-html="renderMarkdown(readings.responsorial_psalm.context, contextMarkdownOptions)"></div>
               </div>
             </ParchmentCard>
 
@@ -212,9 +213,7 @@ const availableTabs = computed(() => {
 
               <div v-if="readings.gospel.context" class="bg-parchment-bg border-l-4 border-parchment-primary rounded-xl p-5 shadow-sm mt-6">
                   <h3 class="text-parchment-primary-dark text-[10px] font-bold uppercase tracking-wider mb-2">Gospel Reflection</h3>
-                  <p class="text-parchment-neutral/70 italic text-xs md:text-sm leading-relaxed">
-                      {{ readings.gospel.context }}
-                  </p>
+                  <div class="text-parchment-neutral/70 italic text-xs md:text-sm leading-relaxed" v-html="renderMarkdown(readings.gospel.context, contextMarkdownOptions)"></div>
               </div>
             </ParchmentCard>
 
