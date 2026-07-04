@@ -2,115 +2,193 @@
   {
     "id": "sign-of-the-cross",
     "name": "The Sign of the Cross",
-    "default": "In the name of the Father, and of the Son, and of the Holy Spirit. Amen.",
-    "latin": "In nomine Patris, et Filii, et Spiritus Sancti. Amen."
+    "latinName": "Signum Crucis",
+    "default": "In the name of the Father and of the Son and of the Holy Spirit. Amen.",
+    "latin": "In nómine Patris et Fílii et Spíritus Sancti. Amen."
   },
   {
     "id": "our-father",
     "name": "Our Father",
-    "default": "Our Father, who art in heaven, hallowed be thy name; thy kingdom come; thy will be done on earth as it is in heaven. Give us this day our daily bread; and forgive us our trespasses as we forgive those who trespass against us; and lead us not into temptation, but deliver us from evil. Amen.",
-    "latin": "Pater noster, qui es in caelis, sanctificetur nomen tuum. Adveniat regnum tuum. Fiat voluntas tua, sicut in caelo et in terra. Panem nostrum quotidianum da nobis hodie, et dimitte nobis debita nostra sicut et nos dimittimus debitoribus nostris. Et ne nos inducas in tentationem, sed libera nos a malo. Amen."
+    "latinName": "Pater Noster",
+    "default": "Our Father, who art in heaven, hallowed be thy name; thy kingdom come; thy will be done on earth as it is in heaven. Give us this day our daily bread; and forgive us our trespasses as we forgive those who trespass against us; and lead us not into temptation, but deliver us from evil. Amen",
+    "latin": "Pater noster, qui es in cælis, sanctificetur nomen tuum; adveniat regnum tuum; fiat voluntas tua, sicut in caelo et in terra. Panem nostrum cotidianum da nobis hodie, et dimitte nobis debita nostra, sicut et nos dimittimus debitoribus nostris; et ne nos inducas in tentationem Sed libera nos a malo. Amen"
   },
   {
     "id": "hail-mary",
     "name": "Hail Mary",
-    "default": "Hail Mary, full of grace, the Lord is with thee; blessed art thou among women, and blessed is the fruit of thy womb, Jesus. Holy Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen.",
-    "latin": "Ave Maria, gratia plena, Dominus tecum. Benedicta tu in mulieribus, et benedictus fructus ventris tui, Iesus. Sancta Maria, Mater Dei, ora pro nobis peccatoribus, nunc et in hora mortis nostrae. Amen."
+    "latinName": "Ave Maria",
+    "default": "Hail Mary, full of grace, the Lord is with thee! Blessed art thou among women, and blessed is the fruit of thy womb, Jesus. Holy Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen.",
+    "latin": "Ave Maria, gratia plena, Dominus tecum. Benedicta tu in mulieribus, et benedictus fructus ventris tui, Jesus. Sancta Maria, Mater Dei, ora pro nobis peccatoribus, nunc et in hora mortis nostrae. Amen."
   },
   {
     "id": "glory-be",
     "name": "Glory Be",
-    "default": "Glory be to the Father, and to the Son, and to the Holy Spirit. As it was in the beginning, is now, and ever shall be, world without end. Amen.",
-    "latin": "Gloria Patri, et Filio, et Spiritui Sancto. Sicut erat in principio, et nunc, et semper, et in saecula saeculorum. Amen."
+    "latinName": "Gloria Patri",
+    "default": "Glory be to the Father and to the Son and to the Holy Spirit, as it was in the beginning is now, and ever shall be world without end. Amen.",
+    "latin": "Glória Patri et Fílio et Spirítui Sancto. Sicut erat in princípio, et nunc et semper et in sǽcula sæculórum. Amen."
   },
   {
     "id": "apostles-creed",
     "name": "Apostles' Creed",
+    "latinName": "Credo",
     "default": "I believe in God, the Father almighty, Creator of heaven and earth, and in Jesus Christ, his only Son, our Lord, who was conceived by the Holy Spirit, born of the Virgin Mary, suffered under Pontius Pilate, was crucified, died and was buried; he descended into hell; on the third day he rose again from the dead; he ascended into heaven, and is seated at the right hand of God the Father almighty; from there he will come to judge the living and the dead. I believe in the Holy Spirit, the holy catholic Church, the communion of saints, the forgiveness of sins, the resurrection of the body, and life everlasting. Amen.",
     "latin": "Credo in Deum Patrem omnipotentem, Creatorem caeli et terrae. Et in Iesum Christum, Filium eius unicum, Dominum nostrum, qui conceptus est de Spiritu Sancto, natus ex Maria Virgine, passus sub Pontio Pilato, crucifixus, mortuus, et sepultus, descendit ad inferos, tertia die resurrexit a mortuis, ascendit ad caelos, sedet ad dexteram Dei Patris omnipotentis, inde venturus est iudicare vivos et mortuos. Credo in Spiritum Sanctum, sanctam Ecclesiam catholicam, sanctorum communionem, remissionem peccatorum, carnis resurrectionem, vitam aeternam. Amen."
   },
   {
     "id": "hail-holy-queen",
     "name": "Hail, Holy Queen",
-    "default": "Hail, holy Queen, Mother of mercy, our life, our sweetness and our hope. To thee do we cry, poor banished children of Eve. To thee do we send up our sighs, mourning and weeping in this valley of tears. Turn, then, most gracious advocate, thine eyes of mercy toward us, and after this our exile, show unto us the blessed fruit of thy womb, Jesus. O clement, O loving, O sweet Virgin Mary.",
-    "latin": "Salve, Regina, mater misericordiae; vita, dulcedo et spes nostra, salve. Ad te clamamus, exsules filii Hevae. Ad te suspiramus, gementes et flentes in hac lacrimarum valle. Eia ergo, advocata nostra, illos tuos misericordes oculos ad nos converte. Et Iesum, benedictum fructum ventris tui, nobis post hoc exsilium ostende. O clemens, o pia, o dulcis Virgo Maria."
+    "latinName": "Salve Regina",
+    "default": "Hail, Holy Queen, Mother of Mercy, Hail our life, our sweetness and our hope! To thee do we cry, poor banished children of Eve. To thee do we send up our sighs, mourning and weeping in this valley of tears! Turn, then, most gracious Advocate, thine eyes of mercy toward us, and after this, our exile, show unto us the blessed fruit of thy womb, Jesus. O clement, O loving, O sweet Virgin Mary.",
+    "latin": "Salve, Regína, Mater misericórdiæ, vita, dulcédo et spes nostra, salve. Ad te clamámus, éxsules fílii Evæ. Ad te suspirámus geméntes et flentes in hac lacrimárum valle. Eia ergo, advocáta nostra, illos tuos misericórdes óculos ad nos convérte. Et Iesum benedíctum fructum ventris tui, nobis, post hoc exsílium, osténde. O clemens, o pia, o dulcis Virgo María!",
+    "youtube": "https://youtu.be/0V8VTNSXEL4?si=5TSN9PITgEBnsqU7"
   },
   {
     "id": "memorare",
     "name": "The Memorare",
+    "latinName": "Memorare",
     "default": "Remember, O most gracious Virgin Mary, that never was it known that anyone who fled to thy protection, implored thy help, or sought thy intercession was left unaided. Inspired by this confidence, I fly unto thee, O Virgin of virgins, my Mother; to thee do I come, before thee I stand, sinful and sorrowful. O Mother of the Word Incarnate, despise not my petitions, but in thy mercy hear and answer me. Amen.",
     "latin": "Memorare, o piissima Virgo Maria, a saeculo non esse auditum, quemquam ad tua currentem praesidia, tua implorantem auxilia, tua petentem suffragia, esse derelictum. Ego tali animatus confidentia, ad te, Virgo virginum, Mater, curro, ad te venio, coram te gemens peccator assisto. Noli, Mater Verbi, verba mea despicere; sed audi propitia et exaudi. Amen."
   },
   {
     "id": "angel-of-god",
     "name": "Angel of God",
-    "default": "Angel of God, my guardian dear, to whom God's love commits me here, ever this day be at my side, to light and guard, to rule and guide. Amen.",
-    "latin": "Angele Dei, qui custos es mei, me, tibi commissum pietate superna, illumina, custodi, rege et guberna. Amen."
+    "latinName": "Angele Dei",
+    "default": "Angel of God, my guardian dear, to whom God’s love commits me here, ever this day be at my side, to light and guard, to rule and guide. Amen.",
+    "latin": "Ángele Dei, qui custos es mei, me, tibi commíssum pietáte supérna, illumina, custódi, rege et gubérna. Amen."
   },
   {
     "id": "st-michael-the-archangel",
     "name": "St. Michael the Archangel",
+    "latinName": "Sancte Michael Archangele",
     "default": "St. Michael the Archangel, defend us in battle; be our protection against the wickedness and snares of the devil. May God rebuke him, we humbly pray; and do thou, O Prince of the heavenly host, by the power of God, cast into hell Satan and all the evil spirits who prowl about the world seeking the ruin of souls. Amen.",
     "latin": "Sancte Michael Archangele, defende nos in praelio, contra nequitiam et insidias diaboli esto praesidium. Imperet illi Deus, supplices deprecamur: tuque, Princeps militiae caelestis, Satanam aliosque spiritus malignos, qui ad perditionem animarum pervagantur in mundo, divina virtute, in infernum detrude. Amen."
   },
   {
     "id": "fatima-prayer",
     "name": "Fatima Prayer",
+    "latinName": "Oratio Fatimae",
     "default": "O my Jesus, forgive us our sins, save us from the fires of hell; lead all souls to Heaven, especially those who have most need of Thy mercy.",
     "latin": "O mi Iesu, dimitte nobis debita nostra, libera nos ab igne inferni, perduc in caelum omnes animas, praesertim eas, quae misericordiae tuae maxime indigent."
   },
   {
     "id": "dm-opening-1",
     "name": "You Expired, Jesus",
+    "latinName": "Expirasti, Iesu",
     "default": "You expired, Jesus, but the source of life gushed forth for souls, and the ocean of mercy opened up for the whole world.\n\nO Fount of Life, unfathomable Divine Mercy, envelop the whole world and empty Yourself out upon us.",
     "latin": "Expirasti, Iesu, sed fons vitae pro animabus emanavit, et oceanus misericordiae pro toto mundo apertus est. O Fons Vitae, inscrutabilis Divina Misericordia, totum mundum circumda, et teipsum super nos effunde."
   },
   {
     "id": "dm-opening-2",
     "name": "O Blood and Water",
+    "latinName": "O Sanguis et Aqua",
     "default": "O Blood and Water, which gushed forth from the Heart of Jesus as a fount of mercy for us, I trust in You!",
     "latin": "O Sanguis et Aqua, qui ex corde Iesu ut fons misericordiae pro nobis emanasti, in Te confido!"
   },
   {
     "id": "eternal-father",
     "name": "Eternal Father",
+    "latinName": "Pater Aeterne",
     "default": "Eternal Father, I offer You the Body and Blood, Soul and Divinity of Your Dearly Beloved Son, Our Lord, Jesus Christ, in atonement for our sins and those of the whole world.",
     "latin": "Pater Aeterne, offero Tibi Corpus et Sanguinem, Animam et Divinitatem delectissimi Filii Tui, Domini nostri, Iesu Christi, in propitiatione pro peccatis nostris et totius mundi."
   },
   {
     "id": "sorrowful-passion",
     "name": "For the sake of His sorrowful Passion",
+    "latinName": "Pro Dolorosa Passione",
     "default": "For the sake of His sorrowful Passion, have mercy on us and on the whole world.",
-    "latin": "Propter eius sorrowful Passionem, miserere nobis et totius mundi."
+    "latin": "Propter eius dolorosam passionem, miserere nobis et totius mundi."
   },
   {
     "id": "holy-god",
     "name": "Holy God",
+    "latinName": "Sanctus Deus",
     "default": "Holy God, Holy Mighty One, Holy Immortal One, have mercy on us and on the whole world.",
     "latin": "Sanctus Deus, Sanctus Fortis, Sanctus Immortalis, miserere nobis et totius mundi."
   },
   {
     "id": "dm-closing",
     "name": "Eternal God",
+    "latinName": "Deus Aeterne",
     "default": "Eternal God, in whom mercy is endless and the treasury of compassion — inexhaustible, look kindly upon us and increase Your mercy in us, that in difficult moments we might not despair nor become despondent, but with great confidence submit ourselves to Your holy will, which is Love and Mercy itself.",
     "latin": "Deus Aeterne, in quo misericordia infinita est, et thesaurus compassionis inexhaustus, respice super nos et auge misericordiam Tuam in nobis, ut in momentis difficilibus non desperatione cedamus, sed magna cum fiducia Tuae sanctissimae Voluntati, quae est Amor et Misericordia ipsa, nos submittamus."
   },
   {
     "id": "rosary-closing-prayer",
     "name": "Rosary Closing Prayer",
+    "latinName": "Oratio Post Rosarium",
     "default": "O God, whose only-begotten Son, by His life, death, and resurrection, has purchased for us the rewards of eternal life, grant, we beseech Thee, that meditating upon these mysteries of the Most Holy Rosary of the Blessed Virgin Mary, we may imitate what they contain and obtain what they promise, through the same Christ our Lord. Amen.",
     "latin": "Deus, cuius Unigenitus per vitam, mortem et resurrectionem suam nobis salutis aeternae praemia comparavit: concede, quaesumus; ut haec mysteria sanctissimo beatae Mariae Virginis Rosario recolentes, et imitemur quod continent, et quod promittunt assequamur. Per eundem Christum Dominum nostrum. Amen."
   },
   {
     "id": "jesus-i-trust-in-you",
     "name": "Jesus, I Trust In You",
+    "latinName": "Iesu, In Te Confido",
     "default": "Jesus, I trust in You!",
     "latin": "Iesu, in te confido!"
   },
   {
     "id": "act-of-contrition",
     "name": "Act of Contrition",
+    "latinName": "Actus Contritionis",
     "default": "O my God, I am heartily sorry for having offended Thee, and I detest all my sins because of thy just punishments, but most of all because they offend Thee, my God, who art all good and deserving of all my love. I firmly resolve with the help of Thy grace to sin no more and to avoid the near occasion of sin. Amen.",
-    "latin": "Deus meus, ex toto corde paenitet me omnium meorum peccatorum, eaque detestor, quia peccando, non solum poenas a Te iuste statutas promeritus sum, sed praesertim quia offendi Te, summum bonum, ac dignum qui super omnia diligaris. Ideo firmiter propono, adiuvante gratia Tua, de cetero me non peccaturum peccandique occasiones proximas fugiturum. Amen."
+    "latin": "Deus meus, ex toto corde pænitet me ómnium meórum peccatórum, éaque detéstor, quia peccándo, non solum pœnas a te iuste statútas proméritus sum, sed præsértim quia offéndi te, summum bonum, ac dignum qui super ómnia diligáris. Ídeo fírmiter propóno, adiuvánte grátia tua, de cétero me non peccatúrum peccandíque occasiónes próximas fugitúrum. Amen."
+  },
+  {
+    "id": "eternal-rest",
+    "name": "Eternal Rest",
+    "latinName": "Requiem Æternam",
+    "default": "V. Eternal rest grant unto them, O Lord.\nR. And let the perpetual light shine upon them.\n\nMay the souls of all the faithful departed, through the mercy of God, rest in peace. Amen.",
+    "latin": "V. Requiem aeternam dona eis, Domine.\nR. Et lux perpetua luceat eis.\n\nFidelium animae, per misericordiam Dei, requiescant in pace. Amen."
+  },
+  {
+    "id": "the-angelus",
+    "name": "The Angelus",
+    "latinName": "Angelus Domini",
+    "default": "V. The Angel of the Lord declared unto Mary.\nR. And she conceived of the Holy Spirit.\n\nHail Mary, full of grace, the Lord is with thee. Blessed art thou among women, and blessed is the fruit of thy womb, Jesus. Holy Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen.\n\nV. Behold the handmaid of the Lord.\nR. Be it done unto me according to thy word.\nHail Mary...\n\nV. And the Word was made flesh.\nR. And dwelt among us.\nHail Mary...\n\nV. Pray for us, O holy Mother of God.\nR. That we may be made worthy of the promises of Christ.\n\nLet us pray;\n\nPour forth, we beseech thee, O Lord, thy grace into our hearts; that we, to whom the Incarnation of Christ, thy Son, was made known by the message of an angel, may by his Passion and Cross be brought to the glory of his Resurrection. Through the same Christ, our Lord. Amen.\n\nGlory be to the Father...",
+    "latin": "V. Ángelus Dómini nuntiávit Maríæ.\nR. Et concépit de Spíritu Sancto.\nAve, María...\n\nV. Ecce ancílla Dómini.\nR. Fiat mihi secúndum verbum tuum.\nAve, María...\n\nV. Et Verbum caro factum est.\nR. Et habitávit in nobis.\nAve, María...\n\nV. Ora pro nobis, sancta Dei génetrix.\nR. Ut digni efficiámur promissiónibus Christi.\n\nOrémus.\n\nGrátiam tuam, quæsumus, Dómine, méntibus nostris infúnde; ut qui, Ángelo nuntiánte, Christi Fílii tui incarnatiónem cognóvimus, per passiónem eius et crucem, ad resurrectiónis glóriam perducámur. Per eúndem Christum Dóminum nostrum. Amen.\n\nGlória Patri..."
+  },
+  {
+    "id": "the-regina-caeli",
+    "name": "The Regina Caeli",
+    "latinName": "Regina Cæli",
+    "default": "Queen of heaven, rejoice, alleluia!\nFor he whom you were worthy to bear, alleluia!\nHas risen as he said, alleluia!\nPray for us to God, alleluia!\n\nLet us pray;\n\nO God, who through the resurrection of your Son, our Lord Jesus Christ, did vouchsafe to give joy to the world; grant, we beseech you, that through his Mother, the Virgin Mary, we may obtain the joys of everlasting life. Through the same Christ our Lord. Amen.",
+    "latin": "Regína cæli lætáre, allelúia.\nQuia quem meruísti portáre, allelúia.\nResurréxit, sicut dixit, allelúia.\nOra pro nobis Deum, allelúia.\n\nGaude et lætáre, Virgo María, allelúia.\nQuia surréxit Dóminus vere, allelúia.\n\nOrémus.\n\nDeus, qui per resurrectiónem Fílii tui Dómini nostri Iesu Christi mundum lætificáre dignátus es, præsta, quæsumus, ut per eius Genetrícem Vírginem Maríam perpétuæ capiámus gáudia vitæ. Per Christum Dóminum nostrum. Amen."
+  },
+  {
+    "id": "blessing-before-meals",
+    "name": "Blessing Before Meals",
+    "latinName": "Benedictio Ante Cibum",
+    "default": "Bless us, O Lord, and these thy gifts which we are about to receive from thy bounty, through Christ our Lord. Amen.",
+    "latin": "Bénedic, Dómine, nos et haec tua dona quae de tua largitate sumus sumpturi. Per Christum Dóminum nostrum. Amen."
+  },
+  {
+    "id": "grace-after-meals",
+    "name": "Grace After Meals",
+    "latinName": "Gratiarum Actio Post Cibum",
+    "default": "We give thee thanks, almighty God, for all your benefits, who livest and reignest forever and ever. Amen.\n\nMay the Lord grant us His peace. And life everlasting. Amen.\n\n(Alternate conclusion: And may the souls of the faithful departed, through the mercy of God, rest in peace. Amen)",
+    "latin": "Ágimus tibi gratias, omnípotens Deus, pro universis beneficiis tuis, qui vivis et regnas in sæcula sæculórum. Amen.\n\nDeus det nobis suam pacem. Et vitam æternam. Amen.\n\n(Alternate conclusion: Fidelium animae, per misericordiam Dei, requiescant in pace. Amen.)"
+  },
+  {
+    "id": "nicene-creed",
+    "name": "Nicene Creed",
+    "latinName": "Symbolum Nicaenum",
+    "default": "I believe in one God\nthe Father almighty,\nmaker of heaven and earth\nof all things visible and invisible.\n\nI believe in one Lord Jesus Christ,\nthe Only-begotten Son of God,\nborn of the Father before all ages.\nGod from God, Light from Light,\ntrue God from true God,\nbegotten, not made, consubstantial with the Father; through Him all things were made.\nFor us men and for our salvation\nHe came down from heaven.\n\n(At the following words, up to and including “and became man”, all bow)\nand by the Holy Spirit was incarnate\nof the Virgin Mary,\nand became man.\n\nFor our sake He was crucified under Pontius Pilate,\nHe suffered death and was buried,\nand rose again on the third day\nin accordance with the Scriptures.\nHe ascended into heaven\nand is seated at the right hand of the Father.\nHe will come again in glory\nto judge the living and the dead.\nHis kingdom will have no end.\n\nI believe in the Holy Spirit, the Lord, the giver of life\nwho proceeds from the Father and the Son,\nwho with the Father and the Son is adored and glorified,\nwho has spoken through the prophets;\nI believe in one, holy, catholic, and apostolic Church.\nI confess one baptism for the forgiveness of sins.\nI look forward to the resurrection of the dead\nand the life of the world to come. Amen.",
+    "latin": "Credo in unum Deum,\nPatrem omnipoténtem, factórem caeli et terrae, visibílium ómnium et invisibílium.\n\nEt in unum Dóminum Iesum Christum,\nFílium Dei unigénitum,\net ex Patre natum, ante ómnia saécula.\nDeum de Deo, lumen de lúmine,\nDeum verum de Deo vero,\ngénitum, non factum, consubstantiálem Patri:\nper quem ómnia facta sunt.\nQui propter nos hómines et propter nostram salútem descéndit de caelis.\n\nEt incarnátus est de Spíritu Sancto\nex María Vîrgine, et homo factus est.\n\nCrucifíxus étiam pro nobis sub Póntio Piláto;\npassus et sepúltus est,\net resurréxit tértia die, secúndum Scriptúras,\net ascéndit in caelum, sedet ad déxteram Patris.\nEt íterum ventúrus est cum glória,\niudicáre vivos et mórtuos,\ncuius regni non erit finis.\n\nEt in Spíritum Sanctum, Dóminum et vivificántem:\nqui ex Patre Filióque procédit.\nQui cum Patre et Filio simul adorátur et conglorificátur:\nqui locütus est per prophétas.\nEt unam, sanctam, cathólicam et apostólicam Ecclésiam.\nConfíteor unum baptísma in remissiónem peccatórum.\nEt exspecto resurrectiónem mortuórum,\net vitam ventúri saéculi. Amen"
+  },
+  {
+    "id": "litany-of-saints",
+    "name": "Litany of the Saints",
+    "latinName": "Litaniae Sanctorum",
+    "default": "",
+    "latin": "",
+    "youtube": "https://youtu.be/DaWRPjNztTs?si=ISoMyr2dWhypBiQ_"
+  },
+  {
+    "id": "magnificat",
+    "name": "Magnificat",
+    "latinName": "Magnificat",
+    "default": "",
+    "latin": "",
+    "youtube": "https://youtu.be/SLUZM3nJ4sg?si=M09jXD34EIqeM0D6"
   }
 ]

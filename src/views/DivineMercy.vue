@@ -79,7 +79,7 @@
                 <div :key="currentStepIndex + (showLatin ? '-la' : '-en') + (isShortVersion ? '-short' : '-full')" class="w-full flex flex-col gap-6">
 
                     <!-- Phase label / Category -->
-                    <PhaseLabel :currentStep="currentStep" :isShort="isShortVersion" />
+                    <PhaseLabel :currentStep="currentStep" :isShort="isShortVersion" :showLatin="showLatin" />
 
                     <!-- Chaplet Beads Progress -->
                     <div class="min-h-[50px] flex items-center justify-center">
@@ -213,10 +213,14 @@ const prev = () => {
 };
 
 // Audio Controls
+let playTimeout: any = null;
+
 const playAudio = (prayerId: string | undefined) => {
     if (!prayerId) return;
     const url = getPrayerAudioUrl(prayerId);
     if (!url) return;
+    
+    stopAudio();
     
     const audio = new Audio(url);
     currentAudio.value = audio;
@@ -242,6 +246,10 @@ const playAudio = (prayerId: string | undefined) => {
 };
 
 const stopAudio = () => {
+    if (playTimeout) {
+        clearTimeout(playTimeout);
+        playTimeout = null;
+    }
     if (currentAudio.value) {
         currentAudio.value.pause();
         currentAudio.value = null;
@@ -249,9 +257,29 @@ const stopAudio = () => {
     isPlaying.value = false;
 };
 
+const pauseAudio = () => {
+    if (playTimeout) {
+        clearTimeout(playTimeout);
+        playTimeout = null;
+    }
+    if (currentAudio.value) {
+        currentAudio.value.pause();
+    }
+    isPlaying.value = false;
+};
+
 const toggleAudio = () => {
     if (isPlaying.value) {
-        stopAudio();
+        pauseAudio();
+    } else if (currentAudio.value) {
+        currentAudio.value.play()
+            .then(() => {
+                isPlaying.value = true;
+            })
+            .catch(err => {
+                console.log('Audio playback postponed:', err);
+                isPlaying.value = false;
+            });
     } else if (currentStep.value.id) {
         playAudio(currentStep.value.id);
     }
@@ -264,17 +292,15 @@ onMounted(() => {
     }
 });
 
-// Watch currentStep change to trigger audio auto-play
-watch(currentStep, (newStep) => {
+// Watch currentStepIndex and beadInDecade change to trigger audio auto-play
+watch([currentStepIndex, beadInDecade], () => {
     stopAudio();
-    if (autoPlay.value && newStep.id) {
-        setTimeout(() => {
-            if (newStep.id === currentStep.value.id) {
-                playAudio(newStep.id);
-            }
+    if (autoPlay.value && currentStep.value.id) {
+        playTimeout = setTimeout(() => {
+            playAudio(currentStep.value.id);
         }, 300);
     }
-}, { deep: true });
+});
 
 // Sync Autoplay Preference
 watch(autoPlay, (newVal) => {

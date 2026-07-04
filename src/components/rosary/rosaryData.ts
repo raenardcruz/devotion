@@ -25,6 +25,7 @@ export type RosaryStep = {
     mysteryTitle?: string;
     beadNumber?: number;
     decadeNumber?: number;
+    youtube?: string;
 };
 
 export const ROSARY_DATA: RosaryData = {
@@ -958,12 +959,22 @@ export const ROSARY_DATA: RosaryData = {
     ]
 };
 
-export const generateRosarySteps = (mysterySet: string): RosaryStep[] => {
+export const generateRosarySteps = (
+    mysterySet: string,
+    beforePrayerIds: string[] = [],
+    afterPrayerIds: string[] = []
+): RosaryStep[] => {
     const steps: RosaryStep[] = [];
     const mysteries = ROSARY_DATA[mysterySet] || [];
 
     // 1. Intro
     steps.push({ type: 'opening', prayerId: 'sign-of-the-cross' });
+
+    // Prepend custom prayers
+    beforePrayerIds.forEach(prayerId => {
+        steps.push({ type: 'intro', prayerId });
+    });
+
     steps.push({ type: 'intro', prayerId: 'apostles-creed' });
     steps.push({ type: 'intro', prayerId: 'our-father' });
     steps.push({ type: 'intro', prayerId: 'hail-mary', beadNumber: 1 });
@@ -1006,7 +1017,22 @@ export const generateRosarySteps = (mysterySet: string): RosaryStep[] => {
     // 3. Closing
     steps.push({ type: 'closing', prayerId: 'hail-holy-queen' });
     steps.push({ type: 'closing', prayerId: 'rosary-closing-prayer' });
+
+    // Append custom prayers
+    afterPrayerIds.forEach(prayerId => {
+        steps.push({ type: 'closing', prayerId });
+    });
+
     steps.push({ type: 'opening', prayerId: 'sign-of-the-cross' });
+
+    // 4. Completion Marker
+    steps.push({
+        type: 'closing',
+        prayerId: 'completion-marker',
+        title: 'Rosary Completed',
+        content: 'You have completed the Rosary devotion. May the peace of Christ rule in your heart.',
+        latin: 'Rosarium finitum est. Pax Christi abundet in corde tuo.'
+    });
 
     return steps;
 };

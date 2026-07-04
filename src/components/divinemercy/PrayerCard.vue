@@ -6,7 +6,7 @@
             <transition name="fade-scale" mode="out-in">
                 <div :key="(currentStep.id || currentStep.title || currentStep.content) + (showLatin ? '-la' : '-en')" class="space-y-6">
                     <h3 v-if="currentStep.title" class="text-parchment-secondary font-bold tracking-[0.2em] text-xs uppercase">
-                        {{ currentStep.title }}
+                        {{ displayTitle }}
                     </h3>
                     
                     <InterlinearText 
@@ -42,6 +42,7 @@ import { computed } from 'vue';
 import type { Step } from './divineMercyData';
 import { getInterlinearPairs } from '../../utils/interlinearMappers';
 import InterlinearText from '../common/InterlinearText.vue';
+import prayerData from '../../data/prayers.json';
 
 const props = defineProps<{
     currentStep: Step;
@@ -51,6 +52,17 @@ const props = defineProps<{
 const interlinearWords = computed(() => {
     if (!props.showLatin || !props.currentStep.latin) return null;
     return getInterlinearPairs(props.currentStep.latin);
+});
+
+const displayTitle = computed(() => {
+    const title = props.currentStep.title;
+    if (props.showLatin) {
+        const prayer = prayerData.find(p => p.name === title || (p.id === 'dm-closing' && title === 'Optional Closing'));
+        if (prayer && (prayer as any).latinName) {
+            return (prayer as any).latinName;
+        }
+    }
+    return title;
 });
 </script>
 
