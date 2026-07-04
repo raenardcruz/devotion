@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
-import ignatiusRaw from '../components/resources/letter_of_ignatius.md?raw';
-import apologyRaw from '../components/resources/apology_of_justin_martyr.md?raw';
 import TopNav from '../components/common/TopNav.vue';
 import BottomNav from '../components/common/BottomNav.vue';
 import AppButton from '../components/common/AppButton.vue';
-import AppTabs from '../components/common/AppTabs.vue';
+import writingsIndex from '../components/resources/index.json';
 
 interface Chapter {
   id: string;
@@ -26,14 +24,40 @@ interface Document {
   sections: Section[];
 }
 
+// Vite dynamic imports map
+const writingModules = import.meta.glob('../components/resources/*.md', { query: '?raw', import: 'default' });
+
 // State
 const documents = ref<Document[]>([]);
-const selectedDocId = ref<string>('ignatius');
-const selectedChapterId = ref<string>('');
+
+// Get initial writing from localStorage or default
+const getInitialWritingId = (): string => {
+  const savedDocId = localStorage.getItem('selected_writing_id');
+  const defaultDocId = writingsIndex[0]?.id || 'alexander_of_alexandria';
+  return savedDocId && writingsIndex.some(w => w.id === savedDocId)
+    ? savedDocId
+    : defaultDocId;
+};
+
+const selectedDocId = ref<string>(getInitialWritingId());
+
+const getInitialChapterId = (docId: string): string => {
+  const savedChapterId = localStorage.getItem('selected_chapter_id');
+  if (savedChapterId && savedChapterId.startsWith(docId)) {
+    return savedChapterId;
+  }
+  return '';
+};
+
+const selectedChapterId = ref<string>(getInitialChapterId(selectedDocId.value));
 const readChapters = ref<Record<string, boolean>>({});
 const searchQuery = ref<string>('');
+const writingSearchQuery = ref<string>('');
+const isSelectorOpen = ref<boolean>(false);
+const isLoading = ref<boolean>(false);
+const errorMsg = ref<string>('');
 
-// Parse both resources on load
+// Parse resource markdown
 const parseMarkdown = (docId: string, rawText: string): Document => {
   const lines = rawText.split('\n');
   let title = '';
@@ -121,26 +145,54 @@ const parseMarkdown = (docId: string, rawText: string): Document => {
   };
 };
 
-// Initialize
-onMounted(() => {
-  documents.value = [
-    parseMarkdown('ignatius', ignatiusRaw),
-    parseMarkdown('justin', apologyRaw)
-  ];
-  
-  if (documents.value.length > 0) {
-    const firstDoc = documents.value[0];
-    if (firstDoc && firstDoc.sections.length > 0) {
-      const firstSection = firstDoc.sections[0];
-      if (firstSection && firstSection.chapters.length > 0) {
-        const firstChapter = firstSection.chapters[0];
-        if (firstChapter) {
-          selectedChapterId.value = firstChapter.id;
-        }
+// Dynamic loading function
+const loadWriting = async (docId: string) => {
+  // Check if we already have it loaded
+  const existing = documents.value.find(d => d.id === docId);
+  if (existing) {
+    return existing;
+  }
+
+  isLoading.value = true;
+  errorMsg.value = '';
+  try {
+    const path = `../components/resources/${docId}.md`;
+    const loadFn = writingModules[path];
+    if (!loadFn) {
+      throw new Error(`Writing file for ID '${docId}' not found.`);
+    }
+    const rawContent = await loadFn() as string;
+    const doc = parseMarkdown(docId, rawContent);
+    documents.value.push(doc);
+    return doc;
+  } catch (err: any) {
+    console.error(err);
+    errorMsg.value = `Failed to load document: ${err.message}`;
+    return null;
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const selectWriting = async (docId: string) => {
+  selectedDocId.value = docId;
+  isSelectorOpen.value = false;
+  writingSearchQuery.value = '';
+  const doc = await loadWriting(docId);
+  if (doc && doc.sections.length > 0) {
+    const firstSection = doc.sections[0];
+    if (firstSection && firstSection.chapters.length > 0) {
+      const firstChapter = firstSection.chapters[0];
+      if (firstChapter) {
+        selectedChapterId.value = firstChapter.id;
       }
     }
   }
+};
 
+// Initialize
+onMounted(async () => {
+  // Restore read progress
   const stored = localStorage.getItem('resource_read_progress');
   if (stored) {
     try {
@@ -149,12 +201,12 @@ onMounted(() => {
       console.error('Error parsing reading progress', e);
     }
   }
-});
 
-// Watch document selection to update active chapter
-watch(selectedDocId, (newDocId) => {
-  const doc = documents.value.find(d => d.id === newDocId);
-  if (doc && doc.sections.length > 0) {
+  // Load the initial writing
+  const doc = await loadWriting(selectedDocId.value);
+  
+  // Set default chapter if none was restored
+  if (!selectedChapterId.value && doc && doc.sections.length > 0) {
     const firstSection = doc.sections[0];
     if (firstSection && firstSection.chapters.length > 0) {
       const firstChapter = firstSection.chapters[0];
@@ -165,8 +217,36 @@ watch(selectedDocId, (newDocId) => {
   }
 });
 
+// Watch writing and chapter changes to persist progress
+watch(selectedDocId, (newDocId) => {
+  localStorage.setItem('selected_writing_id', newDocId);
+});
+
+watch(selectedChapterId, (newChapterId) => {
+  if (newChapterId) {
+    localStorage.setItem('selected_chapter_id', newChapterId);
+  }
+});
+
 const activeDoc = computed(() => {
   return documents.value.find(d => d.id === selectedDocId.value) || null;
+});
+
+const selectedWritingTitle = computed(() => {
+  const writing = writingsIndex.find(w => w.id === selectedDocId.value);
+  if (writing) {
+    return writing.years ? `${writing.title} (${writing.years})` : writing.title;
+  }
+  return 'Select Writing';
+});
+
+const filteredWritings = computed(() => {
+  if (!writingSearchQuery.value.trim()) return writingsIndex;
+  const query = writingSearchQuery.value.toLowerCase();
+  return writingsIndex.filter(w => 
+    w.title.toLowerCase().includes(query) || 
+    (w.years && w.years.toLowerCase().includes(query))
+  );
 });
 
 const allDocChapters = computed(() => {
@@ -264,11 +344,6 @@ const nextChapter = () => {
     }
   }
 };
-
-const docTabs = [
-  { id: 'ignatius', label: 'Letters of Ignatius' },
-  { id: 'justin', label: 'First Apology of Justin' }
-];
 </script>
 
 <template>
@@ -284,11 +359,106 @@ const docTabs = [
         <p class="text-parchment-neutral/50 text-xs uppercase tracking-[0.25em] font-bold">Timeless writings of faith and theology</p>
       </header>
 
-      <!-- Document Switcher Tabs using AppTabs -->
-      <AppTabs :tabs="docTabs" v-model="selectedDocId" class="animate-fade-in-down" />
+      <!-- Searchable Selector for Writings -->
+      <div class="relative max-w-md mx-auto mb-8 w-full animate-fade-in-down z-50">
+        <!-- Backdrop overlay for dropdown closing -->
+        <div v-if="isSelectorOpen" class="fixed inset-0 z-40" @click="isSelectorOpen = false"></div>
+
+        <!-- Trigger Button -->
+        <button 
+          @click="isSelectorOpen = !isSelectorOpen"
+          class="relative z-50 w-full bg-parchment-neutral-light border border-parchment-border hover:border-parchment-primary rounded-2xl py-3.5 px-5 shadow-sm hover:shadow-md flex items-center justify-between transition-all duration-300 group outline-none"
+        >
+          <div class="flex items-center gap-3">
+            <span class="text-parchment-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                <path d="M6 6h10M6 10h10M6 14h10"/>
+              </svg>
+            </span>
+            <div class="text-left">
+              <span class="text-[10px] text-parchment-neutral/50 tracking-widest uppercase font-bold block">Selected Writing</span>
+              <span class="font-serif text-sm md:text-base text-parchment-primary-dark font-semibold group-hover:text-parchment-primary transition-colors">
+                {{ selectedWritingTitle }}
+              </span>
+            </div>
+          </div>
+          <span class="text-parchment-neutral/40 group-hover:text-parchment-primary transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300" :class="{'rotate-180': isSelectorOpen}">
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
+          </span>
+        </button>
+
+        <!-- Dropdown Card -->
+        <div 
+          v-if="isSelectorOpen"
+          class="absolute left-0 right-0 mt-2 bg-parchment-bg border border-parchment-border rounded-2xl shadow-xl z-50 p-4 max-h-[350px] flex flex-col gap-3 animate-fade-in"
+        >
+          <!-- Filter Search -->
+          <div class="relative">
+            <input 
+              v-model="writingSearchQuery"
+              type="text"
+              placeholder="Search writings / authors..."
+              class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-parchment-border bg-parchment-neutral-light text-parchment-neutral placeholder-parchment-neutral/40 focus:border-parchment-primary shadow-inner transition-all outline-none text-xs"
+            >
+            <span class="absolute left-3 top-3 text-parchment-neutral/30">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+              </svg>
+            </span>
+          </div>
+
+          <!-- Writings List -->
+          <div class="flex-grow overflow-y-auto space-y-1 pr-1">
+            <button
+              v-for="writing in filteredWritings"
+              :key="writing.id"
+              @click="selectWriting(writing.id)"
+              class="w-full text-left text-xs py-2.5 px-3.5 rounded-xl transition-colors flex items-center justify-between border-none outline-none"
+              :class="selectedDocId === writing.id 
+                ? 'bg-parchment-primary text-white font-semibold' 
+                : 'text-parchment-neutral/80 hover:bg-parchment-neutral-light hover:text-parchment-primary-dark'"
+            >
+              <span class="truncate pr-4">
+                {{ writing.title }}
+                <span v-if="writing.years" class="text-[10px] font-sans ml-1.5" :class="selectedDocId === writing.id ? 'text-white/80' : 'text-parchment-neutral/75'">
+                  ({{ writing.years }})
+                </span>
+              </span>
+              <span v-if="selectedDocId === writing.id" class="text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </span>
+            </button>
+            <div v-if="filteredWritings.length === 0" class="py-6 text-center text-xs text-parchment-neutral/40 italic">
+              No writings found matching "{{ writingSearchQuery }}"
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading / Error States -->
+      <div v-if="isLoading" class="flex-grow flex flex-col items-center justify-center py-20 gap-4">
+        <div class="w-12 h-12 border-4 border-parchment-primary/30 border-t-parchment-primary rounded-full animate-spin"></div>
+        <p class="font-serif italic text-parchment-neutral/60 text-sm">Loading church father writings...</p>
+      </div>
+
+      <div v-else-if="errorMsg" class="flex-grow flex flex-col items-center justify-center py-20 text-center max-w-md mx-auto gap-4">
+        <span class="text-red-500">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </span>
+        <h3 class="font-serif text-lg font-bold text-parchment-neutral">Failed to Load Content</h3>
+        <p class="text-xs text-parchment-neutral/60">{{ errorMsg }}</p>
+        <AppButton variant="primary" @click="loadWriting(selectedDocId)">Retry Loading</AppButton>
+      </div>
 
       <!-- Main Layout -->
-      <main class="flex-grow grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <main v-else class="flex-grow grid grid-cols-1 lg:grid-cols-4 gap-8">
         <!-- Sidebar Navigation -->
         <aside class="lg:col-span-1 h-fit lg:sticky lg:top-24 flex flex-col gap-6 animate-fade-in-up delay-100">
           <!-- Search & Progress Card -->
@@ -327,7 +497,7 @@ const docTabs = [
               <div v-for="section in filteredSections" :key="section.id" class="space-y-2">
                 <!-- Section Header (if not default) -->
                 <h4 v-if="section.id !== 'default'" class="text-[11px] font-bold text-parchment-neutral/70 mt-3 font-serif italic border-l-2 border-parchment-primary/30 pl-2">
-                  {{ section.title.replace('The Epistle of Ignatius to the ', '') }}
+                  {{ section.title }}
                 </h4>
                 
                 <div class="space-y-1">
@@ -456,6 +626,9 @@ const docTabs = [
 .animate-fade-in-up {
   animation: fadeInUp 0.6s ease-out forwards;
 }
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
 .delay-100 {
   animation-delay: 0.1s;
   animation-fill-mode: both;
@@ -484,6 +657,15 @@ const docTabs = [
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 </style>
