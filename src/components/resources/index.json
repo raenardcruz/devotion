@@ -1,0 +1,347 @@
+[
+  {
+    "id": "alexander_of_alexandria",
+    "title": "Alexander of Alexandria",
+    "years": "d. 326 AD"
+  },
+  {
+    "id": "alexander_of_lycopolis",
+    "title": "Alexander of Lycopolis",
+    "years": "c. 300 AD"
+  },
+  {
+    "id": "ambrose",
+    "title": "Ambrose",
+    "years": "c. 339–397 AD"
+  },
+  {
+    "id": "aphrahat_aphraates",
+    "title": "Aphrahat/Aphraates",
+    "years": "c. 280–345 AD"
+  },
+  {
+    "id": "apocrypha",
+    "title": "Apocrypha",
+    "years": "1st–4th c. AD"
+  },
+  {
+    "id": "archelaus",
+    "title": "Archelaus",
+    "years": "c. 278 AD"
+  },
+  {
+    "id": "aristides_the_philosopher",
+    "title": "Aristides the Philosopher",
+    "years": "c. 125 AD"
+  },
+  {
+    "id": "arnobius",
+    "title": "Arnobius",
+    "years": "c. 255–330 AD"
+  },
+  {
+    "id": "athanasius",
+    "title": "Athanasius",
+    "years": "c. 296–373 AD"
+  },
+  {
+    "id": "athenagoras",
+    "title": "Athenagoras",
+    "years": "c. 133–190 AD"
+  },
+  {
+    "id": "augustine_of_hippo",
+    "title": "Augustine of Hippo",
+    "years": "354–430 AD"
+  },
+  {
+    "id": "bardesanes",
+    "title": "Bardesanes",
+    "years": "154–222 AD"
+  },
+  {
+    "id": "barnabas",
+    "title": "Barnabas",
+    "years": "c. 70–132 AD"
+  },
+  {
+    "id": "basil_the_great",
+    "title": "Basil the Great",
+    "years": "329–379 AD"
+  },
+  {
+    "id": "caius",
+    "title": "Caius",
+    "years": "c. 180–217 AD"
+  },
+  {
+    "id": "clement_of_alexandria",
+    "title": "Clement of Alexandria",
+    "years": "c. 150–215 AD"
+  },
+  {
+    "id": "clement_of_rome",
+    "title": "Clement of Rome",
+    "years": "c. 35–99 AD"
+  },
+  {
+    "id": "commodianus",
+    "title": "Commodianus",
+    "years": "c. 250 AD"
+  },
+  {
+    "id": "councils",
+    "title": "Councils",
+    "years": "325–787 AD"
+  },
+  {
+    "id": "cyprian_of_carthage",
+    "title": "Cyprian of Carthage",
+    "years": "c. 200–258 AD"
+  },
+  {
+    "id": "cyril_of_jerusalem",
+    "title": "Cyril of Jerusalem",
+    "years": "c. 313–386 AD"
+  },
+  {
+    "id": "dionysius_of_rome",
+    "title": "Dionysius of Rome",
+    "years": "d. 268 AD"
+  },
+  {
+    "id": "dionysius_the_great",
+    "title": "Dionysius the Great",
+    "years": "d. 264 AD"
+  },
+  {
+    "id": "ephraim_the_syrian",
+    "title": "Ephraim the Syrian",
+    "years": "c. 306–373 AD"
+  },
+  {
+    "id": "eusebius_of_caesarea",
+    "title": "Eusebius of Caesarea",
+    "years": "c. 260–339 AD"
+  },
+  {
+    "id": "gennadius_of_marseilles",
+    "title": "Gennadius of Marseilles",
+    "years": "d. c. 496 AD"
+  },
+  {
+    "id": "gregory_nazianzen",
+    "title": "Gregory Nazianzen",
+    "years": "c. 329–390 AD"
+  },
+  {
+    "id": "gregory_of_nyssa",
+    "title": "Gregory of Nyssa",
+    "years": "c. 335–395 AD"
+  },
+  {
+    "id": "gregory_thaumaturgus",
+    "title": "Gregory Thaumaturgus",
+    "years": "c. 213–270 AD"
+  },
+  {
+    "id": "gregory_the_great_pope",
+    "title": "Gregory the Great, Pope",
+    "years": "c. 540–604 AD"
+  },
+  {
+    "id": "hermas",
+    "title": "Hermas",
+    "years": "2nd c. AD"
+  },
+  {
+    "id": "hilary_of_poitiers",
+    "title": "Hilary of Poitiers",
+    "years": "c. 310–367 AD"
+  },
+  {
+    "id": "hippolytus",
+    "title": "Hippolytus",
+    "years": "c. 170–235 AD"
+  },
+  {
+    "id": "ignatius_of_antioch",
+    "title": "Ignatius of Antioch",
+    "years": "c. 35–108 AD"
+  },
+  {
+    "id": "irenaeus_of_lyons",
+    "title": "Irenaeus of Lyons",
+    "years": "c. 130–202 AD"
+  },
+  {
+    "id": "jerome",
+    "title": "Jerome",
+    "years": "c. 347–420 AD"
+  },
+  {
+    "id": "john_cassian",
+    "title": "John Cassian",
+    "years": "c. 360–435 AD"
+  },
+  {
+    "id": "john_chrysostom",
+    "title": "John Chrysostom",
+    "years": "c. 347–407 AD"
+  },
+  {
+    "id": "john_of_damascus",
+    "title": "John of Damascus",
+    "years": "c. 675–749 AD"
+  },
+  {
+    "id": "julius_africanus",
+    "title": "Julius Africanus",
+    "years": "c. 160–240 AD"
+  },
+  {
+    "id": "justin_martyr",
+    "title": "Justin Martyr",
+    "years": "c. 100–165 AD"
+  },
+  {
+    "id": "lactantius",
+    "title": "Lactantius",
+    "years": "c. 250–325 AD"
+  },
+  {
+    "id": "leo_the_great_pope",
+    "title": "Leo the Great, Pope",
+    "years": "c. 400–461 AD"
+  },
+  {
+    "id": "liturgies",
+    "title": "Liturgies",
+    "years": "1st–5th c. AD"
+  },
+  {
+    "id": "malchion",
+    "title": "Malchion",
+    "years": "c. 272 AD"
+  },
+  {
+    "id": "mar_jacob",
+    "title": "Mar Jacob",
+    "years": "c. 451–521 AD"
+  },
+  {
+    "id": "mathetes",
+    "title": "Mathetes",
+    "years": "c. 130 AD"
+  },
+  {
+    "id": "methodius",
+    "title": "Methodius",
+    "years": "d. c. 311 AD"
+  },
+  {
+    "id": "minucius_felix",
+    "title": "Minucius Felix",
+    "years": "2nd–3rd c. AD"
+  },
+  {
+    "id": "miscellaneous",
+    "title": "Miscellaneous",
+    "years": "various dates"
+  },
+  {
+    "id": "moses_of_chorene",
+    "title": "Moses of Chorene",
+    "years": "c. 410–490 AD"
+  },
+  {
+    "id": "novatian",
+    "title": "Novatian",
+    "years": "c. 200–258 AD"
+  },
+  {
+    "id": "origen",
+    "title": "Origen",
+    "years": "c. 184–253 AD"
+  },
+  {
+    "id": "pamphilus",
+    "title": "Pamphilus",
+    "years": "c. 240–309 AD"
+  },
+  {
+    "id": "papias",
+    "title": "Papias",
+    "years": "c. 60–163 AD"
+  },
+  {
+    "id": "peter_of_alexandria",
+    "title": "Peter of Alexandria",
+    "years": "d. 311 AD"
+  },
+  {
+    "id": "polycarp",
+    "title": "Polycarp",
+    "years": "c. 69–155 AD"
+  },
+  {
+    "id": "rufinus",
+    "title": "Rufinus",
+    "years": "c. 345–411 AD"
+  },
+  {
+    "id": "socrates_scholasticus",
+    "title": "Socrates Scholasticus",
+    "years": "c. 380–439 AD"
+  },
+  {
+    "id": "sozomen",
+    "title": "Sozomen",
+    "years": "c. 400–450 AD"
+  },
+  {
+    "id": "sulpitius_severus",
+    "title": "Sulpitius Severus",
+    "years": "c. 363–425 AD"
+  },
+  {
+    "id": "tatian",
+    "title": "Tatian",
+    "years": "c. 120–180 AD"
+  },
+  {
+    "id": "tertullian",
+    "title": "Tertullian",
+    "years": "c. 155–220 AD"
+  },
+  {
+    "id": "theodoret",
+    "title": "Theodoret",
+    "years": "c. 393–458 AD"
+  },
+  {
+    "id": "theodotus",
+    "title": "Theodotus",
+    "years": "c. 190 AD"
+  },
+  {
+    "id": "theophilus",
+    "title": "Theophilus",
+    "years": "c. 120–190 AD"
+  },
+  {
+    "id": "venantius",
+    "title": "Venantius",
+    "years": "c. 530–609 AD"
+  },
+  {
+    "id": "victorinus",
+    "title": "Victorinus",
+    "years": "d. 303 AD"
+  },
+  {
+    "id": "vincent_of_l_rins",
+    "title": "Vincent of Lérins",
+    "years": "d. c. 445 AD"
+  }
+]

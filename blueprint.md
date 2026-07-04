@@ -101,16 +101,16 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
     -   Styled it as an elegant gold pill button (`bg-parchment-primary`) positioned at the bottom center (`left-1/2 -translate-x-1/2`) just above the navigation bar.
     -   Added a micro-animation bounce effect on the up arrow to enhance interactive aesthetics.
 
+### Early Church Writings Redesign
+- **Dynamic Asynchronous Loading**: Replaced static markdown imports with dynamic glob imports via Vite. Only the chosen markdown file is fetched and processed, preventing memory/network overflow for large files (e.g. Augustine's 21MB works).
+- **Resource Indexer**: Created a script `research/generate_index.py` that extracts the main title header from all 71 Church Father `.md` files and outputs them into a static `index.json` registry.
+- **Searchable Writings Selector**: Redesigned the top layout of `Resources.vue` with a premium dropdown button and searchable popover selector to navigate all 71 writings with real-time text filtering.
+- **State Persistence**: Added automatic restoration of both the active writing and active chapter on page reload via `localStorage`.
+
 ---
 
-## Active Plan: YouTube Video Integration for Prayers
-- **Goal**: Add prayers that only have the link of YouTube and allow users to select video instead of audio.
-- **Tasks**:
-  1. Add YouTube links for Salve Regina, Litany of the Saints, and Magnificat in `prayers.json`.
-  2. Create a parsing utility `youtube.ts` to convert YouTube URLs to responsive embed links.
-  3. Update `PrayersGallery.vue` to show a video badge and play videos in the details modal, handling video-only prayers dynamically.
-  4. Integrate the YouTube player toggle inside `Rosary.vue` and `VerseCard.vue` for devotions.
-
+## Active Plan: Church Fathers Content Processing
+- **Status**: Completed. All writings processed, indexed, and integrated into the `Resources` view.
 
 ## Architecture
 -   **Framework**: Vue 3 (Composition API)
