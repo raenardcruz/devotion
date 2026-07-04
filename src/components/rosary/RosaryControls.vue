@@ -27,9 +27,12 @@
             @click="$emit('next')"
             custom-class="!px-5 !py-2"
         >
-            <span class="font-bold uppercase tracking-wider text-[10px]">Next</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <span class="font-bold uppercase tracking-wider text-[10px]">{{ isLastStep ? 'Done' : 'Next' }}</span>
+            <svg v-if="!isLastStep" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m9 18 6-6-6-6" />
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
         </AppButton>
     </div>
@@ -41,6 +44,7 @@ import AppButton from '../common/AppButton.vue';
 defineProps<{
     currentStepIndex: number;
     totalSteps: number;
+    isLastStep?: boolean;
 }>();
 
 defineEmits<{

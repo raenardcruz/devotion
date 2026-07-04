@@ -153,7 +153,17 @@ const availableTabs = computed(() => {
             <ParchmentCard v-if="activeTab === 'first_reading' && readings.first_reading" class="shadow-sm">
               <header class="mb-6 border-b border-parchment-border/40 pb-4">
                   <span class="text-parchment-primary font-bold tracking-[0.2em] text-[10px] uppercase block mb-1">First Reading</span>
-                  <h2 class="text-2xl md:text-3xl font-serif text-parchment-neutral font-medium">{{ readings.first_reading.citation }}</h2>
+                  <router-link
+                    :to="{ path: '/bible-study', query: { query: readings.first_reading.citation } }"
+                    class="inline-flex items-center space-x-2 group cursor-pointer"
+                  >
+                    <h2 class="text-2xl md:text-3xl font-serif text-parchment-neutral group-hover:text-parchment-primary-dark transition-colors font-medium">{{ readings.first_reading.citation }}</h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-parchment-neutral/30 group-hover:text-parchment-primary transition-colors">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                      <polyline points="15 3 21 3 21 9"></polyline>
+                      <line x1="10" x2="21" y1="14" y2="3"></line>
+                    </svg>
+                  </router-link>
               </header>
               
               <div class="prose max-w-none mb-8">
@@ -170,7 +180,17 @@ const availableTabs = computed(() => {
             <ParchmentCard v-if="activeTab === 'second_reading' && readings.second_reading" class="shadow-sm">
               <header class="mb-6 border-b border-parchment-border/40 pb-4">
                   <span class="text-parchment-primary font-bold tracking-[0.2em] text-[10px] uppercase block mb-1">Second Reading</span>
-                  <h2 class="text-2xl md:text-3xl font-serif text-parchment-neutral font-medium">{{ readings.second_reading.citation }}</h2>
+                  <router-link
+                    :to="{ path: '/bible-study', query: { query: readings.second_reading.citation } }"
+                    class="inline-flex items-center space-x-2 group cursor-pointer"
+                  >
+                    <h2 class="text-2xl md:text-3xl font-serif text-parchment-neutral group-hover:text-parchment-primary-dark transition-colors font-medium">{{ readings.second_reading.citation }}</h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-parchment-neutral/30 group-hover:text-parchment-primary transition-colors">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                      <polyline points="15 3 21 3 21 9"></polyline>
+                      <line x1="10" x2="21" y1="14" y2="3"></line>
+                    </svg>
+                  </router-link>
               </header>
               
               <div class="prose max-w-none mb-8">
@@ -187,7 +207,17 @@ const availableTabs = computed(() => {
             <ParchmentCard v-if="activeTab === 'responsorial_psalm' && readings.responsorial_psalm" class="shadow-sm">
               <header class="mb-6 border-b border-parchment-border/40 pb-4 text-center">
                   <span class="text-parchment-neutral/40 font-bold tracking-[0.2em] text-[10px] uppercase block mb-1">Responsorial Psalm</span>
-                  <h2 class="text-xl md:text-2xl font-serif text-parchment-neutral font-medium">{{ readings.responsorial_psalm.citation }}</h2>
+                  <router-link
+                    :to="{ path: '/bible-study', query: { query: readings.responsorial_psalm.citation } }"
+                    class="inline-flex items-center space-x-2 group cursor-pointer"
+                  >
+                    <h2 class="text-xl md:text-2xl font-serif text-parchment-neutral group-hover:text-parchment-primary-dark transition-colors font-medium">{{ readings.responsorial_psalm.citation }}</h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-parchment-neutral/30 group-hover:text-parchment-primary transition-colors">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                      <polyline points="15 3 21 3 21 9"></polyline>
+                      <line x1="10" x2="21" y1="14" y2="3"></line>
+                    </svg>
+                  </router-link>
               </header>
               
               <div class="prose max-w-none text-center mb-8">
@@ -204,7 +234,17 @@ const availableTabs = computed(() => {
             <ParchmentCard v-if="activeTab === 'gospel' && readings.gospel" class="shadow-sm">
               <header class="mb-6 border-b border-parchment-border/40 pb-4">
                   <span class="text-parchment-primary font-bold tracking-[0.2em] text-[10px] uppercase block mb-1">Gospel Reading</span>
-                  <h2 class="text-2xl md:text-3xl font-serif text-parchment-neutral font-medium">{{ readings.gospel.citation }}</h2>
+                  <router-link
+                    :to="{ path: '/bible-study', query: { query: readings.gospel.citation } }"
+                    class="inline-flex items-center space-x-2 group cursor-pointer"
+                  >
+                    <h2 class="text-2xl md:text-3xl font-serif text-parchment-neutral group-hover:text-parchment-primary-dark transition-colors font-medium">{{ readings.gospel.citation }}</h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-parchment-neutral/30 group-hover:text-parchment-primary transition-colors">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                      <polyline points="15 3 21 3 21 9"></polyline>
+                      <line x1="10" x2="21" y1="14" y2="3"></line>
+                    </svg>
+                  </router-link>
               </header>
               
               <div class="prose max-w-none mb-8">

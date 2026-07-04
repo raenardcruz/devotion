@@ -27,6 +27,10 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
     -   **Interactive Beads**: Dynamic visualization of progress based on the current step type (Intro vs. Decade).
     -   **Latin/English Toggle**: Real-time language switching for all traditional prayers while maintaining English scripture meditation.
     -   **Premium Styling**: Glassmorphic dark theme with amber/rose accents and smooth transitions.
+    -   **Intro Bead Navigation**: Fixed bead tapping for the initial 3 Hail Marys to correctly jump to the respective intro step.
+    -   **Audio Overlap Prevention**: Cleaned up pending auto-play timers on navigation and page change to avoid voice doubling/overlap.
+    -   **Audio Pause & Resume**: Refactored the audio play/pause logic so that pausing retains the loaded audio instance, allowing subsequent plays to resume from the last position.
+    -   **Dynamic Slide Titles**: Integrated active mystery name dynamically inside decade slide headers (e.g. "First Decade - The Annunciation - Our Father" and "First Decade - The Annunciation - Bead 1").
 
 2.  **Divine Mercy Chaplet**:
     -   **Short Version Toggle**: Added a toggle to skip to closing prayers after the first decade, ideal for quick devotion.
@@ -34,9 +38,16 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
     -   **Refined Navigation**: Enhanced `next`/`prev` logic to handle complex transitions between decades and closing sequences.
     -   **UI Indicators**: Added "Short Version" badges and persistent decade progress tracking.
     -   **Bilingual Display**: Automatically displays English reference text below Latin prayers when the Latin toggle is active.
+    -   **Audio Navigation Stability**: Cleared playback timers on navigation changes to prevent double voice issues.
+    -   **Audio Playback Resuming**: Integrated paused-audio retention to resume the chaplet's audio from where the user paused.
 
-3.  **Expanded Prayer Library**:
+3.  **Expanded Prayer Library & Search**:
     -   Added Act of Contrition (English & Latin) to the centralized data store.
+    -   Verified and corrected Latin character diacritics, accents, and ligatures of existing prayers based on Adoremus.
+    -   Added 6 missing traditional prayers: Eternal Rest, The Angelus, Regina Caeli, Blessing Before Meals, Grace After Meals, and Nicene Creed.
+    -   Implemented real-time, multilingual search functionality for the Prayers Gallery, supporting checks across both English and Latin titles and text content.
+    -   Designed an elegant Empty State layout when a search returns no matching results, offering a prompt reset button.
+    -   Integrated audio recordings for Eternal Rest (`eternal-rest.wav`), Nicene Creed (`nicene-creed.wav`), and Regina Caeli (`the-regina-caeli.wav`) by registering them in `AVAILABLE_AUDIO_PRAYERS`.
 
 ### Catechism & Study
 1.  **Reading Progress Tracking**:
@@ -71,12 +82,35 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
 7.  **API Base URL Validation & Fallback**:
     - Added validation to fallback `baseUrl` to `https://devotionapi.raenardcruz.com` if `VITE_API_BASE_URL` is misconfigured (e.g., set to the token value).
 8.  **Daily Readings Context Markdown Rendering**:
-    - Extracted the local markdown parsing function to a reusable shared utility `src/utils/markdown.ts`.
-    - Integrated Markdown parsing for the contextual meditation overlays in the Daily Mass Readings view (`DailyMassReadings.vue`), rendering headers, bold, italics, and lists beautifully.
+    -   Extracted the local markdown parsing function to a reusable shared utility `src/utils/markdown.ts`.
+    -   Integrated Markdown parsing for the contextual meditation overlays in the Daily Mass Readings view (`DailyMassReadings.vue`), rendering headers, bold, italics, and lists beautifully.
+9.  **Interactive Bible Citations & Latin Titles**:
+    -   Relocated Bible chapter/verse citations in the Scriptural Rosary to directly underneath blockquote quotes as interactive `<router-link>` elements.
+    -   Converted Daily Mass Readings citation headers into interactive `<router-link>` elements that navigate to the Bible Study explorer.
+    -   Integrated query parameter detection in `BibleStudy.vue` to automatically trigger lookup of linked passages.
+    -   Added comprehensive Latin translations for prayer, mystery, set, category, and step heading titles, rendering them dynamically in Latin mode.
+    -   Enhanced the Prayers Gallery list with dual English/Latin titles for a richer, scholarly aesthetic.
+10. **Rosary Completion Marker & Divine Mercy Audio Fix**:
+    -   Implemented a dedicated 81st completion step in the Scriptural Rosary devotion sequence.
+    -   Created custom completion slide templates inside `VerseCard.vue` with a golden-pulsing cross icon, and added interactive buttons to restart the Rosary or return home.
+    -   Updated the `RosaryControls` Next button to display "Done" with a checkmark on the last step.
+    -   Resolved the missing audio tracks for beads 2-10 in the Divine Mercy Chaplet by watching `[currentStepIndex, beadInDecade]` changes instead of step object reference identities.
+11. **Back to Top Button**:
+    -   Created a global `BackToTop.vue` component under `src/components/common/`.
+    -   Integrated it in `App.vue` to dynamically show up across all scrollable views.
+    -   Styled it as an elegant gold pill button (`bg-parchment-primary`) positioned at the bottom center (`left-1/2 -translate-x-1/2`) just above the navigation bar.
+    -   Added a micro-animation bounce effect on the up arrow to enhance interactive aesthetics.
 
 ---
 
-## Active Plan: None (All current items completed)
+## Active Plan: YouTube Video Integration for Prayers
+- **Goal**: Add prayers that only have the link of YouTube and allow users to select video instead of audio.
+- **Tasks**:
+  1. Add YouTube links for Salve Regina, Litany of the Saints, and Magnificat in `prayers.json`.
+  2. Create a parsing utility `youtube.ts` to convert YouTube URLs to responsive embed links.
+  3. Update `PrayersGallery.vue` to show a video badge and play videos in the details modal, handling video-only prayers dynamically.
+  4. Integrate the YouTube player toggle inside `Rosary.vue` and `VerseCard.vue` for devotions.
+
 
 ## Architecture
 -   **Framework**: Vue 3 (Composition API)

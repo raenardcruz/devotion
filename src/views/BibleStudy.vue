@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { useDevotionApi } from '../composables/useDevotionApi';
 import { renderMarkdown } from '../utils/markdown';
 import TopNav from '../components/common/TopNav.vue';
@@ -29,6 +30,7 @@ interface ContextResponse {
 }
 
 const { fetchWithAuth } = useDevotionApi();
+const route = useRoute();
 
 // Form input state
 const activeTab = ref('selector');
@@ -98,23 +100,43 @@ const tabs = [
 ];
 
 // Initialize from localStorage
-onMounted(() => {
+onMounted(async () => {
   try {
     const raw = localStorage.getItem('saved_verses');
     if (raw) {
       savedVerses.value = JSON.parse(raw);
-      // Auto-expand the first item if there is any history
-      if (savedVerses.value.length > 0) {
-        const firstItem = savedVerses.value[0];
-        if (firstItem) {
-          expandedIds.value.add(firstItem.id);
-        }
-      }
     }
   } catch (err) {
     console.error('Error parsing saved verses from localStorage:', err);
   }
+
+  // Check query parameter 'query' or 'passage'
+  const queryParam = route.query.query || route.query.passage;
+  if (queryParam) {
+    activeTab.value = 'search';
+    manualQuery.value = String(queryParam);
+    await getContext();
+  } else {
+    // Auto-expand the first item if there is any history
+    if (savedVerses.value.length > 0) {
+      const firstItem = savedVerses.value[0];
+      if (firstItem) {
+        expandedIds.value.add(firstItem.id);
+      }
+    }
+  }
 });
+
+watch(
+  () => route.query.query || route.query.passage,
+  async (newQuery) => {
+    if (newQuery) {
+      activeTab.value = 'search';
+      manualQuery.value = String(newQuery);
+      await getContext();
+    }
+  }
+);
 
 const toggleExpand = (id: string) => {
   if (expandedIds.value.has(id)) {

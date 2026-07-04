@@ -9,7 +9,7 @@
       <!-- Sub-header & Controls Row -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-parchment-border pb-4 mb-4 gap-4 animate-fade-in-down">
           <h1 class="font-serif text-2xl md:text-3xl text-parchment-neutral font-medium">
-              The {{ currentSetName }} Mysteries
+              {{ displaySetName }}
           </h1>
           
           <!-- Audio Controls & Language Toggle -->
@@ -35,6 +35,18 @@
                   <line x1="6" x2="6" y1="4" y2="20"></line>
                 </svg>
                 <span>{{ isPlaying ? 'Pause' : 'Listen' }}</span>
+              </button>
+
+              <!-- Custom Prayers Configuration Button -->
+              <button 
+                @click="showSettingsModal = true"
+                class="flex items-center gap-1.5 px-3 py-1.5 bg-parchment-neutral-light border border-parchment-border text-parchment-neutral rounded-full hover:bg-parchment-primary/10 active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none shadow-none"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <span>Prayers</span>
               </button>
 
               <!-- Latin/English Language Toggle -->
@@ -72,6 +84,9 @@
                     <RosaryCard 
                         :currentStep="currentStep" 
                         :showLatin="showLatin"
+                        :mysteryTitle="currentStep.mysteryTitle || getCurrentMystery(currentStep).title"
+                        @restart="currentStepIndex = 0"
+                        @video-active="stopAudio"
                     />
 
                     <!-- Interactive Bead Tracker -->
@@ -87,6 +102,7 @@
             <RosaryControls 
                 :totalSteps="steps.length"
                 :currentStepIndex="currentStepIndex"
+                :isLastStep="currentStepIndex === steps.length - 1"
                 @next="nextStep" 
                 @prev="prevStep" 
             />
@@ -121,6 +137,160 @@
 
     <!-- Global Footer -->
     <BottomNav />
+
+    <!-- Custom Prayers Selection Modal -->
+    <transition name="fade">
+      <div v-if="showSettingsModal" class="fixed inset-0 bg-parchment-neutral/65 backdrop-blur-sm z-[100] flex items-center justify-center p-4" @click.self="showSettingsModal = false">
+        <div class="bg-[#FDFBF7] border border-parchment-border w-full max-w-md rounded-[2rem] shadow-2xl flex flex-col max-h-[80vh] overflow-hidden transition-all duration-300 transform scale-100">
+          
+          <!-- Modal Header -->
+          <div class="p-5 border-b border-parchment-border/40 flex items-center justify-between bg-parchment-neutral-light/20">
+            <div>
+              <h3 class="font-serif text-base md:text-lg text-parchment-primary-dark font-medium">Custom Prayers</h3>
+              <p class="text-[9px] text-parchment-neutral/50 font-bold uppercase tracking-wider mt-0.5">Customize your Rosary sequence</p>
+            </div>
+            <button @click="showSettingsModal = false" class="w-7 h-7 rounded-full border border-parchment-border flex items-center justify-center text-parchment-neutral hover:bg-parchment-neutral-light hover:text-parchment-primary active:scale-95 transition-all p-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="px-5 py-3 border-b border-parchment-border/20 bg-parchment-neutral-light/5">
+            <div class="relative">
+              <input 
+                type="text" 
+                v-model="searchQuery" 
+                placeholder="Search prayers by name..." 
+                class="w-full px-4 py-2 pl-9 pr-8 bg-parchment-neutral-light/50 border border-parchment-border rounded-full text-xs text-parchment-neutral placeholder-parchment-neutral/40 focus:outline-none focus:ring-1 focus:ring-parchment-primary/50 focus:border-parchment-primary transition-all font-sans"
+              />
+              <div class="absolute left-3 top-1/2 -translate-y-1/2 text-parchment-neutral/40 pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
+                </svg>
+              </div>
+              <div 
+                v-if="searchQuery" 
+                @click="searchQuery = ''" 
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-parchment-neutral/40 hover:text-parchment-neutral cursor-pointer transition-all flex items-center justify-center p-0.5 rounded-full hover:bg-parchment-neutral/5"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" x2="6" y1="6" y2="18"></line>
+                  <line x1="6" x2="18" y1="6" y2="18"></line>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Content (Scrollable) -->
+          <div class="p-5 overflow-y-auto space-y-5 flex-grow">
+            
+            <div v-if="filteredSelectablePrayers.length === 0" class="text-center py-8 flex flex-col items-center justify-center space-y-2 animate-fade-in-up">
+              <div class="w-10 h-10 rounded-full bg-parchment-primary/10 flex items-center justify-center text-parchment-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
+                </svg>
+              </div>
+              <div class="text-xs font-serif text-parchment-primary-dark font-medium">No prayers found</div>
+              <p class="text-[10px] text-parchment-neutral/50 max-w-[200px] text-center leading-normal">
+                No results match "{{ searchQuery }}". Try searching for another keyword.
+              </p>
+            </div>
+
+            <template v-else>
+              <!-- Prepend Section -->
+              <div>
+                <h4 class="font-serif text-xs font-semibold text-parchment-secondary border-b border-parchment-border/30 pb-1.5 mb-2">
+                  Before the Rosary (Prepend)
+                </h4>
+                <p class="text-[11px] text-parchment-neutral/60 mb-2 leading-relaxed">
+                  Recited immediately after the opening Sign of the Cross.
+                </p>
+                <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1 border border-parchment-border/20 rounded-xl p-2 bg-parchment-neutral-light/10">
+                  <label 
+                    v-for="prayer in filteredSelectablePrayers" 
+                    :key="'before-' + prayer.id" 
+                    class="flex items-start space-x-2.5 p-1.5 rounded-lg hover:bg-parchment-neutral-light/50 transition-colors cursor-pointer select-none"
+                  >
+                    <input 
+                      type="checkbox" 
+                      :value="prayer.id" 
+                      v-model="tempBeforePrayers" 
+                      class="mt-0.5 rounded border-parchment-border text-parchment-primary focus:ring-parchment-primary/30 h-3.5 w-3.5 custom-checkbox" 
+                    />
+                    <div class="flex-grow min-w-0">
+                      <div class="text-xs font-bold text-parchment-neutral truncate">{{ prayer.name }}</div>
+                      <div v-if="prayer.latinName" class="text-[9px] text-parchment-neutral/40 italic truncate">{{ prayer.latinName }}</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Append Section -->
+              <div>
+                <h4 class="font-serif text-xs font-semibold text-parchment-secondary border-b border-parchment-border/30 pb-1.5 mb-2">
+                  After the Rosary (Append)
+                </h4>
+                <p class="text-[11px] text-parchment-neutral/60 mb-2 leading-relaxed">
+                  Recited after traditional closing prayers, before the final Sign of the Cross.
+                </p>
+                <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1 border border-parchment-border/20 rounded-xl p-2 bg-parchment-neutral-light/10">
+                  <label 
+                    v-for="prayer in filteredSelectablePrayers" 
+                    :key="'after-' + prayer.id" 
+                    class="flex items-start space-x-2.5 p-1.5 rounded-lg hover:bg-parchment-neutral-light/50 transition-colors cursor-pointer select-none"
+                  >
+                    <input 
+                      type="checkbox" 
+                      :value="prayer.id" 
+                      v-model="tempAfterPrayers" 
+                      class="mt-0.5 rounded border-parchment-border text-parchment-primary focus:ring-parchment-primary/30 h-3.5 w-3.5 custom-checkbox" 
+                    />
+                    <div class="flex-grow min-w-0">
+                      <div class="text-xs font-bold text-parchment-neutral truncate">{{ prayer.name }}</div>
+                      <div v-if="prayer.latinName" class="text-[9px] text-parchment-neutral/40 italic truncate">{{ prayer.latinName }}</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </template>
+
+            <!-- Notice about restarting -->
+            <div class="bg-parchment-primary/5 border border-parchment-primary/20 rounded-xl p-2.5 flex items-start space-x-2">
+              <svg class="text-parchment-primary-dark mt-0.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              <p class="text-[9px] text-parchment-neutral/70 leading-normal">
+                Applying custom prayers will update the Rosary sequence and restart your current meditation from the beginning.
+              </p>
+            </div>
+
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="p-4 bg-parchment-neutral-light/30 border-t border-parchment-border/40 flex items-center justify-end space-x-2">
+            <button 
+              @click="showSettingsModal = false" 
+              class="px-4 py-1.5 border border-parchment-border hover:bg-parchment-neutral-light text-parchment-neutral rounded-full text-[10px] font-bold uppercase tracking-wider outline-none shadow-none cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button 
+              @click="applySettings" 
+              class="px-4 py-1.5 bg-parchment-primary hover:bg-parchment-primary-dark text-white rounded-full text-[10px] font-bold uppercase tracking-wider border border-transparent shadow-sm hover:scale-[1.02] cursor-pointer"
+            >
+              Apply &amp; Restart
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -146,6 +316,28 @@ const showLatin = ref(false);
 const todayMystery = ref('');
 const sets = Object.keys(ROSARY_DATA);
 const swipeContainer = ref<HTMLElement | null>(null);
+
+// Custom prayers configuration state
+const beforePrayers = ref<string[]>([]);
+const afterPrayers = ref<string[]>([]);
+const showSettingsModal = ref(false);
+const tempBeforePrayers = ref<string[]>([]);
+const tempAfterPrayers = ref<string[]>([]);
+const searchQuery = ref('');
+
+const mysterySetTitleLatinMap: Record<string, string> = {
+  'Joyful': 'Mysteria Gaudiosa',
+  'Luminous': 'Mysteria Luminosa',
+  'Sorrowful': 'Mysteria Dolorosa',
+  'Glorious': 'Mysteria Gloriosa'
+};
+
+const displaySetName = computed(() => {
+  if (showLatin.value) {
+    return mysterySetTitleLatinMap[currentSetName.value] || currentSetName.value;
+  }
+  return `The ${currentSetName.value} Mysteries`;
+});
 
 // Audio State
 const currentAudio = ref<HTMLAudioElement | null>(null);
@@ -183,9 +375,63 @@ onMounted(() => {
     if (savedAutoPlay !== null) {
         autoPlay.value = savedAutoPlay === 'true';
     }
+
+    // Load custom prayers preference
+    const savedBefore = localStorage.getItem('rosary-before-prayers');
+    if (savedBefore) {
+        try {
+            beforePrayers.value = JSON.parse(savedBefore);
+        } catch (e) {
+            console.error('Failed to parse saved before prayers', e);
+        }
+    }
+    const savedAfter = localStorage.getItem('rosary-after-prayers');
+    if (savedAfter) {
+        try {
+            afterPrayers.value = JSON.parse(savedAfter);
+        } catch (e) {
+            console.error('Failed to parse saved after prayers', e);
+        }
+    }
 });
 
-const steps = computed(() => generateRosarySteps(currentSetName.value));
+const steps = computed(() => generateRosarySteps(currentSetName.value, beforePrayers.value, afterPrayers.value));
+
+const selectablePrayers = computed(() => {
+    // Filter out Divine Mercy specific prayers to keep selection options clean and focused.
+    const dmIds = ['dm-opening-1', 'dm-opening-2', 'eternal-father', 'sorrowful-passion', 'holy-god', 'dm-closing', 'jesus-i-trust-in-you'];
+    return prayerData.filter(p => !dmIds.includes(p.id) && p.id !== 'sign-of-the-cross');
+});
+
+const filteredSelectablePrayers = computed(() => {
+    const query = searchQuery.value.trim().toLowerCase();
+    if (!query) return selectablePrayers.value;
+    return selectablePrayers.value.filter(prayer => {
+        return (
+            prayer.name.toLowerCase().includes(query) ||
+            (prayer.latinName && prayer.latinName.toLowerCase().includes(query))
+        );
+    });
+});
+
+watch(showSettingsModal, (isOpen) => {
+    if (isOpen) {
+        tempBeforePrayers.value = [...beforePrayers.value];
+        tempAfterPrayers.value = [...afterPrayers.value];
+        searchQuery.value = '';
+    }
+});
+
+const applySettings = () => {
+    beforePrayers.value = [...tempBeforePrayers.value];
+    afterPrayers.value = [...tempAfterPrayers.value];
+    
+    localStorage.setItem('rosary-before-prayers', JSON.stringify(beforePrayers.value));
+    localStorage.setItem('rosary-after-prayers', JSON.stringify(afterPrayers.value));
+    
+    currentStepIndex.value = 0;
+    showSettingsModal.value = false;
+};
 
 const currentStep = computed((): RosaryStep => {
     const step = steps.value[currentStepIndex.value];
@@ -198,7 +444,8 @@ const currentStep = computed((): RosaryStep => {
                 ...step,
                 title: step.title || prayer.name,
                 content: step.content || prayer.default,
-                latin: step.latin || prayer.latin
+                latin: step.latin || prayer.latin,
+                youtube: (prayer as any).youtube
             };
         }
     }
@@ -234,6 +481,16 @@ const prevStep = () => {
 };
 
 const onSelectBead = (index: number) => {
+    if (currentStep.value.type === 'intro') {
+        const targetIdx = steps.value.findIndex(
+            s => s.type === 'intro' && s.beadNumber === index
+        );
+        if (targetIdx !== -1) {
+            currentStepIndex.value = targetIdx;
+        }
+        return;
+    }
+
     const decNum = currentStep.value.decadeNumber;
     if (!decNum) return;
     const targetIdx = steps.value.findIndex(
@@ -250,10 +507,14 @@ watch(currentSetName, () => {
 });
 
 // Audio Control Functions
+let playTimeout: any = null;
+
 const playAudio = (prayerId: string | undefined) => {
     if (!prayerId) return;
     const url = getPrayerAudioUrl(prayerId);
     if (!url) return;
+    
+    stopAudio();
     
     const audio = new Audio(url);
     currentAudio.value = audio;
@@ -280,6 +541,10 @@ const playAudio = (prayerId: string | undefined) => {
 };
 
 const stopAudio = () => {
+    if (playTimeout) {
+        clearTimeout(playTimeout);
+        playTimeout = null;
+    }
     if (currentAudio.value) {
         currentAudio.value.pause();
         currentAudio.value = null;
@@ -287,9 +552,29 @@ const stopAudio = () => {
     isPlaying.value = false;
 };
 
+const pauseAudio = () => {
+    if (playTimeout) {
+        clearTimeout(playTimeout);
+        playTimeout = null;
+    }
+    if (currentAudio.value) {
+        currentAudio.value.pause();
+    }
+    isPlaying.value = false;
+};
+
 const toggleAudio = () => {
     if (isPlaying.value) {
-        stopAudio();
+        pauseAudio();
+    } else if (currentAudio.value) {
+        currentAudio.value.play()
+            .then(() => {
+                isPlaying.value = true;
+            })
+            .catch(err => {
+                console.log('Audio playback postponed:', err);
+                isPlaying.value = false;
+            });
     } else if (currentStep.value.prayerId) {
         playAudio(currentStep.value.prayerId);
     }
@@ -300,7 +585,7 @@ watch(currentStep, (newStep) => {
     stopAudio();
     if (autoPlay.value && newStep.prayerId) {
         // Delay slightly to give page transition room to render nicely
-        setTimeout(() => {
+        playTimeout = setTimeout(() => {
             if (newStep.prayerId === currentStep.value.prayerId) {
                 playAudio(newStep.prayerId);
             }
@@ -324,6 +609,9 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.custom-checkbox {
+  accent-color: var(--parchment-primary);
+}
 .animate-fade-in-down {
   animation: fadeInDown 0.6s ease-out forwards;
 }

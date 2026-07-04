@@ -22,7 +22,10 @@ export const AVAILABLE_AUDIO_PRAYERS = new Set([
   'dm-closing',
   'rosary-closing-prayer',
   'jesus-i-trust-in-you',
-  'act-of-contrition'
+  'act-of-contrition',
+  'eternal-rest',
+  'nicene-creed',
+  'the-regina-caeli'
 ]);
 
 /**
