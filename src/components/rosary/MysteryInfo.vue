@@ -10,8 +10,17 @@
             {{ currentMystery.title }}
         </h2>
         <p class="text-stone-400 text-sm md:text-base max-w-lg mx-auto leading-relaxed italic opacity-80">
-            {{ currentMystery.focus }}
+            {{ currentMystery.description }}
         </p>
+        <div v-if="currentMystery.virtues && currentMystery.virtues.length" class="flex flex-wrap justify-center gap-2 pt-1">
+            <span 
+                v-for="virtue in currentMystery.virtues" 
+                :key="virtue"
+                class="px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs rounded-full font-semibold"
+            >
+                {{ virtue }}
+            </span>
+        </div>
     </div>
 </template>
 

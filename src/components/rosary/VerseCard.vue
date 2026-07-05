@@ -56,6 +56,23 @@
                             {{ displayMysteryTitle }}
                         </h3>
 
+                        <!-- Mystery Description & Virtues -->
+                        <div v-if="currentStep.type === 'mystery-header'" class="space-y-4 my-4 animate-fade-in-up">
+                            <p class="text-base md:text-lg font-serif italic text-parchment-neutral/80 leading-relaxed">
+                                {{ currentStep.description }}
+                            </p>
+                            <div v-if="currentStep.virtues && currentStep.virtues.length" class="flex flex-wrap items-center gap-2 pt-2 border-t border-parchment-border/10">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-parchment-neutral/50">Virtues:</span>
+                                <span 
+                                    v-for="virtue in currentStep.virtues" 
+                                    :key="virtue"
+                                    class="px-3 py-1 bg-parchment-primary/10 border border-parchment-primary/20 text-parchment-primary-dark rounded-full text-xs font-semibold"
+                                >
+                                    {{ virtue }}
+                                </span>
+                            </div>
+                        </div>
+
                         <!-- Scripture Verse (Mockup blockquote style, always English) -->
                         <div v-if="currentStep.verse" class="border-l-4 border-parchment-primary pl-4 py-1.5 my-4">
                             <p class="text-base md:text-lg font-serif italic text-parchment-neutral/80 leading-relaxed mb-2.5">
@@ -98,7 +115,7 @@
                         </div>
 
                         <!-- Prayer Text / Latin / Interlinear / Video -->
-                        <div class="mt-4 pt-4 border-t border-parchment-border/20">
+                        <div v-if="currentStep.type !== 'mystery-header'" class="mt-4 pt-4 border-t border-parchment-border/20">
                             <!-- Video Player -->
                             <div v-if="selectedPlayMode === 'video'" class="relative w-full aspect-video rounded-2xl overflow-hidden border border-parchment-border shadow-md my-4">
                                 <iframe
