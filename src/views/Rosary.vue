@@ -462,7 +462,14 @@ const getCurrentMystery = (step: RosaryStep): Mystery => {
 };
 
 const currentVisual = computed(() => {
-    const title = currentStep.value.mysteryTitle || getCurrentMystery(currentStep.value).title;
+    const mystery = getCurrentMystery(currentStep.value);
+    const title = currentStep.value.mysteryTitle || mystery.title;
+    if (mystery && mystery.image) {
+        return {
+            image: mystery.image,
+            meditation: getMysteryVisual(title).meditation
+        };
+    }
     return getMysteryVisual(title);
 });
 

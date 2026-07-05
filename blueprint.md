@@ -31,6 +31,7 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
     -   **Audio Overlap Prevention**: Cleaned up pending auto-play timers on navigation and page change to avoid voice doubling/overlap.
     -   **Audio Pause & Resume**: Refactored the audio play/pause logic so that pausing retains the loaded audio instance, allowing subsequent plays to resume from the last position.
     -   **Dynamic Slide Titles**: Integrated active mystery name dynamically inside decade slide headers (e.g. "First Decade - The Annunciation - Our Father" and "First Decade - The Annunciation - Bead 1").
+    -   **Sacred Orthodox & Catholic Icons**: Generated and stored 20 authentic public domain style icons locally under `/public/images/rosary/` to replace the generic Unsplash landscape images and eliminate external load issues. Updated both `rosaryData.ts` and `mysteryVisuals.ts` to reference these local assets. Prioritized the local `image` field in `Rosary.vue`.
 
 2.  **Divine Mercy Chaplet**:
     -   **Short Version Toggle**: Added a toggle to skip to closing prayers after the first decade, ideal for quick devotion.
@@ -109,8 +110,11 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
 
 ---
 
-## Active Plan: Church Fathers Content Processing
-- **Status**: Completed. All writings processed, indexed, and integrated into the `Resources` view.
+## Active Plan: Add Sacred Icons to Rosary Mysteries
+- **Status**: Completed.
+- **Goal**: Integrate authentic Catholic and Orthodox icon/painting URLs into the Rosary's 20 mysteries to replace generic Unsplash images.
+
+
 
 ## Architecture
 -   **Framework**: Vue 3 (Composition API)
