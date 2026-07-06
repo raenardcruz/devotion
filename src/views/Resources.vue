@@ -344,6 +344,39 @@ const nextChapter = () => {
     }
   }
 };
+
+const isBlockquote = (para: string): boolean => {
+  return para.trim().startsWith('>');
+};
+
+const cleanParagraph = (para: string): string => {
+  let cleaned = para.trim();
+  if (cleaned.startsWith('>')) {
+    cleaned = cleaned.substring(1).trim();
+  }
+  return cleaned;
+};
+
+const formatParagraph = (text: string): string => {
+  // Convert markdown bold (**text**) to HTML <strong>text</strong>
+  let html = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
+  
+  // Convert markdown italic (*text*) to HTML <em>text</em>
+  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  html = html.replace(/_(.*?)_/g, '<em>$1</em>');
+  
+  // Replace double dashes or em-dashes with proper HTML entity
+  html = html.replace(/--|—/g, '&mdash;');
+
+  return html;
+};
+
+const isFirstTextPara = (idx: number): boolean => {
+  if (!activeChapter.value) return false;
+  const firstTextIdx = activeChapter.value.content.findIndex(p => !isBlockquote(p));
+  return idx === firstTextIdx;
+};
 </script>
 
 <template>
@@ -537,20 +570,31 @@ const nextChapter = () => {
         <div class="lg:col-span-3 flex flex-col gap-6 animate-fade-in-up delay-150">
           <div class="bg-parchment-neutral-light border border-parchment-border rounded-3xl p-6 md:p-8 flex-grow flex flex-col min-h-[60vh] relative shadow-sm">
             <!-- Reader Area -->
-            <div v-if="activeChapter" id="reader-content" class="flex-grow lg:overflow-y-auto space-y-6 pr-2">
-              <div class="border-b border-parchment-border/40 pb-4 mb-6">
-                <div class="text-[10px] text-parchment-primary font-bold tracking-widest uppercase mb-1">
+            <div v-if="activeChapter" id="reader-content" class="flex-grow lg:overflow-y-auto space-y-8 pr-2 select-text">
+              <!-- Book-style Header -->
+              <div class="text-center mb-12 mt-6">
+                <div class="text-[11px] text-parchment-primary font-serif tracking-[0.25em] uppercase mb-3">
                   Chapter {{ activeChapter.numeral }}
                 </div>
-                <h2 class="text-2xl md:text-3xl font-serif text-parchment-neutral font-medium">
+                <h2 class="text-2xl md:text-3.5xl font-serif text-parchment-primary-dark font-semibold tracking-wide uppercase max-w-2xl mx-auto leading-snug">
                   {{ activeChapter.title }}
                 </h2>
+                <div class="w-16 h-[1px] bg-parchment-primary/30 mx-auto mt-6"></div>
               </div>
 
-              <!-- Main text paragraphs -->
-              <div class="space-y-6 text-parchment-neutral/90 leading-relaxed font-serif text-base md:text-lg">
-                <p v-for="(para, idx) in activeChapter.content" :key="idx" class="indent-6 text-justify">
-                  {{ para }}
+              <!-- Main text paragraphs (Book Layout Style) -->
+              <div class="max-w-2xl mx-auto space-y-4">
+                <p 
+                  v-for="(para, idx) in activeChapter.content" 
+                  :key="idx" 
+                  :class="[
+                    isBlockquote(para) 
+                      ? 'text-center italic my-8 px-10 md:px-16 text-parchment-primary-dark/85 text-sm md:text-base leading-relaxed font-serif max-w-xl mx-auto font-medium' 
+                      : 'text-justify leading-relaxed text-parchment-neutral/90 font-serif text-[16.5px] md:text-[18px] tracking-wide mb-4'
+                  ]"
+                  :style="(!isBlockquote(para) && !isFirstTextPara(idx)) ? { textIndent: '1.75rem' } : {}"
+                >
+                  <span v-html="formatParagraph(cleanParagraph(para))"></span>
                 </p>
               </div>
 

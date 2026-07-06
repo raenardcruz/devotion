@@ -107,6 +107,8 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
 - **Resource Indexer**: Created a script `research/generate_index.py` that extracts the main title header from all 71 Church Father `.md` files and outputs them into a static `index.json` registry.
 - **Searchable Writings Selector**: Redesigned the top layout of `Resources.vue` with a premium dropdown button and searchable popover selector to navigate all 71 writings with real-time text filtering.
 - **State Persistence**: Added automatic restoration of both the active writing and active chapter on page reload via `localStorage`.
+- **Book-Like Page Layout & Typesetting**: Formatted the reader layout to mimic physical books, featuring centered chapter headings (numeral and title) separated by a thin gold divider, a maximum text reading width (`max-w-2xl`), justified alignment, first-line indenting (except for the first paragraph), and blockquotes rendered as centered, borderless epigraphs.
+- **Inline Markdown Parser**: Added safe, lightweight inline markdown styling to convert bold (`**`, `__`), italic (`*`, `_`), and double dashes into proper HTML tags/entities.
 
 ---
 
