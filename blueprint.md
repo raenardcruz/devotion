@@ -61,9 +61,9 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
 
 3.  **Catechism Quick Lookup Bubble**:
     -   Created `CatechismBubble.vue` floating widget visible on the Bible Study and Daily Mass Readings pages.
-    -   Allows looking up any Catechism paragraph (1-2865).
+    -   Allows looking up Catechism paragraphs (1-2865), supporting ranges and lists (using hyphens and commas, e.g., `5-10, 20`).
     -   Integrated interactive nested cross-references that automatically load inside the popover on click.
-    -   Implements back button tracking for reference navigation history.
+    -   Implements back button tracking for reference navigation history, storing whole queries to allow back-navigation to multi-paragraph selections.
 
 ### System & Infrastructure
 1.  **Daily Mass Readings**:
