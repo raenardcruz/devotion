@@ -6,7 +6,6 @@ import { renderMarkdown } from '../utils/markdown';
 import TopNav from '../components/common/TopNav.vue';
 import BottomNav from '../components/common/BottomNav.vue';
 import ParchmentCard from '../components/common/ParchmentCard.vue';
-import AppButton from '../components/common/AppButton.vue';
 import AppTabs from '../components/common/AppTabs.vue';
 import CatechismBubble from '../components/catechism/CatechismBubble.vue';
 
@@ -32,7 +31,6 @@ interface MassReadings {
 
 const readings = ref<MassReadings | null>(null);
 const activeTab = ref('first_reading');
-const showMeditationModal = ref(false);
 
 const { getLocalISOString } = useDate();
 const { getDevotion, loading, error } = useDevotionApi();
@@ -99,7 +97,7 @@ const availableTabs = computed(() => {
     tabs.push({ id: 'gospel', label: 'Gospel' });
   }
   if (readings.value.pope_quote) {
-    tabs.push({ id: 'pope_quote', label: 'Reflection' });
+    tabs.push({ id: 'pope_quote', label: 'Words of the Popes' });
   }
   return tabs;
 });
@@ -221,7 +219,7 @@ const availableTabs = computed(() => {
               </header>
               
               <div class="prose max-w-none text-center mb-8">
-                  <div class="whitespace-pre-line text-base md:text-lg font-serif italic text-parchment-neutral/90 leading-loose" v-html="readings.responsorial_psalm.text"></div>
+                  <div class="whitespace-pre-line text-base md:text-lg font-serif text-parchment-neutral/90 leading-loose" v-html="readings.responsorial_psalm.text"></div>
               </div>
 
               <div v-if="readings.responsorial_psalm.context" class="bg-parchment-bg border-l-4 border-parchment-primary rounded-xl p-5 shadow-sm mt-6">
@@ -265,7 +263,7 @@ const availableTabs = computed(() => {
               </header>
               
               <div class="prose max-w-none mb-6">
-                  <div class="whitespace-pre-line text-base md:text-lg leading-relaxed font-serif italic text-parchment-neutral/90" v-html="readings.pope_quote"></div>
+                  <div class="whitespace-pre-line text-base md:text-lg leading-relaxed font-serif text-parchment-neutral/90" v-html="readings.pope_quote"></div>
               </div>
 
               <div class="text-center text-[10px] text-parchment-neutral/30 tracking-[0.1em] border-t border-parchment-border/20 pt-4">
@@ -283,55 +281,6 @@ const availableTabs = computed(() => {
 
       </div>
     </main>
-
-    <!-- Floating Meditate Button (Image 4 spec) -->
-    <div v-if="readings && readings.pope_quote" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 animate-bounce">
-      <AppButton 
-        variant="primary" 
-        @click="showMeditationModal = true"
-        custom-class="!px-6 !py-3 shadow-lg hover:shadow-xl flex items-center gap-2 hover:-translate-y-1 transform active:scale-95"
-      >
-        <!-- Leaf/Plant Meditate Icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2c1.5 4 1.5 6 0 10-1.5-4-1.5-6 0-10z"></path>
-          <path d="M17 12c-4 1.5-6 1.5-10 0 4-1.5 6-1.5 10 0z"></path>
-          <path d="M12 22c1.5-4 1.5-6 0-10-1.5 4-1.5 6 0 10z"></path>
-        </svg>
-        <span class="font-bold uppercase tracking-wider text-xs">Meditate</span>
-      </AppButton>
-    </div>
-
-    <!-- Meditation Overlay Modal -->
-    <transition name="fade">
-      <div v-if="showMeditationModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showMeditationModal = false">
-        <div class="absolute inset-0 bg-parchment-neutral/40 backdrop-blur-sm transition-opacity" @click="showMeditationModal = false"></div>
-        <div class="relative bg-parchment-bg border border-parchment-border rounded-[2.5rem] p-8 md:p-12 max-w-xl w-full max-h-[85vh] overflow-y-auto shadow-2xl transform transition-all">
-          <button @click="showMeditationModal = false" class="absolute top-5 right-5 text-parchment-neutral/40 hover:text-parchment-neutral transition-colors p-2 rounded-full hover:bg-parchment-neutral-light">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" x2="6" y1="6" y2="18"></line>
-              <line x1="6" x2="18" y1="6" y2="18"></line>
-            </svg>
-          </button>
-          
-          <div class="text-center">
-            <span class="text-parchment-primary font-bold tracking-[0.2em] text-[10px] uppercase block mb-3">Quiet Contemplation</span>
-            <h2 class="text-2xl md:text-3xl font-serif text-parchment-primary-dark mb-6">Pope's Daily Message</h2>
-            
-            <div class="prose max-w-none text-left">
-              <p class="font-serif italic text-base md:text-lg leading-relaxed text-parchment-neutral/80 whitespace-pre-line">
-                {{ readings?.pope_quote }}
-              </p>
-            </div>
-            
-            <div class="mt-8 border-t border-parchment-border/40 pt-6">
-              <AppButton variant="secondary" @click="showMeditationModal = false" class="w-full justify-center">
-                Close Meditation
-              </AppButton>
-            </div>
-          </div>
-        </div>
-      </div>
-    </transition>
 
     <!-- Global Footer -->
     <BottomNav />

@@ -59,9 +59,7 @@
             <input 
               v-model="searchQuery" 
               type="text" 
-              inputmode="numeric"
-              pattern="[0-9]*"
-              placeholder="Enter paragraph (e.g. 748)..." 
+              placeholder="Enter paragraph (e.g. 5-10, 20)..." 
               @keyup.enter="performSearch"
               class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-parchment-border/60 bg-white/70 text-parchment-neutral placeholder-parchment-neutral/40 focus:border-parchment-primary focus:bg-white shadow-inner transition-all outline-none text-xs font-semibold"
             >
@@ -93,30 +91,32 @@
                 <line x1="19" x2="5" y1="12" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
               </svg>
-              Back to §{{ history[history.length - 1] }}
+              Back to: {{ history[history.length - 1] }}
             </button>
           </div>
 
-          <!-- Paragraph Display -->
-          <div v-if="currentParagraph" class="space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-parchment-secondary font-serif select-none">§ {{ currentParagraph.id }}</span>
-              <button 
-                @click="viewInFullCatechism"
-                class="text-[9px] font-bold text-parchment-primary uppercase tracking-wider hover:opacity-80 transition-opacity bg-transparent border-none p-0 shadow-none hover:bg-transparent"
-                title="View in full Catechism explorer"
-              >
-                Go to full page
-              </button>
-            </div>
-            
-            <div class="prose max-w-none text-xs md:text-sm font-serif leading-relaxed text-parchment-neutral/95">
-              <!-- Using original CatechismText component for parsing references -->
-              <CatechismText 
-                :text="currentParagraph.text" 
-                :paragraphs="paragraphs" 
-                @show-reference="handleShowReference"
-              />
+          <!-- Paragraphs Display -->
+          <div v-if="foundParagraphs.length > 0" class="space-y-6">
+            <div v-for="p in foundParagraphs" :key="p.id" class="space-y-3 pb-5 border-b border-parchment-border/30 last:border-b-0 last:pb-0">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-parchment-secondary font-serif select-none">§ {{ p.id }}</span>
+                <button 
+                  @click="viewInFullCatechism(p.id)"
+                  class="text-[9px] font-bold text-parchment-primary uppercase tracking-wider hover:opacity-80 transition-opacity bg-transparent border-none p-0 shadow-none hover:bg-transparent"
+                  title="View in full Catechism explorer"
+                >
+                  Go to full page
+                </button>
+              </div>
+              
+              <div class="prose max-w-none text-xs md:text-sm font-serif leading-relaxed text-parchment-neutral/95">
+                <!-- Using original CatechismText component for parsing references -->
+                <CatechismText 
+                  :text="p.text" 
+                  :paragraphs="paragraphs" 
+                  @show-reference="handleShowReference"
+                />
+              </div>
             </div>
           </div>
 
@@ -132,7 +132,7 @@
             <div class="space-y-1">
               <h4 class="text-xs font-serif font-bold text-parchment-neutral">Quick Lookup</h4>
               <p class="text-[10px] text-parchment-neutral/50 max-w-[220px] leading-normal">
-                Enter a paragraph number (1 to 2865) to quickly consult the Catechism during your readings.
+                Enter paragraph numbers (e.g. 5-10, 20) to quickly consult the Catechism during your readings.
               </p>
             </div>
           </div>
@@ -175,43 +175,74 @@ const paragraphs = ref<Paragraph[]>(catechismData as unknown as Paragraph[]);
 
 const isOpen = ref(false);
 const searchQuery = ref('');
-const currentParagraph = ref<Paragraph | null>(null);
+const foundParagraphs = ref<Paragraph[]>([]);
 const errorMsg = ref('');
-const history = ref<number[]>([]);
+const history = ref<string[]>([]);
 
 const toggleOpen = () => {
   isOpen.value = !isOpen.value;
   if (isOpen.value) {
     // Reset states on open
     searchQuery.value = '';
-    currentParagraph.value = null;
+    foundParagraphs.value = [];
     errorMsg.value = '';
     history.value = [];
   }
 };
 
+const parseSearchQuery = (query: string): Paragraph[] => {
+  const cleaned = query.trim();
+  if (!cleaned) return [];
+
+  const desiredIds = new Set<number>();
+  const parts = cleaned.split(',');
+  
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    
+    if (trimmed.includes('-')) {
+      const rangeParts = trimmed.split('-').map(s => s.trim());
+      if (rangeParts.length === 2) {
+        const start = parseInt(rangeParts[0]!);
+        const end = parseInt(rangeParts[1]!);
+        
+        if (!isNaN(start) && !isNaN(end) && start <= end) {
+          for (let i = start; i <= end; i++) {
+            desiredIds.add(i);
+          }
+        }
+      }
+    } else {
+      const num = parseInt(trimmed);
+      if (!isNaN(num)) {
+        desiredIds.add(num);
+      }
+    }
+  }
+  
+  if (desiredIds.size > 0) {
+    return paragraphs.value.filter(p => desiredIds.has(p.id));
+  }
+  return [];
+};
+
 const performSearch = () => {
   const cleaned = searchQuery.value.trim();
   if (!cleaned) {
-    currentParagraph.value = null;
+    foundParagraphs.value = [];
     errorMsg.value = '';
     return;
   }
 
-  const id = parseInt(cleaned);
-  if (!isNaN(id)) {
-    const p = paragraphs.value.find(p => p.id === id);
-    if (p) {
-      currentParagraph.value = p;
-      errorMsg.value = '';
-      history.value = []; // Reset history when executing a new search query manually
-    } else {
-      currentParagraph.value = null;
-      errorMsg.value = 'Paragraph not found (1-2865)';
-    }
+  const results = parseSearchQuery(cleaned);
+  if (results.length > 0) {
+    foundParagraphs.value = results;
+    errorMsg.value = '';
+    history.value = []; // Reset history when executing a new search query manually
   } else {
-    currentParagraph.value = null;
-    errorMsg.value = 'Please enter a valid number';
+    foundParagraphs.value = [];
+    errorMsg.value = 'No paragraphs found for this query (e.g. 5-10, 20)';
   }
 };
 
@@ -220,11 +251,11 @@ const handleShowReference = (resolvedParagraphs: Paragraph[]) => {
   if (resolvedParagraphs.length > 0) {
     const target = resolvedParagraphs[0];
     if (target) {
-      if (currentParagraph.value) {
-        history.value.push(currentParagraph.value.id);
+      if (searchQuery.value) {
+        history.value.push(searchQuery.value);
       }
       searchQuery.value = String(target.id);
-      currentParagraph.value = target;
+      foundParagraphs.value = [target];
       errorMsg.value = '';
     }
   }
@@ -232,41 +263,33 @@ const handleShowReference = (resolvedParagraphs: Paragraph[]) => {
 
 const goBack = () => {
   if (history.value.length > 0) {
-    const prevId = history.value.pop();
-    if (prevId) {
-      searchQuery.value = String(prevId);
-      const p = paragraphs.value.find(p => p.id === prevId);
-      if (p) {
-        currentParagraph.value = p;
-        errorMsg.value = '';
-      }
+    const prevQuery = history.value.pop();
+    if (prevQuery !== undefined) {
+      searchQuery.value = prevQuery;
+      const results = parseSearchQuery(prevQuery);
+      foundParagraphs.value = results;
+      errorMsg.value = results.length > 0 ? '' : 'Paragraph not found';
     }
   }
 };
 
-const viewInFullCatechism = () => {
-  if (currentParagraph.value) {
-    isOpen.value = false;
-    router.push({ path: '/catechism', query: { q: String(currentParagraph.value.id) } });
-  }
+const viewInFullCatechism = (id: number) => {
+  isOpen.value = false;
+  router.push({ path: '/catechism', query: { q: String(id) } });
 };
 
-// Auto search while typing full paragraph IDs (1-2865)
+// Auto search while typing complete paragraph IDs, ranges, or lists (1-2865)
 watch(searchQuery, (newVal) => {
   const cleaned = newVal.trim();
-  if (/^\d+$/.test(cleaned)) {
-    const id = parseInt(cleaned);
-    if (id >= 1 && id <= 2865) {
-      const p = paragraphs.value.find(p => p.id === id);
-      if (p) {
-        currentParagraph.value = p;
-        errorMsg.value = '';
-        return;
-      }
-    }
-  }
   if (!cleaned) {
-    currentParagraph.value = null;
+    foundParagraphs.value = [];
+    errorMsg.value = '';
+    return;
+  }
+  
+  const results = parseSearchQuery(cleaned);
+  if (results.length > 0) {
+    foundParagraphs.value = results;
     errorMsg.value = '';
   }
 });
