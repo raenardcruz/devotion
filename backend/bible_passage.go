@@ -135,9 +135,10 @@ func passage_sanitize(passage string) string {
 }
 
 func get_bible_passage_text(passage string) (BibleContent, error) {
-	api_key := os.Getenv("BIBLE_API_KEY")
+	settings := GetSettings()
+	api_key := settings.BibleAPIKey
 	if api_key == "" {
-		return BibleContent{}, fmt.Errorf("BIBLE_API_KEY not set")
+		return BibleContent{}, fmt.Errorf("BIBLE_API_KEY not set in database settings")
 	}
 
 	bible_id := os.Getenv("BIBLE_ID")

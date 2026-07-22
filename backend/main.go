@@ -32,6 +32,9 @@ func main() {
 	ctx := context.Background()
 	initializeEnvironment()
 
+	// Initialize Database
+	InitDB()
+
 	// Initialize Redis
 	redisAddr := os.Getenv("REDIS_URL")
 	if redisAddr == "" {
@@ -47,42 +50,57 @@ func main() {
 		log.Println("[main] Successfully connected to Redis")
 	}
 
-	gemini_api_key := os.Getenv("GEMINI_API_KEY")
+	settings := GetSettings()
+	gemini_api_key := settings.GeminiAPIKey
 	if gemini_api_key == "" {
-		log.Fatalf("[main] GEMINI_API_KEY not set")
+		log.Printf("[main] Warning: GEMINI_API_KEY not set in DB settings. Please configure in /admin.")
+		gemini_api_key = "dummy-key-pending-admin-setup"
 	}
 
-	model, err := gemini.NewModel(ctx, "gemini-3.1-flash-lite", &genai.ClientConfig{
+	geminiModelName := settings.GeminiModel
+	if geminiModelName == "" {
+		geminiModelName = "gemini-3.1-flash-lite"
+	}
+
+	model, err := gemini.NewModel(ctx, geminiModelName, &genai.ClientConfig{
 		APIKey: gemini_api_key,
 	})
 	if err != nil {
-		log.Fatalf("[main] Failed to create Gemini model: %v", err)
+		log.Printf("[main] Warning: Failed to create default Gemini model: %v", err)
 	}
 
-	catholicAgent, err := llmagent.New(llmagent.Config{
-		Name:        "CatholicAssistant",
-		Model:       model,
-		Description: "An expert Catholic assistant providing daily devotionals.",
-		Instruction: "You are a wise and compassionate Catholic assistant. Your mission is to help the faithful prepare for the day by providing the daily mass readings, deep historical and theological context, and the inspiring 'Words of the Popes' from Vatican News.\n\nFollow these steps faithfully:\n1. Fetch the daily mass readings using the `GetMassReadings` tool.\n2. For every reading found (First Reading, Psalm, Second Reading, Gospel), obtain its historical and spiritual context using the `GetBibleContext` tool.\n3. Retrieve 'The words of the Popes' for the given date using the `GetPopeQuote` tool.\n4. Synthesize all this information into a beautifully structured daily devotion. When populating the `context` field for each reading in the `SubmitDevotion` tool call, you MUST use the exact, unmodified output returned by the `GetBibleContext` tool for that reading. Do not summarize, rewrite, or synthesize your own context for the readings; strictly respect and copy the output of the `GetBibleContext` tool.\n5. FINAL STEP: Call the `SubmitDevotion` tool with the complete JSON data. Leave the `text` field blank for each reading as it will be automatically populated from a word-for-word Bible API. This is your most important duty. Do not just output the JSON as text; you MUST call the tool.",
-		Tools:       get_tools(),
-	})
-	if err != nil {
-		log.Fatalf("[main] Failed to create ADK agent: %v", err)
-	}
-
-	adkSessionService = session.InMemoryService()
-	adkRunner, err = runner.New(runner.Config{
-		AppName:        "DevotionAPI",
-		Agent:          catholicAgent,
-		SessionService: adkSessionService,
-	})
-	if err != nil {
-		log.Fatalf("[main] Failed to create ADK runner: %v", err)
+	if model != nil {
+		catholicAgent, err := llmagent.New(llmagent.Config{
+			Name:        "CatholicAssistant",
+			Model:       model,
+			Description: "An expert Catholic assistant providing daily devotionals.",
+			Instruction: "You are a wise and compassionate Catholic assistant. Your mission is to help the faithful prepare for the day by providing the daily mass readings, deep historical and theological context, and the inspiring 'Words of the Popes' from Vatican News.\n\nFollow these steps faithfully:\n1. Fetch the daily mass readings using the `GetMassReadings` tool.\n2. For every reading found (First Reading, Psalm, Second Reading, Gospel), obtain its historical and spiritual context using the `GetBibleContext` tool.\n3. Retrieve 'The words of the Popes' for the given date using the `GetPopeQuote` tool.\n4. Synthesize all this information into a beautifully structured daily devotion. When populating the `context` field for each reading in the `SubmitDevotion` tool call, you MUST use the exact, unmodified output returned by the `GetBibleContext` tool for that reading. Do not summarize, rewrite, or synthesize your own context for the readings; strictly respect and copy the output of the `GetBibleContext` tool.\n5. FINAL STEP: Call the `SubmitDevotion` tool with the complete JSON data. Leave the `text` field blank for each reading as it will be automatically populated from a word-for-word Bible API. This is your most important duty. Do not just output the JSON as text; you MUST call the tool.",
+			Tools:       get_tools(),
+		})
+		if err != nil {
+			log.Printf("[main] Failed to create ADK agent: %v", err)
+		} else {
+			adkSessionService = session.InMemoryService()
+			adkRunner, err = runner.New(runner.Config{
+				AppName:        "DevotionAPI",
+				Agent:          catholicAgent,
+				SessionService: adkSessionService,
+			})
+			if err != nil {
+				log.Printf("[main] Failed to create ADK runner: %v", err)
+			}
+		}
 	}
 
 	http.Handle("/devotion", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(devotionHandler))))
 	http.Handle("/bible", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(biblePassageHandler))))
 	http.Handle("/context", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(bibleContextHandler))))
+
+	// Admin API Endpoints
+	http.Handle("/api/admin/login", corsMiddleware(http.HandlerFunc(adminLoginHandler)))
+	http.Handle("/api/admin/settings", corsMiddleware(http.HandlerFunc(adminSettingsHandler)))
+	http.Handle("/api/admin/ollama-models", corsMiddleware(http.HandlerFunc(adminOllamaModelsHandler)))
+	http.Handle("/api/admin/gemini-models", corsMiddleware(http.HandlerFunc(adminGeminiModelsHandler)))
 
 	// Start Cron Jobs
 	startCronJobs(ctx)

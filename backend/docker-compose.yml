@@ -4,23 +4,14 @@ services:
   app:
     build: .
     ports:
-      - "8080:8080"
+      - "${PORT}:${PORT}"
     environment:
-      - REDIS_URL=redis:6379
-      - PORT=8080
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - BIBLE_API_KEY=${BIBLE_API_KEY}
-      - BIBLE_ID=${BIBLE_ID}
-      - CORS_ALLOWED_ORIGIN=*
+      - REDIS_URL=${REDIS_URL}
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable
+      - PORT=${PORT}
+      - CORS_ALLOWED_ORIGIN=${CORS_ALLOWED_ORIGIN}
       - OLLAMA_URL=http://host.docker.internal:11434
       - TZ=Asia/Manila
-      - API_TOKEN=wsDUL6LBS0cb9Tfjg3FF1kyCIDt
+      - API_TOKEN=${API_TOKEN}
 
 
-    depends_on:
-      - redis
-
-  redis:
-    image: "redis:alpine"
-    ports:
-      - "6379:6379"

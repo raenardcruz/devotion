@@ -1,5 +1,7 @@
 import { ref } from 'vue';
 
+const isServerUnreachable = ref(false);
+
 export function useDevotionApi() {
   const loading = ref(false);
   const error = ref<string | null>(null);
@@ -32,6 +34,8 @@ export function useDevotionApi() {
         headers,
       });
 
+      isServerUnreachable.value = false;
+
       if (response.status === 401) {
         throw new Error('Unauthorized access. Please check your API Token configuration.');
       }
@@ -51,6 +55,19 @@ export function useDevotionApi() {
 
       return await response.json() as T;
     } catch (err: any) {
+      if (
+        err.name === 'TypeError' ||
+        (err.message &&
+          (err.message.includes('fetch') ||
+            err.message.includes('NetworkError') ||
+            err.message.includes('Failed to fetch') ||
+            err.message.includes('Load failed')))
+      ) {
+        isServerUnreachable.value = true;
+        const msg = 'Server cannot be reached. Please check if the API server is running and accessible.';
+        error.value = msg;
+        throw new Error(msg);
+      }
       error.value = err.message || 'An error occurred during the API request.';
       throw err;
     } finally {
@@ -66,6 +83,7 @@ export function useDevotionApi() {
   return {
     loading,
     error,
+    isServerUnreachable,
     fetchWithAuth,
     getDevotion,
   };
