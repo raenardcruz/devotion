@@ -13,5 +13,6 @@ services:
       - OLLAMA_URL=http://host.docker.internal:11434
       - TZ=Asia/Manila
       - API_TOKEN=${API_TOKEN}
+      - BIBLE_ID=${BIBLE_ID}
 
 

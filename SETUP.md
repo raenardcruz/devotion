@@ -45,34 +45,33 @@ The `.env` file contains system connection details (database, redis, ollama url)
 ### Backend Environment File (`.env` or `backend/.env`)
 ```env
 # HTTP Server Port
-PORT=8080
+PORT=1024
 
 # Authentication Token
-API_TOKEN=your_secure_api_token
+API_TOKEN=your_strong_api_token_here
+BIBLE_ID=b907c8622b59a1f7-01
 
 # CORS Policy
 CORS_ALLOWED_ORIGIN=*
 
 # PostgreSQL Database Connection
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/devotion?sslmode=disable
-# Alternatively set individual PG host/user/password/db:
-# POSTGRES_HOST=localhost
-# POSTGRES_PORT=5432
-# POSTGRES_USER=postgres
-# POSTGRES_PASSWORD=postgres
-# POSTGRES_DB=devotion
+POSTGRES_HOST=host.docker.internal
+POSTGRES_PORT=5432
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=admin
+POSTGRES_DB=devotion
 
 # Redis Cache Address
-REDIS_URL=localhost:6379
+REDIS_URL=host.docker.internal:6379
 
 # Ollama Endpoint
-OLLAMA_URL=http://localhost:11434
+OLLAMA_URL=http://host.docker.internal:11434
 ```
 
 ### Frontend Environment File (`frontend/.env`)
 ```env
-VITE_API_BASE_URL=http://localhost:8080
-VITE_API_TOKEN=your_secure_api_token
+VITE_API_BASE_URL=http://localhost:1024
+VITE_API_TOKEN=your_strong_api_token_here
 ```
 
 ---
@@ -114,7 +113,7 @@ The Admin settings page allows live customization of AI generation settings.
    ```
 5. Test API connection:
    ```bash
-   curl -H "Authorization: Bearer your_secure_api_token" http://localhost:8080/devotion
+   curl -H "Authorization: Bearer your_strong_api_token_here" http://localhost:1024/devotion
    ```
 
 ### Running Backend with Docker Compose (API + Redis + PostgreSQL)
@@ -165,5 +164,5 @@ npx wrangler pages deploy dist --project-name devotion
 ```bash
 cd backend
 docker build -t devotion-api .
-docker run -d -p 8080:8080 --env-file .env devotion-api
+docker run -d -p 1024:1024 --env-file .env devotion-api
 ```
