@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_URL=redis:6379
+      - PORT=8080
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - BIBLE_API_KEY=${BIBLE_API_KEY}
+      - BIBLE_ID=${BIBLE_ID}
+      - CORS_ALLOWED_ORIGIN=*
+      - OLLAMA_URL=http://host.docker.internal:11434
+      - TZ=Asia/Manila
+      - API_TOKEN=wsDUL6LBS0cb9Tfjg3FF1kyCIDt
+
+
+    depends_on:
+      - redis
+
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
