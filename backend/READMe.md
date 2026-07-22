@@ -34,12 +34,28 @@ cd devotion-api
 Create a `.env` file in the root directory with the following variables:
 
 ```env
-OLLAMA_URL=http://localhost:11434
-BIBLE_API_KEY=your_bible_api_key
+# HTTP Server Port
+PORT=1024
+
+# Authentication Token
+API_TOKEN=your_strong_api_token_here
 BIBLE_ID=your_target_bible_id
-REDIS_URL=localhost:6379
-PORT=8080
+
+# CORS Policy
 CORS_ALLOWED_ORIGIN=*
+
+# PostgreSQL Database Connection
+POSTGRES_HOST=host.docker.internal
+POSTGRES_PORT=5432
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=admin
+POSTGRES_DB=devotion
+
+# Redis Cache Address
+REDIS_URL=host.docker.internal:6379
+
+# Ollama Endpoint
+OLLAMA_URL=http://host.docker.internal:11434
 ```
 
 ### 3. Running Locally
@@ -50,9 +66,9 @@ Ensure your Redis server and Ollama are running, then execute:
 go run .
 ```
 
-The server will start on port `8080` (or the port specified in your `.env`).
+The server will start on port `1024` (or the port specified in your `.env`).
 
-API Endpoint: `http://localhost:8080/devotion`
+API Endpoint: `http://localhost:1024/devotion`
 
 ### 4. Running with Docker
 
@@ -67,7 +83,7 @@ docker build -t devotion-api .
 **Run the container:**
 
 ```bash
-docker run -p 8080:8080 --env-file .env -e TZ=Asia/Manila devotion-api
+docker run -p 1024:1024 --env-file .env -e TZ=Asia/Manila devotion-api
 
 ```
 
@@ -79,7 +95,7 @@ To start the application and Redis together:
 docker-compose up --build
 ```
 
-The API will be available at `http://localhost:8080`.
+The API will be available at `http://localhost:1024`.
 
 To stop the services:
 

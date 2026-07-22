@@ -36,23 +36,36 @@ Environment files now strictly contain system connections (DB connection, Redis,
 Create a `.env` file in `backend/.env` or the workspace root:
 
 ```env
-# Server Config
-PORT=8080
-API_TOKEN=your_secure_api_token
+# HTTP Server Port
+PORT=1024
+
+# Authentication Token
+API_TOKEN=your_strong_api_token_here
+BIBLE_ID=your_target_bible_id
+
+# CORS Policy
 CORS_ALLOWED_ORIGIN=*
 
-# Connections
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/devotion?sslmode=disable
-REDIS_URL=localhost:6379
-OLLAMA_URL=http://localhost:11434
+# PostgreSQL Database Connection
+POSTGRES_HOST=host.docker.internal
+POSTGRES_PORT=5432
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=admin
+POSTGRES_DB=devotion
+
+# Redis Cache Address
+REDIS_URL=host.docker.internal:6379
+
+# Ollama Endpoint
+OLLAMA_URL=http://host.docker.internal:11434
 ```
 
 ### 2. Frontend Environment Variables (`frontend/.env`)
 Create a `.env` file inside `frontend/`:
 
 ```env
-VITE_API_BASE_URL=http://localhost:8080
-VITE_API_TOKEN=your_secure_api_token
+VITE_API_BASE_URL=http://localhost:1024
+VITE_API_TOKEN=your_strong_api_token_here
 ```
 
 ---
@@ -91,7 +104,7 @@ go test ./...
 # Run the Go API server
 go run .
 ```
-The API server will launch at `http://localhost:8080`.
+The API server will launch at `http://localhost:1024`.
 
 *(Alternatively, run backend + Redis + PostgreSQL via Docker Compose:)*
 ```bash
