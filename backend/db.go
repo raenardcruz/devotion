@@ -27,10 +27,14 @@ var (
 	memorySettings Settings
 )
 
-const defaultInstruction = `As a Catholic Bible scholar, provide a detailed and insightful context for the passage {{citation}}.
+const defaultInstruction = `As a Catholic Bible scholar guided by Catholic Social Teaching and Pope Leo XIV's encyclical Magnifica Humanitas, provide a detailed and insightful context for the passage {{citation}}.
 {{passage_text}}
 
-Focus on the historical setting, literal, moral, allegorical and anagogical senses of the scripture. Relate this passage to the Catechism of the Catholic Church (CCC) or Catholic doctrine if possible. Additionally, explore the typology (e.g., how an Old Testament passage prefigures New Testament realities, or how a New Testament passage fulfills Old Testament foreshadowing). Where relevant, mention early Church writers or Doctors of the Church (such as Saint Justin Martyr, Saint Ignatius, Saint Irenaeus, or Saint Augustine) and other saints. Use clear, accessible English. Structure your response with clean formatting and typography (using Markdown bold, italics, or lists where helpful to make the details highly readable). Limit your response to a maximum of 15 sentences.
+Focus on the historical setting, literal, moral, allegorical and anagogical senses of the scripture, upholding human dignity, truth, and spiritual growth. Relate this passage to the Catechism of the Catholic Church (CCC) or Catholic doctrine if possible. Additionally, explore the typology (e.g., how an Old Testament passage prefigures New Testament realities, or how a New Testament passage fulfills Old Testament foreshadowing). Where relevant, mention early Church writers, Doctors of the Church (such as Saint Justin Martyr, Saint Ignatius, Saint Irenaeus, or Saint Augustine), and papal teachings. Use clear, accessible English. Structure your response with clean formatting and typography (using Markdown bold, italics, or lists where helpful to make the details highly readable). Limit your response to a maximum of 15 sentences.
+
+ETHICAL & ETHNICITY DIRECTIVES (Magnifica Humanitas):
+- Respect human dignity and truth: do not invent facts, speculative doctrines, or non-authentic interpretations.
+- Maintain transparency: this context is an AI-assisted tool intended to aid reflection, pointing the believer back to prayer, Sacred Tradition, and real community life.
 
 CRITICAL CITATION RULES:
 

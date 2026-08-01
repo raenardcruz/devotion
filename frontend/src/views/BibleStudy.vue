@@ -503,9 +503,17 @@ const getSnippet = (text: string) => {
               <!-- Card Header -->
               <header class="flex items-start justify-between gap-4">
                 <div class="text-left">
-                  <span class="text-[9px] font-bold text-parchment-primary uppercase tracking-widest block mb-0.5">
-                    {{ formatDate(item.timestamp) }}
-                  </span>
+                  <div class="flex items-center gap-2 mb-1 flex-wrap">
+                    <span class="text-[9px] font-bold text-parchment-primary uppercase tracking-widest">
+                      {{ formatDate(item.timestamp) }}
+                    </span>
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100/80 text-amber-900 border border-amber-300/60">
+                      📖 Sacred Scripture
+                    </span>
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-900 border border-blue-200/80">
+                      🤖 AI-Generated
+                    </span>
+                  </div>
                   <h3 class="font-serif text-lg md:text-xl font-bold text-parchment-primary-dark">
                     {{ item.citation }}
                   </h3>
@@ -549,7 +557,12 @@ const getSnippet = (text: string) => {
                 <div v-if="expandedIds.has(item.id)" class="mt-5 space-y-5 border-t border-parchment-border/40 pt-4 cursor-default" @click.stop>
                   <!-- Scripture Text -->
                   <div>
-                    <h4 class="text-[9px] font-bold text-parchment-neutral/40 uppercase tracking-widest mb-2">Scripture Text</h4>
+                    <div class="flex items-center justify-between mb-2">
+                      <h4 class="text-[9px] font-bold text-parchment-neutral/40 uppercase tracking-widest">Scripture Text</h4>
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100/80 text-amber-900 border border-amber-300/60">
+                        📖 Sacred Scripture
+                      </span>
+                    </div>
                     <div class="prose max-w-none">
                       <blockquote class="border-l-2 border-parchment-border pl-4 font-serif text-base md:text-lg text-parchment-neutral/95 leading-relaxed whitespace-pre-line" v-html="item.content"></blockquote>
                       <p v-if="item.copyright" class="text-[9px] text-parchment-neutral/35 mt-2 ml-4">
@@ -560,15 +573,20 @@ const getSnippet = (text: string) => {
 
                   <!-- Theological Context -->
                   <div class="bg-parchment-bg border-l-4 border-parchment-primary rounded-2xl p-5 shadow-inner">
-                    <div class="flex items-center gap-1.5 mb-2">
-                      <span class="text-parchment-primary-dark">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <line x1="12" x2="12" y1="16" y2="12"></line>
-                          <line x1="12" x2="12.01" y1="8" y2="8"></line>
-                        </svg>
+                    <div class="flex items-center justify-between mb-2">
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-parchment-primary-dark">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" x2="12" y1="16" y2="12"></line>
+                            <line x1="12" x2="12.01" y1="8" y2="8"></line>
+                          </svg>
+                        </span>
+                        <h4 class="text-[10px] font-bold text-parchment-primary-dark uppercase tracking-wider">Historical & Theological Commentary</h4>
+                      </div>
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-900 border border-blue-200/80">
+                        🤖 AI-Generated
                       </span>
-                      <h4 class="text-[10px] font-bold text-parchment-primary-dark uppercase tracking-wider">Historical & Theological Commentary</h4>
                     </div>
                     <div class="prose max-w-none text-parchment-neutral/85" v-html="renderMarkdown(item.context)"></div>
                   </div>

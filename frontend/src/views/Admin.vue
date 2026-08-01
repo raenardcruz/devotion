@@ -219,49 +219,43 @@ const saveSettings = async () => {
           </AppButton>
         </div>
 
+        <!-- Magnifica Humanitas Ethical AI Banner -->
+        <div class="bg-amber-100/60 border border-amber-300/70 rounded-xl p-4 text-amber-950 flex items-start space-x-3 text-xs shadow-xs">
+          <span class="text-base flex-shrink-0">📜</span>
+          <div class="space-y-1">
+            <div class="font-bold text-amber-900 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+              Ethical AI & Data Privacy Principles (Magnifica Humanitas)
+            </div>
+            <p class="text-amber-900/80 font-serif leading-relaxed">
+              In accordance with Pope Leo XIV's encyclical <em>Magnifica Humanitas</em>, AI tools must serve human dignity, preserve truth in Sacred Scripture & Magisterium, and remain transparent.
+            </p>
+            <div class="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-amber-800 font-semibold pt-1">
+              <span>🛡️ Local Ollama mode preserves data privacy on-device.</span>
+              <span>🏷️ All generated reflections are explicitly tagged in the UI.</span>
+            </div>
+          </div>
+        </div>
+
         <div v-if="message" class="p-4 rounded border text-sm font-medium" :class="message.type === 'success' ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : 'bg-red-50 border-red-300 text-red-800'">
           {{ message.text }}
         </div>
 
         <ParchmentCard class="p-6 space-y-6 border border-amber-200 shadow-sm">
-          <!-- Provider Selection -->
+          <!-- Pipeline Architecture Information -->
           <div>
             <label class="block font-serif font-bold text-amber-950 text-base mb-2">
-              AI Generation Provider for Bible Context
+              AI Generation & Fact-Checking Pipeline
             </label>
-            <p class="text-xs text-stone-600 mb-3">Choose which AI provider generates scripture analysis & context.</p>
-            <div class="grid grid-cols-2 gap-4">
-              <label
-                class="flex items-center p-3 border rounded cursor-pointer transition-colors"
-                :class="settings.context_provider === 'ollama' ? 'border-amber-600 bg-amber-100/50 font-semibold text-amber-950' : 'border-amber-200 bg-white/50 text-stone-700'"
-              >
-                <input
-                  type="radio"
-                  value="ollama"
-                  v-model="settings.context_provider"
-                  class="mr-3 text-amber-600 focus:ring-amber-500"
-                />
-                <div>
-                  <span class="block text-sm">Ollama (Local / Self-hosted)</span>
-                  <span class="block text-xs text-stone-500">Uses local Ollama model</span>
-                </div>
-              </label>
-
-              <label
-                class="flex items-center p-3 border rounded cursor-pointer transition-colors"
-                :class="settings.context_provider === 'gemini' ? 'border-amber-600 bg-amber-100/50 font-semibold text-amber-950' : 'border-amber-200 bg-white/50 text-stone-700'"
-              >
-                <input
-                  type="radio"
-                  value="gemini"
-                  v-model="settings.context_provider"
-                  class="mr-3 text-amber-600 focus:ring-amber-500"
-                />
-                <div>
-                  <span class="block text-sm">Google Gemini</span>
-                  <span class="block text-xs text-stone-500">Uses Gemini model & cloud API</span>
-                </div>
-              </label>
+            <p class="text-xs text-stone-600 mb-3">System architecture for scripture analysis and context verification:</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="p-3 border border-amber-300 bg-amber-100/50 rounded text-amber-950">
+                <span class="block text-sm font-semibold">1. Context Generation (Ollama)</span>
+                <span class="block text-xs text-stone-600">Uses local Ollama model to generate historical & theological context.</span>
+              </div>
+              <div class="p-3 border border-amber-300 bg-amber-100/50 rounded text-amber-950">
+                <span class="block text-sm font-semibold">2. Fact Check & Correct (Gemini)</span>
+                <span class="block text-xs text-stone-600">Uses Google Gemini to fact check, verify citations, and correct errors while preserving format.</span>
+              </div>
             </div>
           </div>
 
@@ -312,7 +306,7 @@ const saveSettings = async () => {
           </div>
 
           <!-- Ollama Model Selection -->
-          <div v-if="settings.context_provider === 'ollama'" class="pt-2">
+          <div class="pt-2">
             <label class="block font-serif font-semibold text-amber-950 text-sm mb-1">
               Ollama Model Selection
             </label>
