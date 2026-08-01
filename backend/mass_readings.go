@@ -35,7 +35,7 @@ func get_mass_readings(ctx tool.Context, args GetMassReadingsArgs) (GetMassReadi
 	} else {
 		targetDate = time.Now().Format("010206")
 	}
-	url := fmt.Sprintf("https://bible.usccb.org/bible/readings/%s.cfm", targetDate)
+	url := fmt.Sprintf("https://bible.usccb.org/bible/readings/%s", targetDate)
 
 	c := colly.NewCollector(
 		colly.AllowedDomains("bible.usccb.org"),
