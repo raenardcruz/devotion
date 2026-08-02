@@ -2,12 +2,14 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/url"
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/lib/pq"
 )
@@ -206,10 +208,18 @@ func InitDB() {
 		context_instruction TEXT NOT NULL DEFAULT '',
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		CONSTRAINT single_row CHECK (id = 1)
+	);
+	
+	CREATE TABLE IF NOT EXISTS public_chat_conversations (
+		id VARCHAR(100) PRIMARY KEY,
+		author_name VARCHAR(100) NOT NULL,
+		title VARCHAR(200) NOT NULL,
+		messages JSONB NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`
 
 	if _, err := db.Exec(createTableQuery); err != nil {
-		log.Printf("[InitDB] Error creating settings table: %v", err)
+		log.Printf("[InitDB] Error creating tables: %v", err)
 		return
 	}
 
@@ -332,4 +342,78 @@ func SaveSettings(s Settings) error {
 
 	log.Println("[SaveSettings] Settings updated successfully in PostgreSQL")
 	return nil
+}
+
+type PublicConversation struct {
+	ID         string      `json:"id"`
+	AuthorName string      `json:"author_name"`
+	Title      string      `json:"title"`
+	Messages   interface{} `json:"messages"`
+	CreatedAt  string      `json:"created_at"`
+}
+
+var memoryPublicConversations []PublicConversation
+
+func SavePublicConversation(id, authorName, title string, messagesJSON []byte) error {
+	var msgs interface{}
+	json.Unmarshal(messagesJSON, &msgs)
+
+	pub := PublicConversation{
+		ID:         id,
+		AuthorName: authorName,
+		Title:      title,
+		Messages:   msgs,
+		CreatedAt:  time.Now().Format(time.RFC3339),
+	}
+
+	memoryPublicConversations = append([]PublicConversation{pub}, memoryPublicConversations...)
+
+	if db == nil || db.Ping() != nil {
+		log.Println("[SavePublicConversation] DB unavailable, saved to memory")
+		return nil
+	}
+
+	query := `
+	INSERT INTO public_chat_conversations (id, author_name, title, messages, created_at)
+	VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+	ON CONFLICT (id) DO UPDATE SET
+		author_name = EXCLUDED.author_name,
+		title = EXCLUDED.title,
+		messages = EXCLUDED.messages;`
+
+	_, err := db.Exec(query, id, authorName, title, string(messagesJSON))
+	if err != nil {
+		log.Printf("[SavePublicConversation] Error saving conversation: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func GetPublicConversations() ([]PublicConversation, error) {
+	if db == nil || db.Ping() != nil {
+		return memoryPublicConversations, nil
+	}
+
+	query := `SELECT id, author_name, title, messages, created_at FROM public_chat_conversations ORDER BY created_at DESC LIMIT 50`
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Printf("[GetPublicConversations] Query error: %v", err)
+		return memoryPublicConversations, nil
+	}
+	defer rows.Close()
+
+	var result []PublicConversation
+	for rows.Next() {
+		var pc PublicConversation
+		var msgsRaw string
+		var t time.Time
+		if err := rows.Scan(&pc.ID, &pc.AuthorName, &pc.Title, &msgsRaw, &t); err == nil {
+			pc.CreatedAt = t.Format(time.RFC3339)
+			json.Unmarshal([]byte(msgsRaw), &pc.Messages)
+			result = append(result, pc)
+		}
+	}
+
+	return result, nil
 }

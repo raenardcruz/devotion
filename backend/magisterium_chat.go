@@ -274,3 +274,62 @@ func magisteriumChatHandler(w http.ResponseWriter, r *http.Request) {
 		Usage:     usageInfo,
 	})
 }
+
+type SavePublicConversationRequest struct {
+	ID         string          `json:"id"`
+	AuthorName string          `json:"author_name"`
+	Title      string          `json:"title"`
+	Messages   json.RawMessage `json:"messages"`
+}
+
+func publicConversationsSaveHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req SavePublicConversationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	if strings.TrimSpace(req.AuthorName) == "" {
+		respondWithError(w, http.StatusBadRequest, "Author name is required")
+		return
+	}
+
+	if strings.TrimSpace(req.ID) == "" || len(req.Messages) == 0 {
+		respondWithError(w, http.StatusBadRequest, "Conversation ID and messages are required")
+		return
+	}
+
+	if err := SavePublicConversation(req.ID, req.AuthorName, req.Title, req.Messages); err != nil {
+		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to publish conversation: %v", err))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Conversation successfully published to public sanctuary database!",
+	})
+}
+
+func publicConversationsListHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	list, err := GetPublicConversations()
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to retrieve public conversations")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"conversations": list,
+	})
+}

@@ -51,17 +51,29 @@
       <!-- Main Layout: Sidebar & Chat Container -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow items-start">
         
-        <!-- Sidebar Navigation: Chat Sessions -->
+        <!-- Sidebar Navigation: Local & Public Chat Sessions -->
         <aside class="lg:col-span-4 xl:col-span-3 bg-parchment-neutral-light/80 border border-parchment-border rounded-3xl p-4 flex flex-col shadow-sm h-full max-h-[750px] backdrop-blur-xs">
-          <!-- Sidebar Header -->
-          <div class="flex items-center justify-between pb-3 mb-3 border-b border-parchment-border/60">
-            <div class="flex items-center space-x-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-parchment-primary">
-                <path d="M12 20h9"></path>
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-              </svg>
-              <span class="font-serif font-bold text-xs uppercase tracking-wider text-parchment-primary-dark">Saved Conversations</span>
-            </div>
+          <!-- Sidebar Tabs -->
+          <div class="grid grid-cols-2 gap-1 p-1 bg-parchment-bg border border-parchment-border/60 rounded-2xl mb-3 text-center text-xs font-serif font-bold">
+            <button 
+              @click="sidebarTab = 'local'"
+              class="py-1.5 rounded-xl transition-all"
+              :class="[sidebarTab === 'local' ? 'bg-parchment-primary text-white shadow-2xs' : 'text-parchment-neutral/70 hover:text-parchment-primary-dark']"
+            >
+              My Chats
+            </button>
+            <button 
+              @click="sidebarTab = 'public'"
+              class="py-1.5 rounded-xl transition-all"
+              :class="[sidebarTab === 'public' ? 'bg-parchment-primary text-white shadow-2xs' : 'text-parchment-neutral/70 hover:text-parchment-primary-dark']"
+            >
+              Public Sanctuary
+            </button>
+          </div>
+
+          <!-- Sidebar Header for Local -->
+          <div v-if="sidebarTab === 'local'" class="flex items-center justify-between pb-3 mb-3 border-b border-parchment-border/60">
+            <span class="font-serif font-bold text-[11px] uppercase tracking-wider text-parchment-primary-dark">Saved Conversations</span>
             <button 
               @click="createNewSession" 
               class="text-xs bg-parchment-primary text-white px-3 py-1.5 rounded-xl font-semibold hover:bg-parchment-primary-dark transition-all shadow-xs flex items-center space-x-1"
@@ -70,8 +82,19 @@
             </button>
           </div>
 
-          <!-- Sessions Scroll List -->
-          <div class="overflow-y-auto space-y-2.5 flex-1 scrollbar-thin pr-1 max-h-[620px]">
+          <!-- Sidebar Header for Public -->
+          <div v-else class="flex items-center justify-between pb-3 mb-3 border-b border-parchment-border/60">
+            <span class="font-serif font-bold text-[11px] uppercase tracking-wider text-amber-950">Community Discussions</span>
+            <button 
+              @click="fetchPublicConversations" 
+              class="text-[11px] text-amber-900 hover:text-amber-950 underline font-semibold flex items-center space-x-1"
+            >
+              <span>Refresh</span>
+            </button>
+          </div>
+
+          <!-- Local Sessions Scroll List -->
+          <div v-if="sidebarTab === 'local'" class="overflow-y-auto space-y-2.5 flex-1 scrollbar-thin pr-1 max-h-[620px]">
             <div 
               v-for="session in chatSessions" 
               :key="session.id"
@@ -106,6 +129,35 @@
             <div v-if="chatSessions.length === 0" class="text-center py-8 px-4 text-xs text-parchment-neutral/50 italic space-y-2">
               <div class="text-2xl opacity-40">✍️</div>
               <p>No saved conversations yet. Click "+ New Chat" to begin a discussion.</p>
+            </div>
+          </div>
+
+          <!-- Public Conversations Scroll List -->
+          <div v-else class="overflow-y-auto space-y-2.5 flex-1 scrollbar-thin pr-1 max-h-[620px]">
+            <div 
+              v-for="pub in publicConversations" 
+              :key="pub.id"
+              @click="loadPublicSession(pub)"
+              class="p-3 rounded-2xl border text-left cursor-pointer transition-all flex items-center justify-between group relative overflow-hidden bg-amber-50/70 border-amber-200/80 hover:bg-amber-100/70"
+            >
+              <div class="min-w-0 flex-1 pr-2">
+                <div class="text-xs font-bold text-amber-950 truncate font-serif">
+                  {{ pub.title || 'Public Discussion' }}
+                </div>
+                <div class="text-[10px] text-amber-900/80 mt-1 flex items-center space-x-1.5 font-serif">
+                  <span class="font-semibold text-amber-950">By {{ pub.author_name }}</span>
+                  <span class="w-1 h-1 rounded-full bg-amber-400"></span>
+                  <span>{{ formatIsoDate(pub.created_at) }}</span>
+                </div>
+              </div>
+              <span class="text-[10px] bg-amber-200/80 text-amber-950 font-bold px-2 py-0.5 rounded-full border border-amber-300/60">
+                Shared 🌐
+              </span>
+            </div>
+
+            <div v-if="publicConversations.length === 0" class="text-center py-8 px-4 text-xs text-amber-900/60 italic space-y-2 font-serif">
+              <div class="text-2xl opacity-40">🌐</div>
+              <p>No public community chats published yet. Be the first to share your Q&A!</p>
             </div>
           </div>
         </aside>
@@ -297,8 +349,18 @@
                 </svg>
               </AppButton>
             </form>
-            <div class="mt-2.5 text-center flex items-center justify-between text-[11px] text-parchment-neutral/50 px-2 font-serif">
-              <span>Auto-saved to local browser storage</span>
+            <div class="mt-3 flex items-center justify-between text-[11px] text-parchment-neutral/60 px-1 font-serif border-t border-parchment-border/40 pt-2.5">
+              <div class="flex items-center space-x-2">
+                <span>Auto-saved to local browser storage</span>
+                <button 
+                  v-if="activeMessages.length > 0"
+                  @click="openPublishModal"
+                  class="ml-2 px-2.5 py-1 rounded-lg bg-amber-100/90 text-amber-950 border border-amber-300/80 font-bold hover:bg-amber-200 transition-all flex items-center space-x-1 shadow-2xs"
+                >
+                  <span>🌐 Publish to Public Sanctuary</span>
+                </button>
+              </div>
+
               <router-link to="/admin" class="hover:text-parchment-primary transition-colors flex items-center space-x-1">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 <span>API Settings</span>
@@ -308,6 +370,58 @@
         </div>
 
       </div>
+
+      <!-- Publish Conversation to Database Modal -->
+      <Teleport to="body">
+        <div v-if="showPublishModal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div class="bg-parchment-neutral-light border border-amber-300 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 font-serif relative">
+            <div class="flex items-center justify-between border-b border-parchment-border/60 pb-3">
+              <div class="flex items-center space-x-2">
+                <span class="text-xl">🌐</span>
+                <h3 class="font-serif text-lg font-bold text-parchment-primary-dark">Publish Conversation to Database</h3>
+              </div>
+              <button @click="showPublishModal = false" class="text-stone-400 hover:text-stone-700 text-lg">✕</button>
+            </div>
+
+            <!-- Public Warning Banner -->
+            <div class="bg-amber-100/70 border border-amber-300/80 rounded-2xl p-4 text-xs text-amber-950 space-y-1.5">
+              <div class="font-bold flex items-center space-x-1 text-amber-900 uppercase tracking-wider">
+                <span>⚠️ Public Community Disclosure</span>
+              </div>
+              <p class="leading-relaxed">
+                By publishing this discussion, it will be stored securely in the PostgreSQL database and <strong>made publicly visible to all users</strong> on the site under the <strong>Public Sanctuary</strong> tab.
+              </p>
+            </div>
+
+            <form @submit.prevent="submitPublishConversation" class="space-y-4 pt-1">
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-amber-950 mb-1">Your Name / Title</label>
+                <input 
+                  v-model="authorName" 
+                  type="text" 
+                  required 
+                  placeholder="e.g. Brother John, Maria, Pilgrim..."
+                  class="w-full px-4 py-2.5 bg-white border border-amber-300 rounded-xl text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-amber-500 font-sans"
+                />
+                <p class="text-[11px] text-stone-500 mt-1">This name will be attributed alongside your published conversation.</p>
+              </div>
+
+              <div v-if="publishMessage" class="p-3 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-xl text-xs font-semibold">
+                {{ publishMessage }}
+              </div>
+
+              <div class="flex justify-end space-x-3 pt-2">
+                <AppButton type="button" variant="secondary" @click="showPublishModal = false">
+                  Cancel
+                </AppButton>
+                <AppButton type="submit" variant="primary" :disabled="isPublishing || !authorName.trim()">
+                  {{ isPublishing ? 'Publishing...' : 'Confirm & Publish Publicly' }}
+                </AppButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      </Teleport>
     </main>
 
     <BottomNav />
@@ -356,17 +470,33 @@ interface MagisteriumResponse {
   usage?: ApiUsage;
 }
 
+interface PublicConversation {
+  id: string;
+  author_name: string;
+  title: string;
+  messages: ChatMessage[];
+  created_at: string;
+}
+
 const { fetchWithAuth } = useDevotionApi();
 
 const LOCAL_STORAGE_KEY = 'magisterium_chat_sessions_v1';
 
+const sidebarTab = ref<'local' | 'public'>('local');
 const chatSessions = ref<ChatSession[]>([]);
+const publicConversations = ref<PublicConversation[]>([]);
 const activeSessionId = ref<string>('');
 const inputQuery = ref('');
 const isLoading = ref(false);
 const chatError = ref<string | null>(null);
 const chatContainer = ref<HTMLDivElement | null>(null);
 const apiUsage = ref<ApiUsage | null>(null);
+
+// Modal & Publish State
+const showPublishModal = ref(false);
+const authorName = ref('');
+const isPublishing = ref(false);
+const publishMessage = ref<string | null>(null);
 
 const activeMessages = computed(() => {
   const current = chatSessions.value.find(s => s.id === activeSessionId.value);
@@ -375,6 +505,7 @@ const activeMessages = computed(() => {
 
 onMounted(() => {
   loadSessionsFromLocalStorage();
+  fetchPublicConversations();
   const first = chatSessions.value[0];
   if (first) {
     activeSessionId.value = first.id;
@@ -382,6 +513,84 @@ onMounted(() => {
     createNewSession();
   }
 });
+
+const fetchPublicConversations = async () => {
+  try {
+    const res = await fetchWithAuth<{ conversations: PublicConversation[] }>('/magisterium/conversations/public');
+    if (res && res.conversations) {
+      publicConversations.value = res.conversations;
+    }
+  } catch (err) {
+    console.error('Failed to fetch public conversations:', err);
+  }
+};
+
+const openPublishModal = () => {
+  publishMessage.value = null;
+  showPublishModal.value = true;
+};
+
+const submitPublishConversation = async () => {
+  const current = chatSessions.value.find(s => s.id === activeSessionId.value);
+  if (!current || current.messages.length === 0 || !authorName.value.trim()) return;
+
+  isPublishing.value = true;
+  publishMessage.value = null;
+
+  try {
+    const payload = {
+      id: current.id,
+      author_name: authorName.value.trim(),
+      title: current.title || 'Magisterium AI Reflection',
+      messages: current.messages,
+    };
+
+    await fetchWithAuth('/magisterium/conversations/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    publishMessage.value = 'Conversation successfully published! It is now visible to all users under Public Sanctuary.';
+    fetchPublicConversations();
+    setTimeout(() => {
+      showPublishModal.value = false;
+      sidebarTab.value = 'public';
+    }, 1500);
+  } catch (err: any) {
+    chatError.value = err.message || 'Failed to publish conversation to database.';
+  } finally {
+    isPublishing.value = false;
+  }
+};
+
+const loadPublicSession = (pub: PublicConversation) => {
+  // Load public conversation as a readable local chat session
+  let existing = chatSessions.value.find(s => s.id === pub.id);
+  if (!existing) {
+    existing = {
+      id: pub.id,
+      title: `[Public] ${pub.title} (${pub.author_name})`,
+      updatedAt: new Date(pub.created_at).getTime() || Date.now(),
+      messages: pub.messages || [],
+    };
+    chatSessions.value.unshift(existing);
+  }
+  activeSessionId.value = existing.id;
+  scrollToBottom();
+};
+
+const formatIsoDate = (isoStr: string) => {
+  if (!isoStr) return '';
+  try {
+    return new Date(isoStr).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+    });
+  } catch {
+    return isoStr;
+  }
+};
 
 const loadSessionsFromLocalStorage = () => {
   try {
