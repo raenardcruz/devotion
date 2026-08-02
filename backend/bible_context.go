@@ -10,7 +10,6 @@ import (
 	"github.com/raenardcruz/ollama-adk-wrapper"
 	"google.golang.org/adk/model"
 	geminiModel "google.golang.org/adk/model/gemini"
-	"google.golang.org/adk/tool"
 	"google.golang.org/genai"
 )
 
@@ -21,10 +20,6 @@ type BibleContext struct {
 
 type GetBibleContextArgs struct {
 	Citation string `json:"citation"`
-}
-
-func get_bible_context_tool(ctx tool.Context, args GetBibleContextArgs) (BibleContext, error) {
-	return get_bible_context(ctx, args)
 }
 
 func get_bible_context(ctx context.Context, args GetBibleContextArgs) (BibleContext, error) {
@@ -62,36 +57,77 @@ func get_bible_context(ctx context.Context, args GetBibleContextArgs) (BibleCont
 		},
 	}
 
-	// Context generation draft always uses Ollama
-	ollamaURL := os.Getenv("OLLAMA_URL")
-	if ollamaURL == "" {
-		ollamaURL = "http://localhost:11434"
-	}
-	selectedModelName := settings.OllamaModel
-	if selectedModelName == "" {
-		selectedModelName = "gemma4:cloud"
-	}
-
-	log.Printf("[get_bible_context] Generating draft bible context for %s with ollama (%s)...\n", args.Citation, selectedModelName)
-	oModel := ollama.NewModel(selectedModelName, ollamaURL)
-	seq := oModel.GenerateContent(ctx, req, false)
-
 	var contextText strings.Builder
-	for resp, err := range seq {
-		if err != nil {
-			return BibleContext{}, fmt.Errorf("error generating bible context with ollama: %w", err)
+
+	if settings.ContextProvider == "gemini" {
+		apiKey := settings.GeminiAPIKey
+		if apiKey == "" {
+			return BibleContext{}, fmt.Errorf("Gemini API key not configured in settings")
 		}
-		if resp.Content != nil {
-			for _, part := range resp.Content.Parts {
-				if part.Text != "" {
-					contextText.WriteString(part.Text)
+		selectedModelName := settings.GeminiModel
+		if selectedModelName == "" {
+			selectedModelName = "gemini-3.1-flash-lite"
+		}
+		log.Printf("[get_bible_context] Generating draft bible context for %s with Gemini (%s)...\n", args.Citation, selectedModelName)
+		gModel, err := geminiModel.NewModel(ctx, selectedModelName, &genai.ClientConfig{
+			APIKey: apiKey,
+		})
+		if err != nil {
+			return BibleContext{}, fmt.Errorf("failed to create gemini model: %w", err)
+		}
+		seq := gModel.GenerateContent(ctx, req, false)
+		for resp, err := range seq {
+			if err != nil {
+				return BibleContext{}, fmt.Errorf("error generating bible context with gemini: %w", err)
+			}
+			if resp.Content != nil {
+				for _, part := range resp.Content.Parts {
+					if part.Text != "" {
+						contextText.WriteString(part.Text)
+					}
+				}
+			}
+		}
+	} else {
+		// Context generation defaults to Ollama
+		ollamaURL := os.Getenv("OLLAMA_URL")
+		if ollamaURL == "" {
+			ollamaURL = "http://localhost:11434"
+		}
+		selectedModelName := settings.OllamaModel
+		if selectedModelName == "" {
+			selectedModelName = "gemma4:cloud"
+		}
+
+		log.Printf("[get_bible_context] Generating draft bible context for %s with Ollama (%s)...\n", args.Citation, selectedModelName)
+		oModel := ollama.NewModel(selectedModelName, ollamaURL)
+		seq := oModel.GenerateContent(ctx, req, false)
+
+		for resp, err := range seq {
+			if err != nil {
+				return BibleContext{}, fmt.Errorf("error generating bible context with ollama: %w", err)
+			}
+			if resp.Content != nil {
+				for _, part := range resp.Content.Parts {
+					if part.Text != "" {
+						contextText.WriteString(part.Text)
+					}
 				}
 			}
 		}
 	}
 
-	log.Printf("[get_bible_context] Generated draft bible context for %s successfully with Ollama. Running Gemini fact-check & correction...\n", args.Citation)
 	rawContext := contextText.String()
+
+	if !settings.EnableFactChecker {
+		log.Printf("[get_bible_context] Fact checker is disabled in settings. Returning raw draft context for %s.\n", args.Citation)
+		return BibleContext{
+			Citation: args.Citation,
+			Context:  rawContext,
+		}, nil
+	}
+
+	log.Printf("[get_bible_context] Generated draft bible context for %s successfully. Running fact-check & correction...\n", args.Citation)
 
 	factCheckedContext, err := FactCheckBibleContext(ctx, args.Citation, rawContext, passageText)
 	if err != nil {
@@ -134,35 +170,62 @@ Fact-Checking Instructions:
 		},
 	}
 
-	// Fact checking always uses Gemini
-	apiKey := settings.GeminiAPIKey
-	if apiKey == "" {
-		log.Printf("[FactCheckBibleContext] Warning: Gemini API key not configured in settings. Returning raw context.")
-		return rawContext, nil
-	}
-	selectedModelName := settings.GeminiModel
-	if selectedModelName == "" {
-		selectedModelName = "gemini-3.1-flash-lite"
-	}
-
-	log.Printf("[FactCheckBibleContext] Fact checking context for %s using Gemini (%s)...\n", citation, selectedModelName)
-	gModel, err := geminiModel.NewModel(ctx, selectedModelName, &genai.ClientConfig{
-		APIKey: apiKey,
-	})
-	if err != nil {
-		return rawContext, fmt.Errorf("failed to create gemini model for fact check: %w", err)
-	}
-	seq := gModel.GenerateContent(ctx, req, false)
-
 	var correctedText strings.Builder
-	for resp, err := range seq {
-		if err != nil {
-			return rawContext, fmt.Errorf("error generating fact-check correction: %w", err)
+
+	if settings.FactCheckerProvider == "ollama" {
+		ollamaURL := os.Getenv("OLLAMA_URL")
+		if ollamaURL == "" {
+			ollamaURL = "http://localhost:11434"
 		}
-		if resp.Content != nil {
-			for _, part := range resp.Content.Parts {
-				if part.Text != "" {
-					correctedText.WriteString(part.Text)
+		selectedModelName := settings.OllamaModel
+		if selectedModelName == "" {
+			selectedModelName = "gemma4:cloud"
+		}
+		log.Printf("[FactCheckBibleContext] Fact checking context for %s using Ollama (%s)...\n", citation, selectedModelName)
+		oModel := ollama.NewModel(selectedModelName, ollamaURL)
+		seq := oModel.GenerateContent(ctx, req, false)
+		for resp, err := range seq {
+			if err != nil {
+				return rawContext, fmt.Errorf("error generating fact-check correction with ollama: %w", err)
+			}
+			if resp.Content != nil {
+				for _, part := range resp.Content.Parts {
+					if part.Text != "" {
+						correctedText.WriteString(part.Text)
+					}
+				}
+			}
+		}
+	} else {
+		// Fact checking default: Gemini
+		apiKey := settings.GeminiAPIKey
+		if apiKey == "" {
+			log.Printf("[FactCheckBibleContext] Warning: Gemini API key not configured in settings. Returning raw context.")
+			return rawContext, nil
+		}
+		selectedModelName := settings.GeminiModel
+		if selectedModelName == "" {
+			selectedModelName = "gemini-3.1-flash-lite"
+		}
+
+		log.Printf("[FactCheckBibleContext] Fact checking context for %s using Gemini (%s)...\n", citation, selectedModelName)
+		gModel, err := geminiModel.NewModel(ctx, selectedModelName, &genai.ClientConfig{
+			APIKey: apiKey,
+		})
+		if err != nil {
+			return rawContext, fmt.Errorf("failed to create gemini model for fact check: %w", err)
+		}
+		seq := gModel.GenerateContent(ctx, req, false)
+
+		for resp, err := range seq {
+			if err != nil {
+				return rawContext, fmt.Errorf("error generating fact-check correction: %w", err)
+			}
+			if resp.Content != nil {
+				for _, part := range resp.Content.Parts {
+					if part.Text != "" {
+						correctedText.WriteString(part.Text)
+					}
 				}
 			}
 		}

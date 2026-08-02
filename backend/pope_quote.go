@@ -7,24 +7,19 @@ import (
 	"time"
 
 	"github.com/gocolly/colly"
-	"google.golang.org/adk/tool"
 )
-
-type GetPopeQuoteArgs struct {
-	Date string `json:"date"` // Format: YYYY-MM-DD
-}
 
 type GetPopeQuoteResponse struct {
 	Text string `json:"text"`
 }
 
-func get_pope_quote(ctx tool.Context, args GetPopeQuoteArgs) (GetPopeQuoteResponse, error) {
+func get_pope_quote(dateStr string) (GetPopeQuoteResponse, error) {
 	var t time.Time
 	var err error
-	if args.Date != "" {
-		t, err = time.Parse("2006-01-02", args.Date)
+	if dateStr != "" {
+		t, err = time.Parse("2006-01-02", dateStr)
 		if err != nil {
-			log.Printf("[get_pope_quote] Error parsing date %s, falling back to today: %v", args.Date, err)
+			log.Printf("[get_pope_quote] Error parsing date %s, falling back to today: %v", dateStr, err)
 			t = time.Now()
 		}
 	} else {
