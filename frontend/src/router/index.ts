@@ -54,7 +54,7 @@ const router = createRouter({
             component: BibleStudy
         },
         {
-            path: '/magisterium-chat',
+            path: '/magisterium-chat/:id?',
             name: 'MagisteriumChat',
             component: MagisteriumChat
         },

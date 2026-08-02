@@ -46,6 +46,14 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
           </a>
         </div>
+
+        <!-- Copy Toast Banner -->
+        <transition name="fade">
+          <div v-if="copyNotice" class="mt-3 max-w-md mx-auto p-2.5 bg-emerald-100 border border-emerald-300 text-emerald-950 font-bold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-2">
+            <span>✅</span>
+            <span>{{ copyNotice }}</span>
+          </div>
+        </transition>
       </div>
 
       <!-- Main Layout: Sidebar & Chat Container -->
@@ -139,6 +147,7 @@
               :key="pub.id"
               @click="loadPublicSession(pub)"
               class="p-3 rounded-2xl border text-left cursor-pointer transition-all flex items-center justify-between group relative overflow-hidden bg-amber-50/70 border-amber-200/80 hover:bg-amber-100/70"
+              :class="[activeSessionId === pub.id ? 'ring-2 ring-amber-500 bg-amber-100/90' : '']"
             >
               <div class="min-w-0 flex-1 pr-2">
                 <div class="text-xs font-bold text-amber-950 truncate font-serif">
@@ -150,9 +159,13 @@
                   <span>{{ formatIsoDate(pub.created_at) }}</span>
                 </div>
               </div>
-              <span class="text-[10px] bg-amber-200/80 text-amber-950 font-bold px-2 py-0.5 rounded-full border border-amber-300/60">
-                Shared 🌐
-              </span>
+              <button 
+                @click.stop="copyPublicShareLink(pub.id)"
+                class="text-[10px] bg-amber-200/90 hover:bg-amber-300 text-amber-950 font-bold px-2 py-1 rounded-lg border border-amber-300 flex items-center space-x-1 transition-colors"
+                title="Copy Public Share Link"
+              >
+                <span>🔗 Share</span>
+              </button>
             </div>
 
             <div v-if="publicConversations.length === 0" class="text-center py-8 px-4 text-xs text-amber-900/60 italic space-y-2 font-serif">
@@ -430,6 +443,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue';
+import { useRoute } from 'vue-router';
 import TopNav from '../components/common/TopNav.vue';
 import BottomNav from '../components/common/BottomNav.vue';
 import AppButton from '../components/common/AppButton.vue';
@@ -478,6 +492,7 @@ interface PublicConversation {
   created_at: string;
 }
 
+const route = useRoute();
 const { fetchWithAuth } = useDevotionApi();
 
 const LOCAL_STORAGE_KEY = 'magisterium_chat_sessions_v1';
@@ -492,6 +507,9 @@ const chatError = ref<string | null>(null);
 const chatContainer = ref<HTMLDivElement | null>(null);
 const apiUsage = ref<ApiUsage | null>(null);
 
+// Toast Banner / Copy state
+const copyNotice = ref<string | null>(null);
+
 // Modal & Publish State
 const showPublishModal = ref(false);
 const authorName = ref('');
@@ -503,9 +521,21 @@ const activeMessages = computed(() => {
   return current ? current.messages : [];
 });
 
-onMounted(() => {
+onMounted(async () => {
   loadSessionsFromLocalStorage();
-  fetchPublicConversations();
+  await fetchPublicConversations();
+
+  // Check if route has shared public conversation ID param
+  const paramId = route.params.id as string;
+  if (paramId) {
+    const pub = publicConversations.value.find(p => p.id === paramId);
+    if (pub) {
+      sidebarTab.value = 'public';
+      loadPublicSession(pub);
+      return;
+    }
+  }
+
   const first = chatSessions.value[0];
   if (first) {
     activeSessionId.value = first.id;
@@ -513,6 +543,27 @@ onMounted(() => {
     createNewSession();
   }
 });
+
+const copyPublicShareLink = (id: string) => {
+  const baseUrl = window.location.origin + window.location.pathname;
+  const shareUrl = `${baseUrl}#/magisterium-chat/${id}`;
+  
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(shareUrl);
+  } else {
+    const textArea = document.createElement("textarea");
+    textArea.value = shareUrl;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+  }
+
+  copyNotice.value = 'Public Share Link copied to clipboard!';
+  setTimeout(() => {
+    copyNotice.value = null;
+  }, 3000);
+};
 
 const fetchPublicConversations = async () => {
   try {
