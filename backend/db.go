@@ -16,6 +16,7 @@ type Settings struct {
 	ContextProvider     string `json:"context_provider"`
 	FactCheckerProvider string `json:"fact_checker_provider"`
 	GeminiAPIKey        string `json:"gemini_api_key"`
+	MagisteriumAPIKey   string `json:"magisterium_api_key"`
 	BibleAPIKey         string `json:"bible_api_key"`
 	GeminiModel         string `json:"gemini_model"`
 	OllamaModel         string `json:"ollama_model"`
@@ -51,6 +52,7 @@ func getDefaultSettings() Settings {
 		ContextProvider:     "ollama",
 		FactCheckerProvider: "gemini",
 		GeminiAPIKey:        "",
+		MagisteriumAPIKey:   "",
 		BibleAPIKey:         "",
 		GeminiModel:         "gemini-3.1-flash-lite",
 		OllamaModel:         "gemma4:cloud",
@@ -213,6 +215,7 @@ func InitDB() {
 
 	// Migrations for missing columns on existing tables
 	migrations := []string{
+		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS magisterium_api_key TEXT NOT NULL DEFAULT '';`,
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS bible_api_key TEXT NOT NULL DEFAULT '';`,
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS gemini_model VARCHAR(100) NOT NULL DEFAULT 'gemini-3.1-flash-lite';`,
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS ollama_model VARCHAR(100) NOT NULL DEFAULT 'gemma4:cloud';`,
@@ -227,8 +230,8 @@ func InitDB() {
 
 	// Insert initial default settings if empty
 	insertDefaultQuery := `
-	INSERT INTO settings (id, context_provider, fact_checker_provider, gemini_api_key, bible_api_key, gemini_model, ollama_model, context_model, context_instruction, enable_fact_checker)
-	VALUES (1, 'ollama', 'gemini', '', '', 'gemini-3.1-flash-lite', 'gemma4:cloud', 'gemma4:cloud', $1, true)
+	INSERT INTO settings (id, context_provider, fact_checker_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, ollama_model, context_model, context_instruction, enable_fact_checker)
+	VALUES (1, 'ollama', 'gemini', '', '', '', 'gemini-3.1-flash-lite', 'gemma4:cloud', 'gemma4:cloud', $1, true)
 	ON CONFLICT (id) DO NOTHING;`
 
 	if _, err := db.Exec(insertDefaultQuery, defaultInstruction); err != nil {
@@ -241,11 +244,11 @@ func GetSettings() Settings {
 		return memorySettings
 	}
 
-	query := `SELECT context_provider, fact_checker_provider, gemini_api_key, bible_api_key, gemini_model, ollama_model, context_model, context_instruction, enable_fact_checker FROM settings WHERE id = 1`
+	query := `SELECT context_provider, fact_checker_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, ollama_model, context_model, context_instruction, enable_fact_checker FROM settings WHERE id = 1`
 	row := db.QueryRow(query)
 
 	var s Settings
-	err := row.Scan(&s.ContextProvider, &s.FactCheckerProvider, &s.GeminiAPIKey, &s.BibleAPIKey, &s.GeminiModel, &s.OllamaModel, &s.ContextModel, &s.ContextInstruction, &s.EnableFactChecker)
+	err := row.Scan(&s.ContextProvider, &s.FactCheckerProvider, &s.GeminiAPIKey, &s.MagisteriumAPIKey, &s.BibleAPIKey, &s.GeminiModel, &s.OllamaModel, &s.ContextModel, &s.ContextInstruction, &s.EnableFactChecker)
 	if err != nil {
 		log.Printf("[GetSettings] Warning scanning row: %v. Returning current memory settings.", err)
 		return memorySettings
@@ -306,12 +309,13 @@ func SaveSettings(s Settings) error {
 	}
 
 	query := `
-	INSERT INTO settings (id, context_provider, fact_checker_provider, gemini_api_key, bible_api_key, gemini_model, ollama_model, context_model, context_instruction, enable_fact_checker, updated_at)
-	VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
+	INSERT INTO settings (id, context_provider, fact_checker_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, ollama_model, context_model, context_instruction, enable_fact_checker, updated_at)
+	VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP)
 	ON CONFLICT (id) DO UPDATE SET
 		context_provider = EXCLUDED.context_provider,
 		fact_checker_provider = EXCLUDED.fact_checker_provider,
 		gemini_api_key = EXCLUDED.gemini_api_key,
+		magisterium_api_key = EXCLUDED.magisterium_api_key,
 		bible_api_key = EXCLUDED.bible_api_key,
 		gemini_model = EXCLUDED.gemini_model,
 		ollama_model = EXCLUDED.ollama_model,
@@ -320,7 +324,7 @@ func SaveSettings(s Settings) error {
 		enable_fact_checker = EXCLUDED.enable_fact_checker,
 		updated_at = CURRENT_TIMESTAMP;`
 
-	_, err := db.Exec(query, s.ContextProvider, s.FactCheckerProvider, s.GeminiAPIKey, s.BibleAPIKey, s.GeminiModel, s.OllamaModel, s.ContextModel, s.ContextInstruction, s.EnableFactChecker)
+	_, err := db.Exec(query, s.ContextProvider, s.FactCheckerProvider, s.GeminiAPIKey, s.MagisteriumAPIKey, s.BibleAPIKey, s.GeminiModel, s.OllamaModel, s.ContextModel, s.ContextInstruction, s.EnableFactChecker)
 	if err != nil {
 		log.Printf("[SaveSettings] Error saving settings to postgres: %v", err)
 		return err

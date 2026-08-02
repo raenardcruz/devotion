@@ -7,6 +7,7 @@ import Catechism from '../views/Catechism.vue'
 import DailyMassReadings from '../views/DailyMassReadings.vue'
 import Resources from '../views/Resources.vue'
 import BibleStudy from '../views/BibleStudy.vue'
+import MagisteriumChat from '../views/MagisteriumChat.vue'
 import Admin from '../views/Admin.vue'
 
 const router = createRouter({
@@ -51,6 +52,11 @@ const router = createRouter({
             path: '/bible-study',
             name: 'BibleStudy',
             component: BibleStudy
+        },
+        {
+            path: '/magisterium-chat',
+            name: 'MagisteriumChat',
+            component: MagisteriumChat
         },
         {
             path: '/admin',
