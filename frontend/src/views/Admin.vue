@@ -8,12 +8,14 @@ import { useDevotionApi } from '../composables/useDevotionApi';
 
 interface Settings {
   context_provider: string;
+  fact_checker_provider: string;
   gemini_api_key: string;
   bible_api_key: string;
   gemini_model: string;
   ollama_model: string;
   context_model?: string;
   context_instruction: string;
+  enable_fact_checker: boolean;
 }
 
 const { fetchWithAuth, isServerUnreachable } = useDevotionApi();
@@ -28,11 +30,13 @@ const authLoading = ref(false);
 // Settings State
 const settings = ref<Settings>({
   context_provider: 'ollama',
+  fact_checker_provider: 'gemini',
   gemini_api_key: '',
   bible_api_key: '',
   gemini_model: 'gemini-3.1-flash-lite',
   ollama_model: 'gemma4:cloud',
   context_instruction: '',
+  enable_fact_checker: true,
 });
 
 const geminiModelsList = ref<string[]>([
@@ -241,21 +245,65 @@ const saveSettings = async () => {
         </div>
 
         <ParchmentCard class="p-6 space-y-6 border border-amber-200 shadow-sm">
-          <!-- Pipeline Architecture Information -->
+          <!-- Pipeline Architecture Information & Provider Selection -->
           <div>
             <label class="block font-serif font-bold text-amber-950 text-base mb-2">
               AI Generation & Fact-Checking Pipeline
             </label>
-            <p class="text-xs text-stone-600 mb-3">System architecture for scripture analysis and context verification:</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="p-3 border border-amber-300 bg-amber-100/50 rounded text-amber-950">
-                <span class="block text-sm font-semibold">1. Context Generation (Ollama)</span>
-                <span class="block text-xs text-stone-600">Uses local Ollama model to generate historical & theological context.</span>
+            <p class="text-xs text-stone-600 mb-3">System architecture and AI model providers for scripture context generation & verification:</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <!-- Context Provider Picker -->
+              <div class="p-3 border border-amber-300 bg-amber-100/50 rounded text-amber-950 space-y-2">
+                <div>
+                  <span class="block text-sm font-semibold">1. Context Generation Provider</span>
+                  <span class="block text-xs text-stone-600">Select AI provider to generate initial scripture context.</span>
+                </div>
+                <select
+                  v-model="settings.context_provider"
+                  class="w-full px-2.5 py-1.5 border border-amber-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs font-semibold text-stone-800"
+                >
+                  <option value="ollama">Ollama (Local Model)</option>
+                  <option value="gemini">Google Gemini (Cloud AI)</option>
+                </select>
               </div>
-              <div class="p-3 border border-amber-300 bg-amber-100/50 rounded text-amber-950">
-                <span class="block text-sm font-semibold">2. Fact Check & Correct (Gemini)</span>
-                <span class="block text-xs text-stone-600">Uses Google Gemini to fact check, verify citations, and correct errors while preserving format.</span>
+
+              <!-- Fact Checker Provider Picker -->
+              <div class="p-3 border border-amber-300 bg-amber-100/50 rounded text-amber-950 space-y-2">
+                <div>
+                  <span class="block text-sm font-semibold">2. Fact Checker Provider</span>
+                  <span class="block text-xs text-stone-600">Select AI provider to fact-check & verify citations.</span>
+                </div>
+                <select
+                  v-model="settings.fact_checker_provider"
+                  :disabled="!settings.enable_fact_checker"
+                  class="w-full px-2.5 py-1.5 border border-amber-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs font-semibold text-stone-800 disabled:opacity-50"
+                >
+                  <option value="gemini">Google Gemini (Cloud AI)</option>
+                  <option value="ollama">Ollama (Local Model)</option>
+                </select>
               </div>
+            </div>
+
+            <!-- Fact Checker Toggle Switch -->
+            <div class="flex items-center justify-between p-4 bg-amber-100/40 border border-amber-300 rounded-lg">
+              <div>
+                <label for="fact-checker-toggle" class="font-serif font-semibold text-amber-950 text-sm cursor-pointer">
+                  Enable Scripture Fact Checker
+                </label>
+                <p class="text-xs text-stone-600 mt-0.5">
+                  When enabled, the fact checker verifies and corrects generated context against Church doctrine.
+                </p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer ml-4">
+                <input
+                  id="fact-checker-toggle"
+                  type="checkbox"
+                  v-model="settings.enable_fact_checker"
+                  class="sr-only peer"
+                />
+                <div class="w-11 h-6 bg-stone-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-amber-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+              </label>
             </div>
           </div>
 

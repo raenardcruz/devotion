@@ -8,23 +8,16 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
 	"github.com/robfig/cron/v3"
-	"google.golang.org/adk/agent"
-	"google.golang.org/adk/agent/llmagent"
-	"google.golang.org/adk/model/gemini"
-	"google.golang.org/adk/runner"
-	"google.golang.org/adk/session"
-	"google.golang.org/genai"
 )
 
 var (
-	redisClient       *redis.Client
-	adkRunner         *runner.Runner
-	adkSessionService session.Service
+	redisClient *redis.Client
 )
 
 func main() {
@@ -48,48 +41,6 @@ func main() {
 		log.Printf("[main] Failed to connect to Redis: %v", err)
 	} else {
 		log.Println("[main] Successfully connected to Redis")
-	}
-
-	settings := GetSettings()
-	gemini_api_key := settings.GeminiAPIKey
-	if gemini_api_key == "" {
-		log.Printf("[main] Warning: GEMINI_API_KEY not set in DB settings. Please configure in /admin.")
-		gemini_api_key = "dummy-key-pending-admin-setup"
-	}
-
-	geminiModelName := settings.GeminiModel
-	if geminiModelName == "" {
-		geminiModelName = "gemini-3.1-flash-lite"
-	}
-
-	model, err := gemini.NewModel(ctx, geminiModelName, &genai.ClientConfig{
-		APIKey: gemini_api_key,
-	})
-	if err != nil {
-		log.Printf("[main] Warning: Failed to create default Gemini model: %v", err)
-	}
-
-	if model != nil {
-		catholicAgent, err := llmagent.New(llmagent.Config{
-			Name:        "CatholicAssistant",
-			Model:       model,
-			Description: "An expert Catholic assistant providing daily devotionals in accord with Magnifica Humanitas principles.",
-			Instruction: "You are a wise and compassionate Catholic assistant guided by Catholic Social Teaching and Pope Leo XIV's Magnifica Humanitas. Your mission is to help the faithful prepare for the day by providing daily mass readings, historical & theological context, and inspiring Papal wisdom, upholding human dignity and truth.\n\nFollow these steps faithfully:\n1. Fetch the daily mass readings using the `GetMassReadings` tool.\n2. For every reading found (First Reading, Psalm, Second Reading, Gospel), obtain its historical and spiritual context using the `GetBibleContext` tool.\n3. Retrieve 'The words of the Popes' for the given date using the `GetPopeQuote` tool.\n4. Synthesize all this information into a beautifully structured daily devotion. When populating the `context` field for each reading in the `SubmitDevotion` tool call, you MUST use the exact, unmodified output returned by the `GetBibleContext` tool for that reading. Do not summarize, rewrite, or synthesize your own context for the readings; strictly respect and copy the output of the `GetBibleContext` tool.\n5. FINAL STEP: Call the `SubmitDevotion` tool with the complete JSON data. Leave the `text` field blank for each reading as it will be automatically populated from a word-for-word Bible API. This is your most important duty. Do not just output the JSON as text; you MUST call the tool.",
-			Tools:       get_tools(),
-		})
-		if err != nil {
-			log.Printf("[main] Failed to create ADK agent: %v", err)
-		} else {
-			adkSessionService = session.InMemoryService()
-			adkRunner, err = runner.New(runner.Config{
-				AppName:        "DevotionAPI",
-				Agent:          catholicAgent,
-				SessionService: adkSessionService,
-			})
-			if err != nil {
-				log.Printf("[main] Failed to create ADK runner: %v", err)
-			}
-		}
 	}
 
 	http.Handle("/devotion", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(devotionHandler))))
@@ -177,26 +128,18 @@ func fetchDevotionData(ctx context.Context, date string) (*DevotionData, error) 
 	if err == nil {
 		log.Printf("[fetchDevotionData] Cache hit for %s", date)
 		devotionData, err := ExtractDevotionData(val)
-		if err != nil {
-			return nil, err
+		if err == nil {
+			// Ensure passage texts are populated in case they weren't in cached string
+			if err := PopulatePassageTexts(devotionData); err != nil {
+				log.Printf("[fetchDevotionData] Warning: failed to populate passage texts: %v", err)
+			}
+			return devotionData, nil
 		}
-
-		// Ensure passage texts are populated in case they weren't in the cached string
-		if err := PopulatePassageTexts(devotionData); err != nil {
-			log.Printf("[fetchDevotionData] Warning: failed to populate passage texts: %v", err)
-		}
-
-		return devotionData, nil
 	}
 
-	log.Printf("[fetchDevotionData] Cache miss for %s. Generating devotion using ADK...", date)
+	log.Printf("[fetchDevotionData] Cache miss for %s. Generating devotion concurrently using goroutines...", date)
 
-	devotionDataStr, err := generate_devotion(ctx, date)
-	if err != nil {
-		return nil, err
-	}
-
-	devotionData, err := ExtractDevotionData(devotionDataStr)
+	devotionData, err := generate_devotion(ctx, date)
 	if err != nil {
 		return nil, err
 	}
@@ -207,15 +150,12 @@ func fetchDevotionData(ctx context.Context, date string) (*DevotionData, error) 
 	}
 
 	// Re-marshal to string to cache the updated data
-	updatedDevotionDataStr, err := json.Marshal(devotionData)
+	updatedDevotionDataBytes, err := json.Marshal(devotionData)
 	if err == nil {
-		devotionDataStr = string(updatedDevotionDataStr)
-	}
-
-	// Cache the result
-	err = redisClient.Set(ctx, cacheKey, devotionDataStr, 24*time.Hour).Err()
-	if err != nil {
-		log.Printf("[fetchDevotionData] Error caching to Redis: %v", err)
+		err = redisClient.Set(ctx, cacheKey, string(updatedDevotionDataBytes), 24*time.Hour).Err()
+		if err != nil {
+			log.Printf("[fetchDevotionData] Error caching to Redis: %v", err)
+		}
 	}
 
 	return devotionData, nil
@@ -245,45 +185,71 @@ func startCronJobs(ctx context.Context) {
 	log.Println("[cron] Scheduled daily prepopulation job for 12 AM")
 }
 
-func generate_devotion(ctx context.Context, date string) (string, error) {
-	sessionID := fmt.Sprintf("devotion-%s", strings.ReplaceAll(date, "-", ""))
-	userID := "system"
-
-	// Ensure session exists
-	_, err := adkSessionService.Create(ctx, &session.CreateRequest{
-		AppName:   "DevotionAPI",
-		UserID:    userID,
-		SessionID: sessionID,
-	})
-	if err != nil && !strings.Contains(err.Error(), "already exists") {
-		log.Printf("[generate_devotion] Warning calling session Create: %v", err)
+func generate_devotion(ctx context.Context, date string) (*DevotionData, error) {
+	log.Printf("[generate_devotion] Step 1: Scraping mass readings for date: %s", date)
+	readingsResp, err := get_mass_readings(date)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch mass readings: %w", err)
 	}
 
-	var lastText strings.Builder
-	var lastToolResult string
+	devotion := &DevotionData{}
 
-	for event, err := range adkRunner.Run(ctx, userID, sessionID, genai.NewContentFromText(fmt.Sprintf("Generate devotion for %s. Use the GetMassReadings tool with the specific date.", date), "user"), agent.RunConfig{}) {
+	// Categorize readings
+	for _, r := range readingsResp.Readings {
+		t := strings.ToLower(r.Type)
+		rw := &ReadingWithContext{Citation: r.Citation}
+		switch {
+		case strings.Contains(t, "second reading") || strings.Contains(t, "reading 2") || strings.Contains(t, "reading ii"):
+			devotion.SecondReading = rw
+		case strings.Contains(t, "first reading") || strings.Contains(t, "reading 1") || strings.Contains(t, "reading i"):
+			devotion.FirstReading = rw
+		case strings.Contains(t, "psalm"):
+			devotion.ResponsorialPsalm = rw
+		case strings.Contains(t, "gospel"):
+			devotion.Gospel = rw
+		}
+	}
+
+	var wg sync.WaitGroup
+
+	// Fetch Pope Quote concurrently
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		pq, err := get_pope_quote(date)
 		if err != nil {
-			return "", fmt.Errorf("error during agent run: %w", err)
+			log.Printf("[generate_devotion] Warning: failed to fetch Pope quote: %v", err)
+			return
 		}
+		devotion.PopeQuote = pq.Text
+	}()
 
-		if event.Content != nil {
-			for _, part := range event.Content.Parts {
-				if part.Text != "" {
-					lastText.WriteString(part.Text)
-				}
-				if part.FunctionResponse != nil && part.FunctionResponse.Name == "SubmitDevotion" {
-					b, _ := json.Marshal(part.FunctionResponse.Response)
-					lastToolResult = string(b)
-				}
+	// Helper to fetch context in goroutine
+	fetchContext := func(rw *ReadingWithContext) {
+		if rw == nil || rw.Citation == "" {
+			return
+		}
+		wg.Add(1)
+		go func(target *ReadingWithContext) {
+			defer wg.Done()
+			bCtx, err := get_bible_context(ctx, GetBibleContextArgs{Citation: target.Citation})
+			if err != nil {
+				log.Printf("[generate_devotion] Warning: failed to fetch context for %s: %v", target.Citation, err)
+				return
 			}
-		}
+			target.Context = bCtx.Context
+		}(rw)
 	}
 
-	if lastToolResult != "" {
-		return lastToolResult, nil
-	}
-	return lastText.String(), nil
+	fetchContext(devotion.FirstReading)
+	fetchContext(devotion.ResponsorialPsalm)
+	fetchContext(devotion.SecondReading)
+	fetchContext(devotion.Gospel)
+
+	wg.Wait()
+	log.Printf("[generate_devotion] Finished parallel fetching of context and Pope quote for %s", date)
+
+	return devotion, nil
 }
 
 func initializeEnvironment() {
