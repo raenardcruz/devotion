@@ -241,6 +241,7 @@ func generate_devotion(ctx context.Context, date string) (*DevotionData, error) 
 				return
 			}
 			target.Context = bCtx.Context
+			target.Citations = bCtx.Citations
 		}(rw)
 	}
 

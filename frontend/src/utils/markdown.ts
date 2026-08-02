@@ -31,6 +31,17 @@ export function renderMarkdown(markdown: string, options?: MarkdownOptions): str
   // Replace blockquotes
   html = html.replace(/^&gt; (.*?)$/gm, '<blockquote class="border-l-2 border-parchment-primary/40 pl-3 italic text-parchment-neutral/80 my-2">$1</blockquote>');
   
+  // Restore details and summary tags if sanitized
+  html = html.replace(/&lt;details(.*?)&gt;/g, '<details$1>')
+             .replace(/&lt;\/details&gt;/g, '</details>')
+             .replace(/&lt;summary(.*?)&gt;/g, '<summary$1>')
+             .replace(/&lt;\/summary&gt;/g, '</summary>')
+             .replace(/&lt;div(.*?)&gt;/g, '<div$1>')
+             .replace(/&lt;\/div&gt;/g, '</div>')
+             .replace(/&lt;strong(.*?)&gt;/g, '<strong$1>')
+             .replace(/&lt;\/strong&gt;/g, '</strong>')
+             .replace(/&lt;br\s*\/?&gt;/g, '<br/>');
+
   // Process line by line for paragraphs and lists
   const lines = html.split('\n');
   let inList = false;
@@ -65,7 +76,7 @@ export function renderMarkdown(markdown: string, options?: MarkdownOptions): str
     }
     
     // If it's already an HTML block tag, keep it
-    if (trimmed.startsWith('<h') || trimmed.startsWith('<blockquote') || trimmed.startsWith('</blockquote') || trimmed.startsWith('<ul') || trimmed.startsWith('</ul')) {
+    if (trimmed.startsWith('<h') || trimmed.startsWith('<blockquote') || trimmed.startsWith('</blockquote') || trimmed.startsWith('<ul') || trimmed.startsWith('</ul') || trimmed.startsWith('<details') || trimmed.startsWith('</details') || trimmed.startsWith('<summary') || trimmed.startsWith('</summary') || trimmed.startsWith('<div') || trimmed.startsWith('</div')) {
       processedLines.push(trimmed);
     } else {
       processedLines.push(`<p class="${paragraphClass}">${trimmed}</p>`);

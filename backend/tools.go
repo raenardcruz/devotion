@@ -9,7 +9,9 @@ type DevotionData struct {
 }
 
 type ReadingWithContext struct {
-	Citation string `json:"citation,omitempty"`
-	Context  string `json:"context,omitempty"`
-	Text     string `json:"text,omitempty"`
+	Citation  string                `json:"citation,omitempty"`
+	Context   string                `json:"context,omitempty"`
+	Text      string                `json:"text,omitempty"`
+	Citations []MagisteriumCitation `json:"citations,omitempty"`
 }
+

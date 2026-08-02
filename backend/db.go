@@ -15,16 +15,17 @@ import (
 )
 
 type Settings struct {
-	ContextProvider     string `json:"context_provider"`
-	FactCheckerProvider string `json:"fact_checker_provider"`
-	GeminiAPIKey        string `json:"gemini_api_key"`
-	MagisteriumAPIKey   string `json:"magisterium_api_key"`
-	BibleAPIKey         string `json:"bible_api_key"`
-	GeminiModel         string `json:"gemini_model"`
-	OllamaModel         string `json:"ollama_model"`
-	ContextModel        string `json:"context_model"`
-	ContextInstruction  string `json:"context_instruction"`
-	EnableFactChecker   bool   `json:"enable_fact_checker"`
+	ContextProvider        string `json:"context_provider"`
+	FactCheckerProvider    string `json:"fact_checker_provider"`
+	MagisteriumLLMProvider string `json:"magisterium_llm_provider"`
+	GeminiAPIKey           string `json:"gemini_api_key"`
+	MagisteriumAPIKey      string `json:"magisterium_api_key"`
+	BibleAPIKey            string `json:"bible_api_key"`
+	GeminiModel            string `json:"gemini_model"`
+	OllamaModel            string `json:"ollama_model"`
+	ContextModel           string `json:"context_model"`
+	ContextInstruction     string `json:"context_instruction"`
+	EnableFactChecker      bool   `json:"enable_fact_checker"`
 }
 
 var (
@@ -51,16 +52,17 @@ STRICT BIBLE CITATION: Any verse cited must exactly match the text and citation 
 
 func getDefaultSettings() Settings {
 	return Settings{
-		ContextProvider:     "ollama",
-		FactCheckerProvider: "gemini",
-		GeminiAPIKey:        "",
-		MagisteriumAPIKey:   "",
-		BibleAPIKey:         "",
-		GeminiModel:         "gemini-3.1-flash-lite",
-		OllamaModel:         "gemma4:cloud",
-		ContextModel:        "gemma4:cloud",
-		ContextInstruction:  defaultInstruction,
-		EnableFactChecker:   true,
+		ContextProvider:        "ollama",
+		FactCheckerProvider:    "gemini",
+		MagisteriumLLMProvider: "ollama",
+		GeminiAPIKey:           "",
+		MagisteriumAPIKey:      "",
+		BibleAPIKey:            "",
+		GeminiModel:            "gemini-3.1-flash-lite",
+		OllamaModel:            "gemma4:cloud",
+		ContextModel:           "gemma4:cloud",
+		ContextInstruction:     defaultInstruction,
+		EnableFactChecker:      true,
 	}
 }
 
@@ -231,6 +233,7 @@ func InitDB() {
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS ollama_model VARCHAR(100) NOT NULL DEFAULT 'gemma4:cloud';`,
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS enable_fact_checker BOOLEAN NOT NULL DEFAULT true;`,
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS fact_checker_provider VARCHAR(50) NOT NULL DEFAULT 'gemini';`,
+		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS magisterium_llm_provider VARCHAR(50) NOT NULL DEFAULT 'ollama';`,
 	}
 	for _, m := range migrations {
 		if _, err := db.Exec(m); err != nil {
@@ -240,8 +243,8 @@ func InitDB() {
 
 	// Insert initial default settings if empty
 	insertDefaultQuery := `
-	INSERT INTO settings (id, context_provider, fact_checker_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, ollama_model, context_model, context_instruction, enable_fact_checker)
-	VALUES (1, 'ollama', 'gemini', '', '', '', 'gemini-3.1-flash-lite', 'gemma4:cloud', 'gemma4:cloud', $1, true)
+	INSERT INTO settings (id, context_provider, fact_checker_provider, magisterium_llm_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, ollama_model, context_model, context_instruction, enable_fact_checker)
+	VALUES (1, 'ollama', 'gemini', 'ollama', '', '', '', 'gemini-3.1-flash-lite', 'gemma4:cloud', 'gemma4:cloud', $1, true)
 	ON CONFLICT (id) DO NOTHING;`
 
 	if _, err := db.Exec(insertDefaultQuery, defaultInstruction); err != nil {
@@ -254,11 +257,11 @@ func GetSettings() Settings {
 		return memorySettings
 	}
 
-	query := `SELECT context_provider, fact_checker_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, ollama_model, context_model, context_instruction, enable_fact_checker FROM settings WHERE id = 1`
+	query := `SELECT context_provider, fact_checker_provider, magisterium_llm_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, ollama_model, context_model, context_instruction, enable_fact_checker FROM settings WHERE id = 1`
 	row := db.QueryRow(query)
 
 	var s Settings
-	err := row.Scan(&s.ContextProvider, &s.FactCheckerProvider, &s.GeminiAPIKey, &s.MagisteriumAPIKey, &s.BibleAPIKey, &s.GeminiModel, &s.OllamaModel, &s.ContextModel, &s.ContextInstruction, &s.EnableFactChecker)
+	err := row.Scan(&s.ContextProvider, &s.FactCheckerProvider, &s.MagisteriumLLMProvider, &s.GeminiAPIKey, &s.MagisteriumAPIKey, &s.BibleAPIKey, &s.GeminiModel, &s.OllamaModel, &s.ContextModel, &s.ContextInstruction, &s.EnableFactChecker)
 	if err != nil {
 		log.Printf("[GetSettings] Warning scanning row: %v. Returning current memory settings.", err)
 		return memorySettings
@@ -269,6 +272,9 @@ func GetSettings() Settings {
 	}
 	if s.FactCheckerProvider == "" {
 		s.FactCheckerProvider = "gemini"
+	}
+	if s.MagisteriumLLMProvider == "" {
+		s.MagisteriumLLMProvider = "ollama"
 	}
 	if s.GeminiModel == "" {
 		s.GeminiModel = "gemini-3.1-flash-lite"
@@ -296,6 +302,9 @@ func SaveSettings(s Settings) error {
 	if s.FactCheckerProvider == "" {
 		s.FactCheckerProvider = "gemini"
 	}
+	if s.MagisteriumLLMProvider == "" {
+		s.MagisteriumLLMProvider = "ollama"
+	}
 	if s.GeminiModel == "" {
 		s.GeminiModel = "gemini-3.1-flash-lite"
 	}
@@ -319,11 +328,12 @@ func SaveSettings(s Settings) error {
 	}
 
 	query := `
-	INSERT INTO settings (id, context_provider, fact_checker_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, ollama_model, context_model, context_instruction, enable_fact_checker, updated_at)
-	VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP)
+	INSERT INTO settings (id, context_provider, fact_checker_provider, magisterium_llm_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, ollama_model, context_model, context_instruction, enable_fact_checker, updated_at)
+	VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP)
 	ON CONFLICT (id) DO UPDATE SET
 		context_provider = EXCLUDED.context_provider,
 		fact_checker_provider = EXCLUDED.fact_checker_provider,
+		magisterium_llm_provider = EXCLUDED.magisterium_llm_provider,
 		gemini_api_key = EXCLUDED.gemini_api_key,
 		magisterium_api_key = EXCLUDED.magisterium_api_key,
 		bible_api_key = EXCLUDED.bible_api_key,
@@ -334,7 +344,7 @@ func SaveSettings(s Settings) error {
 		enable_fact_checker = EXCLUDED.enable_fact_checker,
 		updated_at = CURRENT_TIMESTAMP;`
 
-	_, err := db.Exec(query, s.ContextProvider, s.FactCheckerProvider, s.GeminiAPIKey, s.MagisteriumAPIKey, s.BibleAPIKey, s.GeminiModel, s.OllamaModel, s.ContextModel, s.ContextInstruction, s.EnableFactChecker)
+	_, err := db.Exec(query, s.ContextProvider, s.FactCheckerProvider, s.MagisteriumLLMProvider, s.GeminiAPIKey, s.MagisteriumAPIKey, s.BibleAPIKey, s.GeminiModel, s.OllamaModel, s.ContextModel, s.ContextInstruction, s.EnableFactChecker)
 	if err != nil {
 		log.Printf("[SaveSettings] Error saving settings to postgres: %v", err)
 		return err
