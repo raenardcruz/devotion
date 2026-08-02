@@ -104,15 +104,6 @@ func adminSettingsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Flush Redis cache when settings change so cached contexts and citations clear together
-		if redisClient != nil {
-			if err := redisClient.FlushAll(r.Context()).Err(); err != nil {
-				log.Printf("[adminSettingsHandler] Warning: failed to flush Redis cache after saving settings: %v", err)
-			} else {
-				log.Printf("[adminSettingsHandler] Successfully flushed Redis cache after settings update.")
-			}
-		}
-
 		respSettings := settings
 		respSettings.GeminiAPIKey = maskAPIKey(settings.GeminiAPIKey)
 		respSettings.MagisteriumAPIKey = maskAPIKey(settings.MagisteriumAPIKey)
