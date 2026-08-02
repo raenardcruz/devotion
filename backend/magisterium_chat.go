@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,6 +11,11 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/raenardcruz/ollama-adk-wrapper"
+	"google.golang.org/adk/model"
+	geminiModel "google.golang.org/adk/model/gemini"
+	"google.golang.org/genai"
 )
 
 type MagisteriumChatMessage struct {
@@ -19,6 +25,7 @@ type MagisteriumChatMessage struct {
 
 type MagisteriumChatRequest struct {
 	Messages []MagisteriumChatMessage `json:"messages"`
+	Mode     string                   `json:"mode,omitempty"` // "magisterium" or "llm_summary"
 }
 
 type MagisteriumCitation struct {
@@ -224,8 +231,20 @@ func magisteriumChatHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	// If no explicit summary answer was provided, build formatted response synthesis from results
-	if strings.TrimSpace(answerText) == "" && len(citations) > 0 {
+	// If user requested LLM summary mode (or if answerText is empty in llm_summary mode), summarize citations with configured LLM (Ollama or Gemini)
+	if req.Mode == "llm_summary" && len(citations) > 0 {
+		llmProvider := settings.MagisteriumLLMProvider
+		if llmProvider == "" {
+			llmProvider = "ollama"
+		}
+		userQuestion := req.Messages[len(req.Messages)-1].Content
+		summary, err := summarizeCitationsWithLLM(r.Context(), userQuestion, citations, llmProvider, settings)
+		if err != nil {
+			log.Printf("[magisteriumChatHandler] Warning: custom LLM summary failed: %v. Falling back to default answer/citations.", err)
+		} else if strings.TrimSpace(summary) != "" {
+			answerText = summary
+		}
+	} else if strings.TrimSpace(answerText) == "" && len(citations) > 0 {
 		var parts []string
 		for idx, c := range citations {
 			header := fmt.Sprintf("**%d. %s**", idx+1, c.DocumentTitle)
@@ -273,6 +292,102 @@ func magisteriumChatHandler(w http.ResponseWriter, r *http.Request) {
 		Citations: citations,
 		Usage:     usageInfo,
 	})
+}
+
+// summarizeCitationsWithLLM feeds Magisterium search citations into the selected LLM provider (Ollama or Gemini) to generate a synthesis summary.
+func summarizeCitationsWithLLM(ctx context.Context, userQuestion string, citations []MagisteriumCitation, provider string, settings Settings) (string, error) {
+	var citationText strings.Builder
+	for i, c := range citations {
+		citationText.WriteString(fmt.Sprintf("[%d] %s", i+1, c.DocumentTitle))
+		if c.Author != "" {
+			citationText.WriteString(fmt.Sprintf(" (Author: %s)", c.Author))
+		}
+		if c.Ref != "" {
+			citationText.WriteString(fmt.Sprintf(" [Ref: %s]", c.Ref))
+		}
+		citationText.WriteString("\n")
+		if c.Text != "" {
+			citationText.WriteString(fmt.Sprintf("Excerpt: %s\n\n", c.Text))
+		}
+	}
+
+	prompt := fmt.Sprintf(`You are a knowledgeable and faithful Catholic assistant.
+The user asked: "%s"
+
+Below are official search citations retrieved from Catholic Magisterial documents (Catechism, Encyclicals, Scripture, Council documents):
+
+%s
+
+Instructions:
+1. Provide a clear, cohesive, and comprehensive summary answering the user's question using ONLY the provided citations above.
+2. Maintain fidelity to Catholic doctrine. Refer back to the cited documents or authors inline (e.g. [1], [2] or naming the document) when summarizing.
+3. Structure your response with clean formatting (using markdown bolding and bullet points where helpful).`, userQuestion, citationText.String())
+
+	req := &model.LLMRequest{
+		Contents: []*genai.Content{
+			genai.NewContentFromText(prompt, "user"),
+		},
+	}
+
+	var summaryBuilder strings.Builder
+
+	if provider == "gemini" {
+		apiKey := settings.GeminiAPIKey
+		if apiKey == "" {
+			return "", fmt.Errorf("Gemini API key not configured in Admin Settings")
+		}
+		selectedModel := settings.GeminiModel
+		if selectedModel == "" {
+			selectedModel = "gemini-3.1-flash-lite"
+		}
+		log.Printf("[summarizeCitationsWithLLM] Summarizing Magisterium citations with Gemini (%s)...", selectedModel)
+		gModel, err := geminiModel.NewModel(ctx, selectedModel, &genai.ClientConfig{
+			APIKey: apiKey,
+		})
+		if err != nil {
+			return "", fmt.Errorf("failed to initialize Gemini model: %w", err)
+		}
+		seq := gModel.GenerateContent(ctx, req, false)
+		for resp, err := range seq {
+			if err != nil {
+				return "", fmt.Errorf("error generating summary with Gemini: %w", err)
+			}
+			if resp.Content != nil {
+				for _, part := range resp.Content.Parts {
+					if part.Text != "" {
+						summaryBuilder.WriteString(part.Text)
+					}
+				}
+			}
+		}
+	} else {
+		// Default to Ollama
+		ollamaURL := os.Getenv("OLLAMA_URL")
+		if ollamaURL == "" {
+			ollamaURL = "http://localhost:11434"
+		}
+		selectedModel := settings.OllamaModel
+		if selectedModel == "" {
+			selectedModel = "gemma4:cloud"
+		}
+		log.Printf("[summarizeCitationsWithLLM] Summarizing Magisterium citations with Ollama (%s)...", selectedModel)
+		oModel := ollama.NewModel(selectedModel, ollamaURL)
+		seq := oModel.GenerateContent(ctx, req, false)
+		for resp, err := range seq {
+			if err != nil {
+				return "", fmt.Errorf("error generating summary with Ollama: %w", err)
+			}
+			if resp.Content != nil {
+				for _, part := range resp.Content.Parts {
+					if part.Text != "" {
+						summaryBuilder.WriteString(part.Text)
+					}
+				}
+			}
+		}
+	}
+
+	return strings.TrimSpace(summaryBuilder.String()), nil
 }
 
 type SavePublicConversationRequest struct {

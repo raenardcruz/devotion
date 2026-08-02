@@ -570,7 +570,7 @@ const isFirstTextPara = (idx: number): boolean => {
         <div class="lg:col-span-3 flex flex-col gap-6 animate-fade-in-up delay-150">
           <div class="bg-parchment-neutral-light border border-parchment-border rounded-3xl p-6 md:p-8 flex-grow flex flex-col min-h-[60vh] relative shadow-sm">
             <!-- Reader Area -->
-            <div v-if="activeChapter" id="reader-content" class="flex-grow lg:overflow-y-auto space-y-8 pr-2 select-text">
+            <div v-if="activeChapter" id="reader-content" class="flex-grow overflow-y-auto lg:overflow-y-auto space-y-8 pr-2 select-text max-h-[65vh] lg:max-h-none">
               <!-- Book-style Header -->
               <div class="text-center mb-12 mt-6">
                 <div class="text-[11px] text-parchment-primary font-serif tracking-[0.25em] uppercase mb-3">

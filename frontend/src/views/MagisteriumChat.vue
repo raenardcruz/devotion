@@ -60,7 +60,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow items-start">
         
         <!-- Sidebar Navigation: Local & Public Chat Sessions -->
-        <aside class="lg:col-span-4 xl:col-span-3 bg-parchment-neutral-light/80 border border-parchment-border rounded-3xl p-4 flex flex-col shadow-sm h-full max-h-[750px] backdrop-blur-xs">
+        <aside class="lg:col-span-4 xl:col-span-3 bg-parchment-neutral-light/80 border border-parchment-border rounded-3xl p-4 flex flex-col shadow-sm h-auto max-h-[400px] lg:max-h-[750px] lg:h-full backdrop-blur-xs">
           <!-- Sidebar Tabs -->
           <div class="grid grid-cols-2 gap-1 p-1 bg-parchment-bg border border-parchment-border/60 rounded-2xl mb-3 text-center text-xs font-serif font-bold">
             <button 
@@ -102,7 +102,7 @@
           </div>
 
           <!-- Local Sessions Scroll List -->
-          <div v-if="sidebarTab === 'local'" class="overflow-y-auto space-y-2.5 flex-1 scrollbar-thin pr-1 max-h-[620px]">
+          <div v-if="sidebarTab === 'local'" class="overflow-y-auto space-y-2.5 flex-1 scrollbar-thin pr-1 max-h-[300px] lg:max-h-[620px]">
             <div 
               v-for="session in chatSessions" 
               :key="session.id"
@@ -141,7 +141,7 @@
           </div>
 
           <!-- Public Conversations Scroll List -->
-          <div v-else class="overflow-y-auto space-y-2.5 flex-1 scrollbar-thin pr-1 max-h-[620px]">
+          <div v-else class="overflow-y-auto space-y-2.5 flex-1 scrollbar-thin pr-1 max-h-[300px] lg:max-h-[620px]">
             <div 
               v-for="pub in publicConversations" 
               :key="pub.id"
@@ -176,7 +176,7 @@
         </aside>
 
         <!-- Main Chat Box Panel -->
-        <div class="lg:col-span-8 xl:col-span-9 flex flex-col bg-parchment-neutral-light/60 border border-parchment-border rounded-3xl shadow-sm overflow-hidden h-[750px]">
+        <div class="lg:col-span-8 xl:col-span-9 flex flex-col bg-parchment-neutral-light/60 border border-parchment-border rounded-3xl shadow-sm overflow-hidden h-[550px] sm:h-[650px] lg:h-[750px]">
           
           <!-- Scrollable Chat Window -->
           <div ref="chatContainer" class="flex-1 p-5 md:p-8 overflow-y-auto space-y-6 scrollbar-thin">
@@ -229,7 +229,12 @@
             </div>
 
             <!-- Active Messages Stream -->
-            <div v-for="(msg, index) in activeMessages" :key="index" class="flex flex-col space-y-2 animate-fade-in">
+            <div 
+              v-for="(msg, index) in activeMessages" 
+              :key="index" 
+              :ref="el => { if (el) messageRefs[index] = el as HTMLElement }"
+              class="flex flex-col space-y-2 animate-fade-in"
+            >
               <!-- User Query Bubble -->
               <div v-if="msg.role === 'user'" class="flex items-start justify-end space-x-3 max-w-3xl ml-auto">
                 <div class="bg-parchment-primary text-white rounded-3xl rounded-tr-none px-5 py-3.5 text-sm leading-relaxed shadow-sm font-sans">
@@ -252,15 +257,38 @@
 
                   <!-- Structured Search Results & Citations (Formatted Schema) -->
                   <div v-if="msg.citations && msg.citations.length > 0" class="mt-5 pt-4 border-t border-amber-200/70 bg-amber-50/50 rounded-2xl p-4 space-y-3">
-                    <div class="flex items-center justify-between border-b border-amber-200/60 pb-2.5">
+                    <div 
+                      @click="toggleCitations(index)"
+                      class="flex items-center justify-between cursor-pointer select-none border-b border-amber-200/60 pb-2.5 group"
+                    >
                       <span class="text-xs font-bold text-amber-950 uppercase tracking-wider flex items-center space-x-1.5">
                         <span>📚 Magisterium Citations</span>
                         <span class="bg-amber-200/80 text-amber-900 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">{{ msg.citations.length }}</span>
                       </span>
-                      <span class="text-[10px] text-amber-800/70 font-semibold uppercase tracking-wider">Church Sources</span>
+                      <button 
+                        type="button" 
+                        class="text-[11px] text-amber-900 hover:text-amber-950 font-semibold uppercase tracking-wider flex items-center space-x-1 border-none shadow-none py-0 px-1 bg-transparent hover:bg-amber-200/50 rounded-lg transition-colors"
+                      >
+                        <span>{{ expandedCitations.has(index) ? 'Hide Citations' : 'Show Citations' }}</span>
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          width="12" 
+                          height="12" 
+                          viewBox="0 0 24 24" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          stroke-width="2" 
+                          stroke-linecap="round" 
+                          stroke-linejoin="round"
+                          class="transition-transform duration-200"
+                          :class="{ 'rotate-180': expandedCitations.has(index) }"
+                        >
+                          <path d="m6 9 6 6 6-6"/>
+                        </svg>
+                      </button>
                     </div>
 
-                    <div class="grid grid-cols-1 gap-3">
+                    <div v-if="expandedCitations.has(index)" class="grid grid-cols-1 gap-3 animate-fade-in">
                       <div 
                         v-for="(cite, idx) in msg.citations" 
                         :key="idx" 
@@ -340,7 +368,34 @@
           </div>
 
           <!-- Bottom Chat Input Bar -->
-          <div class="p-4 bg-parchment-neutral-light/90 border-t border-parchment-border backdrop-blur-xs">
+          <div class="p-4 bg-parchment-neutral-light/90 border-t border-parchment-border backdrop-blur-xs space-y-2.5">
+            <!-- Mode Selector Bar -->
+            <div class="flex items-center justify-between px-1 text-xs font-serif">
+              <span class="text-stone-600 font-semibold flex items-center space-x-1">
+                <span>Response Mode:</span>
+              </span>
+              <div class="inline-flex p-0.5 bg-stone-200/80 border border-parchment-border/70 rounded-xl shadow-inner">
+                <button
+                  type="button"
+                  @click="completionMode = 'magisterium'"
+                  class="px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center space-x-1"
+                  :class="[completionMode === 'magisterium' ? 'bg-amber-800 text-white shadow-2xs' : 'text-stone-700 hover:text-amber-900']"
+                  title="Use direct Magisterium AI answer engine"
+                >
+                  <span>📜 Direct Magisterium AI</span>
+                </button>
+                <button
+                  type="button"
+                  @click="completionMode = 'llm_summary'"
+                  class="px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center space-x-1"
+                  :class="[completionMode === 'llm_summary' ? 'bg-amber-800 text-white shadow-2xs' : 'text-stone-700 hover:text-amber-900']"
+                  title="Search citations and generate summary with configured LLM (Ollama or Gemini)"
+                >
+                  <span>🤖 Custom LLM Summary</span>
+                </button>
+              </div>
+            </div>
+
             <form @submit.prevent="sendMessage" class="flex items-center space-x-3">
               <input
                 v-model="inputQuery"
@@ -502,13 +557,26 @@ const chatSessions = ref<ChatSession[]>([]);
 const publicConversations = ref<PublicConversation[]>([]);
 const activeSessionId = ref<string>('');
 const inputQuery = ref('');
+const completionMode = ref<'magisterium' | 'llm_summary'>('magisterium');
 const isLoading = ref(false);
 const chatError = ref<string | null>(null);
 const chatContainer = ref<HTMLDivElement | null>(null);
+const messageRefs = ref<HTMLElement[]>([]);
 const apiUsage = ref<ApiUsage | null>(null);
 
 // Toast Banner / Copy state
 const copyNotice = ref<string | null>(null);
+
+// Collapsible Citations State (Hidden by default)
+const expandedCitations = ref<Set<number>>(new Set());
+
+const toggleCitations = (msgIndex: number) => {
+  if (expandedCitations.value.has(msgIndex)) {
+    expandedCitations.value.delete(msgIndex);
+  } else {
+    expandedCitations.value.add(msgIndex);
+  }
+};
 
 // Modal & Publish State
 const showPublishModal = ref(false);
@@ -628,7 +696,7 @@ const loadPublicSession = (pub: PublicConversation) => {
     chatSessions.value.unshift(existing);
   }
   activeSessionId.value = existing.id;
-  scrollToBottom();
+  scrollToTop();
 };
 
 const formatIsoDate = (isoStr: string) => {
@@ -708,6 +776,13 @@ const formatDate = (timestamp: number) => {
   });
 };
 
+const scrollToTop = async () => {
+  await nextTick();
+  if (chatContainer.value) {
+    chatContainer.value.scrollTop = 0;
+  }
+};
+
 const scrollToBottom = async () => {
   await nextTick();
   if (chatContainer.value) {
@@ -722,9 +797,54 @@ const askSuggested = (question: string) => {
 
 const formatResponse = (text: string) => {
   if (!text) return '';
-  return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n/g, '<br/>');
+  
+  let html = text;
+
+  // Escape unsafe HTML entities first
+  html = html
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Fenced Code Blocks ```lang ... ```
+  html = html.replace(/```([\s\S]*?)```/g, (_match, code) => {
+    return `<pre class="bg-stone-900 text-stone-100 p-3 rounded-xl my-2 overflow-x-auto font-mono text-xs"><code>${code.trim()}</code></pre>`;
+  });
+
+  // Inline code `code`
+  html = html.replace(/`([^`]+)`/g, '<code class="bg-amber-100/80 text-amber-950 px-1.5 py-0.5 rounded font-mono text-xs">$1</code>');
+
+  // Headings
+  html = html.replace(/^### (.*$)/gim, '<h3 class="text-base font-bold font-serif text-amber-950 mt-4 mb-1">$1</h3>');
+  html = html.replace(/^## (.*$)/gim, '<h2 class="text-lg font-bold font-serif text-amber-950 mt-4 mb-1.5 pb-1 border-b border-amber-200">$1</h2>');
+  html = html.replace(/^# (.*$)/gim, '<h1 class="text-xl font-bold font-serif text-amber-950 mt-5 mb-2 pb-1 border-b border-amber-300">$1</h1>');
+
+  // Blockquotes
+  html = html.replace(/^\&gt; (.*$)/gim, '<blockquote class="border-l-4 border-amber-500 pl-3 py-1 my-2 italic text-stone-700 bg-amber-50/50 rounded-r-lg">$1</blockquote>');
+
+  // Bold & Italics
+  html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-amber-950">$1</strong>');
+  html = html.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
+
+  // Unordered Lists (- or *)
+  html = html.replace(/^[\*\-] (.*$)/gim, '<li class="ml-4 list-disc text-stone-800 my-0.5">$1</li>');
+
+  // Ordered Lists (1. 2.)
+  html = html.replace(/^\d+\. (.*$)/gim, '<li class="ml-4 list-decimal text-stone-800 my-0.5">$1</li>');
+
+  // Wrap contiguous <li> tags in <ul> or <ol>
+  html = html.replace(/((?:<li class="ml-4 list-disc[^>]*>.*?<\/li>\s*)+)/gs, '<ul class="my-2 space-y-1">$1</ul>');
+  html = html.replace(/((?:<li class="ml-4 list-decimal[^>]*>.*?<\/li>\s*)+)/gs, '<ol class="my-2 space-y-1">$1</ol>');
+
+  // Markdown Links [title](url)
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-amber-900 font-semibold underline hover:text-amber-700">$1</a>');
+
+  // Paragraph breaks & newlines
+  html = html.replace(/\n\n+/g, '</p><p class="my-2.5">');
+  html = html.replace(/\n/g, '<br/>');
+
+  return `<p class="my-1">${html}</p>`;
 };
 
 const sendMessage = async () => {
@@ -757,7 +877,10 @@ const sendMessage = async () => {
     const res = await fetchWithAuth<MagisteriumResponse>('/magisterium/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: payloadMessages }),
+      body: JSON.stringify({
+        messages: payloadMessages,
+        mode: completionMode.value,
+      }),
     });
 
     if (res && res.response) {

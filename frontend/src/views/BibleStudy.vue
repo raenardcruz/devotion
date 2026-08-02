@@ -8,13 +8,14 @@ import BottomNav from '../components/common/BottomNav.vue';
 import ParchmentCard from '../components/common/ParchmentCard.vue';
 import AppButton from '../components/common/AppButton.vue';
 import AppTabs from '../components/common/AppTabs.vue';
-import CatechismBubble from '../components/catechism/CatechismBubble.vue';
+import FactCheckCitations, { type MagisteriumCitation } from '../components/common/FactCheckCitations.vue';
 
 interface SavedVerse {
   id: string;
   citation: string;
   content: string;
   context: string;
+  citations?: MagisteriumCitation[];
   copyright?: string;
   timestamp: number;
 }
@@ -27,6 +28,7 @@ interface BibleResponse {
 interface ContextResponse {
   citation: string;
   context: string;
+  citations?: MagisteriumCitation[];
 }
 
 const { fetchWithAuth } = useDevotionApi();
@@ -47,6 +49,11 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const savedVerses = ref<SavedVerse[]>([]);
 const expandedIds = ref<Set<string>>(new Set());
+
+const cleanContext = (contextStr?: string) => {
+  if (!contextStr) return '';
+  return contextStr.replace(/<details[\s\S]*?<\/details>/gi, '').trim();
+};
 
 // Book data for Catholic Bible (73 books)
 const categories = [
@@ -217,6 +224,7 @@ const getContext = async () => {
       citation: contextRes.citation || passage,
       content: bibleRes.content,
       context: contextRes.context || 'Context commentary unavailable.',
+      citations: contextRes.citations,
       copyright: bibleRes.copyright,
       timestamp: Date.now()
     };
@@ -588,7 +596,8 @@ const getSnippet = (text: string) => {
                         🤖 AI-Generated
                       </span>
                     </div>
-                    <div class="prose max-w-none text-parchment-neutral/85" v-html="renderMarkdown(item.context)"></div>
+                    <div class="prose max-w-none text-parchment-neutral/85" v-html="renderMarkdown(cleanContext(item.context))"></div>
+                    <FactCheckCitations :citations="item.citations" :rawContextHtml="item.context" />
                   </div>
                 </div>
               </transition>

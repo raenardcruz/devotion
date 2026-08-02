@@ -176,13 +176,58 @@ func get_bible_passage_text(passage string) (BibleContent, error) {
 }
 
 func get_bible_book_short(passage_book string) string {
+	cleanBook := strings.TrimSpace(passage_book)
+	norm := strings.ToLower(cleanBook)
+
+	// Psalm aliases
+	if norm == "ps" || norm == "psalm" || norm == "psalms" || norm == "psa" {
+		return "PSA"
+	}
+
 	for _, book := range bible_books.Data {
-		if book.Name == passage_book {
+		if strings.EqualFold(book.Name, cleanBook) ||
+			strings.EqualFold(book.NameLong, cleanBook) ||
+			strings.EqualFold(book.Abbreviation, cleanBook) ||
+			strings.EqualFold(book.ID, cleanBook) {
 			return book.Abbreviation
 		}
 	}
+
+	// Additional common book aliases
+	switch norm {
+	case "matt", "mt", "matthew":
+		return "MAT"
+	case "mk", "mark":
+		return "MRK"
+	case "lk", "luke":
+		return "LUK"
+	case "jn", "john":
+		return "JHN"
+	case "act", "acts":
+		return "ACT"
+	case "rom", "romans":
+		return "ROM"
+	case "1 cor", "1 corinthians", "1cor":
+		return "1CO"
+	case "2 cor", "2 corinthians", "2cor":
+		return "2CO"
+	case "gal", "galatians":
+		return "GAL"
+	case "eph", "ephesians":
+		return "EPH"
+	case "phil", "philippians":
+		return "PHP"
+	case "col", "colossians":
+		return "COL"
+	case "gen", "genesis":
+		return "GEN"
+	case "ex", "exod", "exodus":
+		return "EXO"
+	}
+
 	return ""
 }
+
 
 func strip_verse_suffix(v string) string {
 	re := regexp.MustCompile(`[a-zA-Z]+$`)

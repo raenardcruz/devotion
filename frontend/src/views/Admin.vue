@@ -9,6 +9,7 @@ import { useDevotionApi } from '../composables/useDevotionApi';
 interface Settings {
   context_provider: string;
   fact_checker_provider: string;
+  magisterium_llm_provider: string;
   gemini_api_key: string;
   magisterium_api_key: string;
   bible_api_key: string;
@@ -32,6 +33,7 @@ const authLoading = ref(false);
 const settings = ref<Settings>({
   context_provider: 'ollama',
   fact_checker_provider: 'gemini',
+  magisterium_llm_provider: 'ollama',
   gemini_api_key: '',
   magisterium_api_key: '',
   bible_api_key: '',
@@ -254,12 +256,12 @@ const saveSettings = async () => {
             </label>
             <p class="text-xs text-stone-600 mb-3">System architecture and AI model providers for scripture context generation & verification:</p>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <!-- Context Provider Picker -->
               <div class="p-3 border border-amber-300 bg-amber-100/50 rounded text-amber-950 space-y-2">
                 <div>
-                  <span class="block text-sm font-semibold">1. Context Generation Provider</span>
-                  <span class="block text-xs text-stone-600">Select AI provider to generate initial scripture context.</span>
+                  <span class="block text-sm font-semibold">1. Context Provider</span>
+                  <span class="block text-xs text-stone-600">Select AI provider to generate scripture context.</span>
                 </div>
                 <select
                   v-model="settings.context_provider"
@@ -274,7 +276,7 @@ const saveSettings = async () => {
               <div class="p-3 border border-amber-300 bg-amber-100/50 rounded text-amber-950 space-y-2">
                 <div>
                   <span class="block text-sm font-semibold">2. Fact Checker Provider</span>
-                  <span class="block text-xs text-stone-600">Select AI provider to fact-check & verify citations.</span>
+                  <span class="block text-xs text-stone-600">Select AI provider to verify citations.</span>
                 </div>
                 <select
                   v-model="settings.fact_checker_provider"
@@ -283,6 +285,22 @@ const saveSettings = async () => {
                 >
                   <option value="gemini">Google Gemini (Cloud AI)</option>
                   <option value="ollama">Ollama (Local Model)</option>
+                  <option value="magisterium">Magisterium AI (Doctrine Search & Verify)</option>
+                </select>
+              </div>
+
+              <!-- Magisterium LLM Summary Provider Picker -->
+              <div class="p-3 border border-amber-300 bg-amber-100/50 rounded text-amber-950 space-y-2">
+                <div>
+                  <span class="block text-sm font-semibold">3. Magisterium Summary LLM</span>
+                  <span class="block text-xs text-stone-600">Select LLM to summarize citations.</span>
+                </div>
+                <select
+                  v-model="settings.magisterium_llm_provider"
+                  class="w-full px-2.5 py-1.5 border border-amber-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs font-semibold text-stone-800"
+                >
+                  <option value="ollama">Ollama (Local Model)</option>
+                  <option value="gemini">Google Gemini (Cloud AI)</option>
                 </select>
               </div>
             </div>

@@ -47,9 +47,17 @@ func get_mass_readings(dateStr string) (GetMassReadingsResponse, error) {
 	var readings []Readings
 
 	c.OnHTML(".innerblock", func(e *colly.HTMLElement) {
+		typeText := strings.TrimSpace(e.ChildText("h3.name"))
+		citation := strings.TrimSpace(e.ChildText(".address a"))
+		if citation == "" {
+			citation = strings.TrimSpace(e.ChildText(".address"))
+		}
+		citation = strings.ReplaceAll(citation, "\n", " ")
+		citation = strings.TrimSpace(citation)
+
 		reading := Readings{
-			Type:     e.ChildText("h3.name"),
-			Citation: e.ChildText(".address a"),
+			Type:     typeText,
+			Citation: citation,
 		}
 
 		if reading.Type != "" {
