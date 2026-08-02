@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode"
 )
 
 type BibleResponse struct {
@@ -121,17 +122,31 @@ func get_bible_passage(passage string) (string, string, error) {
 }
 
 func passage_sanitize(passage string) string {
+	// Normalize all unicode space characters (like NBSP \u00a0) to standard ASCII space ' '
+	passage = strings.Map(func(r rune) rune {
+		if unicode.IsSpace(r) {
+			return ' '
+		}
+		return r
+	}, passage)
+	passage = strings.ReplaceAll(passage, "\u200b", "")
 	passage = strings.ReplaceAll(passage, "—", "-")
+	passage = strings.ReplaceAll(passage, "–", "-")
 	passage = strings.ReplaceAll(passage, ";", ",")
-	passage = strings.ReplaceAll(passage, " and ", ",")
-	passage = strings.ReplaceAll(passage, ", ", ",")
-	passage = strings.ReplaceAll(passage, ": ", ":")
-	passage = strings.ReplaceAll(passage, " :", ":")
-	passage = strings.ReplaceAll(passage, " : ", ":")
-	passage = strings.ReplaceAll(passage, "- ", "-")
-	passage = strings.ReplaceAll(passage, " -", "-")
-	passage = strings.ReplaceAll(passage, " - ", "-")
-	return passage
+
+	// Replace " and " with comma (case-insensitive)
+	reAnd := regexp.MustCompile(`(?i)\s+and\s+`)
+	passage = reAnd.ReplaceAllString(passage, ",")
+
+	// Remove spaces around colons, commas, hyphens
+	reDelim := regexp.MustCompile(`\s*([,:-])\s*`)
+	passage = reDelim.ReplaceAllString(passage, "$1")
+
+	// Collapse multiple spaces into a single space
+	reSpaces := regexp.MustCompile(`\s+`)
+	passage = reSpaces.ReplaceAllString(passage, " ")
+
+	return strings.TrimSpace(passage)
 }
 
 func get_bible_passage_text(passage string) (BibleContent, error) {
