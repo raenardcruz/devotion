@@ -105,6 +105,7 @@
               <svg v-else-if="item.icon === 'star'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.886L4.2 9.08l4.956 3.6L7.243 18.57 12 15l4.757 3.57-1.913-5.887 4.957-3.6-5.887-.193Z"></path></svg>
               <svg v-else-if="item.icon === 'scroll'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
               <svg v-else-if="item.icon === 'context'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+              <svg v-else-if="item.icon === 'chat'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             </div>
             <div class="text-left flex-1 min-w-0">
               <div class="text-sm font-semibold tracking-wide leading-none mb-1">{{ item.label }}</div>
@@ -187,6 +188,12 @@ const navItems = [
     label: 'Bible Study',
     desc: 'Retrieve scripture and commentary',
     icon: 'context'
+  },
+  {
+    path: '/magisterium-chat',
+    label: 'Magisterium AI Chat',
+    desc: 'Ask questions on Church doctrine & teachings',
+    icon: 'chat'
   }
 ];
 </script>

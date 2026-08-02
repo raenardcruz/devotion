@@ -2,12 +2,14 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/url"
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/lib/pq"
 )
@@ -16,6 +18,7 @@ type Settings struct {
 	ContextProvider     string `json:"context_provider"`
 	FactCheckerProvider string `json:"fact_checker_provider"`
 	GeminiAPIKey        string `json:"gemini_api_key"`
+	MagisteriumAPIKey   string `json:"magisterium_api_key"`
 	BibleAPIKey         string `json:"bible_api_key"`
 	GeminiModel         string `json:"gemini_model"`
 	OllamaModel         string `json:"ollama_model"`
@@ -51,6 +54,7 @@ func getDefaultSettings() Settings {
 		ContextProvider:     "ollama",
 		FactCheckerProvider: "gemini",
 		GeminiAPIKey:        "",
+		MagisteriumAPIKey:   "",
 		BibleAPIKey:         "",
 		GeminiModel:         "gemini-3.1-flash-lite",
 		OllamaModel:         "gemma4:cloud",
@@ -204,15 +208,24 @@ func InitDB() {
 		context_instruction TEXT NOT NULL DEFAULT '',
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		CONSTRAINT single_row CHECK (id = 1)
+	);
+	
+	CREATE TABLE IF NOT EXISTS public_chat_conversations (
+		id VARCHAR(100) PRIMARY KEY,
+		author_name VARCHAR(100) NOT NULL,
+		title VARCHAR(200) NOT NULL,
+		messages JSONB NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`
 
 	if _, err := db.Exec(createTableQuery); err != nil {
-		log.Printf("[InitDB] Error creating settings table: %v", err)
+		log.Printf("[InitDB] Error creating tables: %v", err)
 		return
 	}
 
 	// Migrations for missing columns on existing tables
 	migrations := []string{
+		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS magisterium_api_key TEXT NOT NULL DEFAULT '';`,
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS bible_api_key TEXT NOT NULL DEFAULT '';`,
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS gemini_model VARCHAR(100) NOT NULL DEFAULT 'gemini-3.1-flash-lite';`,
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS ollama_model VARCHAR(100) NOT NULL DEFAULT 'gemma4:cloud';`,
@@ -227,8 +240,8 @@ func InitDB() {
 
 	// Insert initial default settings if empty
 	insertDefaultQuery := `
-	INSERT INTO settings (id, context_provider, fact_checker_provider, gemini_api_key, bible_api_key, gemini_model, ollama_model, context_model, context_instruction, enable_fact_checker)
-	VALUES (1, 'ollama', 'gemini', '', '', 'gemini-3.1-flash-lite', 'gemma4:cloud', 'gemma4:cloud', $1, true)
+	INSERT INTO settings (id, context_provider, fact_checker_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, ollama_model, context_model, context_instruction, enable_fact_checker)
+	VALUES (1, 'ollama', 'gemini', '', '', '', 'gemini-3.1-flash-lite', 'gemma4:cloud', 'gemma4:cloud', $1, true)
 	ON CONFLICT (id) DO NOTHING;`
 
 	if _, err := db.Exec(insertDefaultQuery, defaultInstruction); err != nil {
@@ -241,11 +254,11 @@ func GetSettings() Settings {
 		return memorySettings
 	}
 
-	query := `SELECT context_provider, fact_checker_provider, gemini_api_key, bible_api_key, gemini_model, ollama_model, context_model, context_instruction, enable_fact_checker FROM settings WHERE id = 1`
+	query := `SELECT context_provider, fact_checker_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, ollama_model, context_model, context_instruction, enable_fact_checker FROM settings WHERE id = 1`
 	row := db.QueryRow(query)
 
 	var s Settings
-	err := row.Scan(&s.ContextProvider, &s.FactCheckerProvider, &s.GeminiAPIKey, &s.BibleAPIKey, &s.GeminiModel, &s.OllamaModel, &s.ContextModel, &s.ContextInstruction, &s.EnableFactChecker)
+	err := row.Scan(&s.ContextProvider, &s.FactCheckerProvider, &s.GeminiAPIKey, &s.MagisteriumAPIKey, &s.BibleAPIKey, &s.GeminiModel, &s.OllamaModel, &s.ContextModel, &s.ContextInstruction, &s.EnableFactChecker)
 	if err != nil {
 		log.Printf("[GetSettings] Warning scanning row: %v. Returning current memory settings.", err)
 		return memorySettings
@@ -306,12 +319,13 @@ func SaveSettings(s Settings) error {
 	}
 
 	query := `
-	INSERT INTO settings (id, context_provider, fact_checker_provider, gemini_api_key, bible_api_key, gemini_model, ollama_model, context_model, context_instruction, enable_fact_checker, updated_at)
-	VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
+	INSERT INTO settings (id, context_provider, fact_checker_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, ollama_model, context_model, context_instruction, enable_fact_checker, updated_at)
+	VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP)
 	ON CONFLICT (id) DO UPDATE SET
 		context_provider = EXCLUDED.context_provider,
 		fact_checker_provider = EXCLUDED.fact_checker_provider,
 		gemini_api_key = EXCLUDED.gemini_api_key,
+		magisterium_api_key = EXCLUDED.magisterium_api_key,
 		bible_api_key = EXCLUDED.bible_api_key,
 		gemini_model = EXCLUDED.gemini_model,
 		ollama_model = EXCLUDED.ollama_model,
@@ -320,7 +334,7 @@ func SaveSettings(s Settings) error {
 		enable_fact_checker = EXCLUDED.enable_fact_checker,
 		updated_at = CURRENT_TIMESTAMP;`
 
-	_, err := db.Exec(query, s.ContextProvider, s.FactCheckerProvider, s.GeminiAPIKey, s.BibleAPIKey, s.GeminiModel, s.OllamaModel, s.ContextModel, s.ContextInstruction, s.EnableFactChecker)
+	_, err := db.Exec(query, s.ContextProvider, s.FactCheckerProvider, s.GeminiAPIKey, s.MagisteriumAPIKey, s.BibleAPIKey, s.GeminiModel, s.OllamaModel, s.ContextModel, s.ContextInstruction, s.EnableFactChecker)
 	if err != nil {
 		log.Printf("[SaveSettings] Error saving settings to postgres: %v", err)
 		return err
@@ -328,4 +342,78 @@ func SaveSettings(s Settings) error {
 
 	log.Println("[SaveSettings] Settings updated successfully in PostgreSQL")
 	return nil
+}
+
+type PublicConversation struct {
+	ID         string      `json:"id"`
+	AuthorName string      `json:"author_name"`
+	Title      string      `json:"title"`
+	Messages   interface{} `json:"messages"`
+	CreatedAt  string      `json:"created_at"`
+}
+
+var memoryPublicConversations []PublicConversation
+
+func SavePublicConversation(id, authorName, title string, messagesJSON []byte) error {
+	var msgs interface{}
+	json.Unmarshal(messagesJSON, &msgs)
+
+	pub := PublicConversation{
+		ID:         id,
+		AuthorName: authorName,
+		Title:      title,
+		Messages:   msgs,
+		CreatedAt:  time.Now().Format(time.RFC3339),
+	}
+
+	memoryPublicConversations = append([]PublicConversation{pub}, memoryPublicConversations...)
+
+	if db == nil || db.Ping() != nil {
+		log.Println("[SavePublicConversation] DB unavailable, saved to memory")
+		return nil
+	}
+
+	query := `
+	INSERT INTO public_chat_conversations (id, author_name, title, messages, created_at)
+	VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+	ON CONFLICT (id) DO UPDATE SET
+		author_name = EXCLUDED.author_name,
+		title = EXCLUDED.title,
+		messages = EXCLUDED.messages;`
+
+	_, err := db.Exec(query, id, authorName, title, string(messagesJSON))
+	if err != nil {
+		log.Printf("[SavePublicConversation] Error saving conversation: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func GetPublicConversations() ([]PublicConversation, error) {
+	if db == nil || db.Ping() != nil {
+		return memoryPublicConversations, nil
+	}
+
+	query := `SELECT id, author_name, title, messages, created_at FROM public_chat_conversations ORDER BY created_at DESC LIMIT 50`
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Printf("[GetPublicConversations] Query error: %v", err)
+		return memoryPublicConversations, nil
+	}
+	defer rows.Close()
+
+	var result []PublicConversation
+	for rows.Next() {
+		var pc PublicConversation
+		var msgsRaw string
+		var t time.Time
+		if err := rows.Scan(&pc.ID, &pc.AuthorName, &pc.Title, &msgsRaw, &t); err == nil {
+			pc.CreatedAt = t.Format(time.RFC3339)
+			json.Unmarshal([]byte(msgsRaw), &pc.Messages)
+			result = append(result, pc)
+		}
+	}
+
+	return result, nil
 }

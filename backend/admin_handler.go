@@ -76,6 +76,7 @@ func adminSettingsHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		settings := GetSettings()
 		settings.GeminiAPIKey = maskAPIKey(settings.GeminiAPIKey)
+		settings.MagisteriumAPIKey = maskAPIKey(settings.MagisteriumAPIKey)
 		settings.BibleAPIKey = maskAPIKey(settings.BibleAPIKey)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(settings)
@@ -91,6 +92,9 @@ func adminSettingsHandler(w http.ResponseWriter, r *http.Request) {
 		if isMaskedKey(settings.GeminiAPIKey) {
 			settings.GeminiAPIKey = current.GeminiAPIKey
 		}
+		if isMaskedKey(settings.MagisteriumAPIKey) {
+			settings.MagisteriumAPIKey = current.MagisteriumAPIKey
+		}
 		if isMaskedKey(settings.BibleAPIKey) {
 			settings.BibleAPIKey = current.BibleAPIKey
 		}
@@ -102,6 +106,7 @@ func adminSettingsHandler(w http.ResponseWriter, r *http.Request) {
 
 		respSettings := settings
 		respSettings.GeminiAPIKey = maskAPIKey(settings.GeminiAPIKey)
+		respSettings.MagisteriumAPIKey = maskAPIKey(settings.MagisteriumAPIKey)
 		respSettings.BibleAPIKey = maskAPIKey(settings.BibleAPIKey)
 
 		w.Header().Set("Content-Type", "application/json")

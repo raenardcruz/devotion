@@ -10,6 +10,7 @@ interface Settings {
   context_provider: string;
   fact_checker_provider: string;
   gemini_api_key: string;
+  magisterium_api_key: string;
   bible_api_key: string;
   gemini_model: string;
   ollama_model: string;
@@ -32,6 +33,7 @@ const settings = ref<Settings>({
   context_provider: 'ollama',
   fact_checker_provider: 'gemini',
   gemini_api_key: '',
+  magisterium_api_key: '',
   bible_api_key: '',
   gemini_model: 'gemini-3.1-flash-lite',
   ollama_model: 'gemma4:cloud',
@@ -318,6 +320,20 @@ const saveSettings = async () => {
               type="password"
               class="w-full px-3 py-2 border border-amber-300 rounded bg-white/80 focus:outline-none focus:ring-2 focus:ring-amber-500 text-stone-800 font-mono text-sm"
               placeholder="AIzaSy..."
+            />
+          </div>
+
+          <!-- Magisterium AI Key -->
+          <div class="pt-2">
+            <label class="block font-serif font-semibold text-amber-950 text-sm mb-1">
+              Magisterium AI API Key
+            </label>
+            <p class="text-xs text-stone-600 mb-2">Stored securely in PostgreSQL database. Required for Catholic doctrine chat queries via Magisterium AI API.</p>
+            <input
+              v-model="settings.magisterium_api_key"
+              type="password"
+              class="w-full px-3 py-2 border border-amber-300 rounded bg-white/80 focus:outline-none focus:ring-2 focus:ring-amber-500 text-stone-800 font-mono text-sm"
+              placeholder="magisterium-key-..."
             />
           </div>
 

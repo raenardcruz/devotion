@@ -46,6 +46,9 @@ func main() {
 	http.Handle("/devotion", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(devotionHandler))))
 	http.Handle("/bible", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(biblePassageHandler))))
 	http.Handle("/context", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(bibleContextHandler))))
+	http.Handle("/magisterium/chat", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(magisteriumChatHandler))))
+	http.Handle("/magisterium/conversations/save", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(publicConversationsSaveHandler))))
+	http.Handle("/magisterium/conversations/public", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(publicConversationsListHandler))))
 
 	// Admin API Endpoints
 	http.Handle("/api/admin/login", corsMiddleware(http.HandlerFunc(adminLoginHandler)))
