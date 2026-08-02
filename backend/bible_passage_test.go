@@ -44,6 +44,16 @@ func TestPassageSanitize(t *testing.T) {
 			input:    "James 1:12-18, 20 and 22",
 			expected: "James 1:12-18,20,22",
 		},
+		{
+			name:     "Non-breaking space and multi-verse list",
+			input:    "Psalm\u00a0119:29, 43, 79, 80, 95, 102",
+			expected: "Psalm 119:29,43,79,80,95,102",
+		},
+		{
+			name:     "En-dash and extra spaces",
+			input:    "Psalm 119:29 – 43 , 79",
+			expected: "Psalm 119:29-43,79",
+		},
 	}
 
 	for _, tt := range tests {
@@ -69,9 +79,19 @@ func TestGetBibleBookShort(t *testing.T) {
 			expected: "GEN",
 		},
 		{
-			name:     "Exodus",
-			bookName: "Exodus",
+			name:     "Exodus lowercase",
+			bookName: "exodus",
 			expected: "EXO",
+		},
+		{
+			name:     "Psalm",
+			bookName: "Psalm",
+			expected: "PSA",
+		},
+		{
+			name:     "Psalms",
+			bookName: "Psalms",
+			expected: "PSA",
 		},
 		{
 			name:     "Matthew",
