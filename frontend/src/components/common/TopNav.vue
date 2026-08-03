@@ -40,9 +40,16 @@
         <router-link 
           to="/bible-study" 
           class="text-sm font-medium tracking-wider uppercase transition-colors"
-          :class="[route.path !== '/' ? 'text-parchment-primary-dark font-bold' : 'text-parchment-neutral/60 hover:text-parchment-neutral']"
+          :class="[route.path === '/bible-study' ? 'text-parchment-primary-dark font-bold' : 'text-parchment-neutral/60 hover:text-parchment-neutral']"
         >
           Bible Study
+        </router-link>
+        <router-link 
+          to="/magisterium-chat" 
+          class="text-sm font-medium tracking-wider uppercase transition-colors"
+          :class="[route.path === '/magisterium-chat' ? 'text-parchment-primary-dark font-bold' : 'text-parchment-neutral/60 hover:text-parchment-neutral']"
+        >
+          Magisterium
         </router-link>
       </nav>
     </div>

@@ -23,7 +23,7 @@
     <router-link to="/daily-readings" class="flex flex-col items-center group transition-all duration-300">
       <div 
         class="w-12 h-10 flex items-center justify-center rounded-xl transition-all duration-300"
-        :class="[route.path !== '/' && route.path !== '/search' && route.path !== '/profile' && route.path !== '/bible-study' ? 'bg-parchment-primary-dark text-white' : 'text-parchment-neutral/50 group-hover:text-parchment-neutral']"
+        :class="[route.path === '/daily-readings' || route.path === '/rosary' || route.path === '/divine-mercy' || route.path === '/prayers' || route.path === '/catechism' || route.path === '/resources' ? 'bg-parchment-primary-dark text-white' : 'text-parchment-neutral/50 group-hover:text-parchment-neutral']"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
@@ -33,7 +33,7 @@
       </div>
       <span 
         class="text-[11px] font-medium uppercase tracking-wider mt-1 transition-all duration-300"
-        :class="[route.path !== '/' && route.path !== '/search' && route.path !== '/profile' && route.path !== '/bible-study' ? 'text-parchment-primary-dark font-bold' : 'text-parchment-neutral/50 group-hover:text-parchment-neutral']"
+        :class="[route.path === '/daily-readings' || route.path === '/rosary' || route.path === '/divine-mercy' || route.path === '/prayers' || route.path === '/catechism' || route.path === '/resources' ? 'text-parchment-primary-dark font-bold' : 'text-parchment-neutral/50 group-hover:text-parchment-neutral']"
       >
         Devotions
       </span>
@@ -54,6 +54,24 @@
         :class="[route.path === '/bible-study' ? 'text-parchment-primary-dark font-bold' : 'text-parchment-neutral/50 group-hover:text-parchment-neutral']"
       >
         Study
+      </span>
+    </router-link>
+
+    <!-- Magisterium AI Tab -->
+    <router-link to="/magisterium-chat" class="flex flex-col items-center group transition-all duration-300">
+      <div 
+        class="w-12 h-10 flex items-center justify-center rounded-xl transition-all duration-300"
+        :class="[route.path === '/magisterium-chat' ? 'bg-parchment-primary-dark text-white' : 'text-parchment-neutral/50 group-hover:text-parchment-neutral']"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+      </div>
+      <span 
+        class="text-[11px] font-medium uppercase tracking-wider mt-1 transition-all duration-300"
+        :class="[route.path === '/magisterium-chat' ? 'text-parchment-primary-dark font-bold' : 'text-parchment-neutral/50 group-hover:text-parchment-neutral']"
+      >
+        Magisterium
       </span>
     </router-link>
   </footer>

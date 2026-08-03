@@ -12,10 +12,104 @@
           <p class="text-parchment-neutral/50 text-xs uppercase tracking-[0.25em] font-bold">Of The Catholic Church</p>
       </header>
 
+      <!-- Mobile Navigation Floating Trigger Button -->
+      <div class="lg:hidden mb-4 flex items-center justify-between bg-parchment-neutral-light border border-parchment-border rounded-2xl p-3 shadow-sm">
+        <div class="flex items-center gap-2 overflow-hidden pr-2">
+          <span class="text-parchment-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </span>
+          <span class="font-serif text-xs font-semibold text-parchment-primary-dark truncate">
+            {{ selectedPart ? `Part ${selectedPart.part}: ${selectedPart.title}` : 'Structure & Navigation' }}
+          </span>
+        </div>
+        <button 
+          @click="isMobileMenuOpen = true" 
+          class="px-3 py-1.5 bg-parchment-primary text-white text-xs font-medium rounded-xl hover:bg-parchment-primary-dark transition-all shadow-xs shrink-0 flex items-center gap-1.5"
+        >
+          <span>Contents</span>
+        </button>
+      </div>
+
+      <!-- Mobile Navigation Slide-Over Drawer -->
+      <transition 
+        enter-active-class="transition duration-300 ease-out" 
+        enter-from-class="opacity-0" 
+        enter-to-class="opacity-100" 
+        leave-active-class="transition duration-200 ease-in" 
+        leave-from-class="opacity-100" 
+        leave-to-class="opacity-0"
+      >
+        <div v-if="isMobileMenuOpen" class="fixed inset-0 z-50 flex justify-start lg:hidden" @click="isMobileMenuOpen = false">
+          <!-- Backdrop -->
+          <div class="absolute inset-0 bg-parchment-neutral/40 backdrop-blur-xs"></div>
+          
+          <!-- Drawer Content Panel -->
+          <div class="relative w-4/5 max-w-xs bg-parchment-bg h-full shadow-2xl p-5 flex flex-col z-10 overflow-y-auto border-r border-parchment-border" @click.stop>
+            <div class="flex items-center justify-between pb-4 border-b border-parchment-border mb-4">
+              <h3 class="font-serif text-base text-parchment-primary-dark font-bold">Catechism Structure</h3>
+              <button @click="isMobileMenuOpen = false" class="p-1.5 text-parchment-neutral/50 hover:text-parchment-neutral rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+
+            <div class="space-y-4 flex-grow">
+              <div v-for="part in structure.catechism.structure" :key="part.part" class="space-y-2">
+                <!-- Part Header -->
+                <button 
+                  @click="togglePart(part)"
+                  class="w-full text-left font-medium text-sm text-parchment-neutral/70 hover:text-parchment-neutral transition-all flex justify-between items-start group p-2 rounded-lg hover:bg-parchment-bg border-none shadow-none"
+                  :class="{'bg-parchment-primary/10 text-parchment-primary-dark border border-parchment-primary/20': selectedPart?.part === part.part}"
+                >
+                  <span class="font-serif font-bold mr-2 text-parchment-primary group-hover:text-parchment-primary-dark transition-colors">Part {{ part.part }}</span>
+                  <span class="flex-1">{{ part.title }}</span>
+                </button>
+                
+                <!-- Sections (only if part selected) -->
+                <transition name="fade-slide">
+                  <div v-if="selectedPart?.part === part.part" class="pl-4 space-y-2 border-l-2 border-parchment-primary/30 ml-3 mt-2">
+                    <div v-for="section in part.sections" :key="section.section">
+                       <button 
+                        @click="toggleSection(section)"
+                        class="w-full text-left text-xs text-parchment-neutral/70 hover:text-parchment-neutral transition-colors py-1.5 px-2 rounded block hover:bg-parchment-bg border-none shadow-none"
+                        :class="{'text-parchment-primary-dark font-medium bg-parchment-primary/5': selectedSection?.section === section.section}"
+                      >
+                        {{ section.title }}
+                      </button>
+  
+                      <!-- Chapters (only if section selected) -->
+                      <transition name="fade-slide">
+                        <div v-if="selectedSection?.section === section.section" class="pl-3 mt-1 space-y-1 border-l border-parchment-primary/10 ml-1.5">
+                            <button
+                                v-for="chapter in section.chapters"
+                                :key="chapter.chapter"
+                                @click="toggleChapter(chapter); isMobileMenuOpen = false"
+                                class="w-full text-left text-[11px] text-parchment-neutral/50 hover:text-parchment-neutral transition-colors py-1 px-2 rounded block hover:bg-parchment-bg border-none shadow-none"
+                                :class="{'text-parchment-primary font-bold bg-parchment-primary/5': selectedChapter?.chapter === chapter.chapter}"
+                            >
+                                {{ chapter.title }}
+                            </button>
+                        </div>
+                      </transition>
+                    </div>
+                  </div>
+                </transition>
+              </div>
+            </div>
+          </div>
+        </div>
+      </transition>
+
       <main class="flex-grow grid grid-cols-1 lg:grid-cols-4 gap-8">
         
-        <!-- Sidebar Navigation (Structure) -->
-        <aside class="lg:col-span-1 h-fit lg:sticky lg:top-24 lg:overflow-y-auto lg:max-h-[calc(100vh-8rem)] animate-fade-in-up delay-100 scrollbar-hide">
+        <!-- Desktop Sidebar Navigation (Structure) -->
+        <aside class="hidden lg:block lg:col-span-1 h-fit lg:sticky lg:top-24 lg:overflow-y-auto lg:max-h-[calc(100vh-8rem)] animate-fade-in-up delay-100 scrollbar-hide">
           <div class="bg-parchment-neutral-light border border-parchment-border rounded-3xl p-6 shadow-sm">
             <h3 class="font-serif text-sm mb-6 text-parchment-primary-dark/80 tracking-widest uppercase font-bold border-b border-parchment-border/40 pb-2.5">Structure</h3>
             
@@ -233,6 +327,7 @@ const route = useRoute();
 const structure = ref<Structure>(structureData as unknown as Structure);
 const paragraphs = ref<Paragraph[]>(catechismData as unknown as Paragraph[]);
 const searchQuery = ref('');
+const isMobileMenuOpen = ref(false);
 
 const selectedPart = ref<Part | null>(null);
 const selectedSection = ref<Section | null>(null);

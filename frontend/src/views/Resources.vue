@@ -54,6 +54,7 @@ const readChapters = ref<Record<string, boolean>>({});
 const searchQuery = ref<string>('');
 const writingSearchQuery = ref<string>('');
 const isSelectorOpen = ref<boolean>(false);
+const isMobileMenuOpen = ref<boolean>(false);
 const isLoading = ref<boolean>(false);
 const errorMsg = ref<string>('');
 
@@ -490,10 +491,121 @@ const isFirstTextPara = (idx: number): boolean => {
         <AppButton variant="primary" @click="loadWriting(selectedDocId)">Retry Loading</AppButton>
       </div>
 
+      <!-- Mobile Navigation Trigger Button -->
+      <div v-if="!isLoading && !errorMsg" class="lg:hidden mb-4 flex items-center justify-between bg-parchment-neutral-light border border-parchment-border rounded-2xl p-3 shadow-sm">
+        <div class="flex items-center gap-2 overflow-hidden pr-2">
+          <span class="text-parchment-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </span>
+          <span class="font-serif text-xs font-semibold text-parchment-primary-dark truncate">
+            {{ activeChapter ? `Chapter ${activeChapter.numeral}: ${activeChapter.title}` : 'Chapters & Progress' }}
+          </span>
+        </div>
+        <button 
+          @click="isMobileMenuOpen = true" 
+          class="px-3 py-1.5 bg-parchment-primary text-white text-xs font-medium rounded-xl hover:bg-parchment-primary-dark transition-all shadow-xs shrink-0 flex items-center gap-1.5"
+        >
+          <span>Chapters</span>
+        </button>
+      </div>
+
+      <!-- Mobile Navigation Drawer -->
+      <transition 
+        enter-active-class="transition duration-300 ease-out" 
+        enter-from-class="opacity-0" 
+        enter-to-class="opacity-100" 
+        leave-active-class="transition duration-200 ease-in" 
+        leave-from-class="opacity-100" 
+        leave-to-class="opacity-0"
+      >
+        <div v-if="isMobileMenuOpen" class="fixed inset-0 z-50 flex justify-start lg:hidden" @click="isMobileMenuOpen = false">
+          <!-- Backdrop -->
+          <div class="absolute inset-0 bg-parchment-neutral/40 backdrop-blur-xs"></div>
+          
+          <!-- Panel Content -->
+          <div class="relative w-4/5 max-w-xs bg-parchment-bg h-full shadow-2xl p-5 flex flex-col z-10 overflow-y-auto border-r border-parchment-border space-y-4" @click.stop>
+            <div class="flex items-center justify-between pb-3 border-b border-parchment-border">
+              <h3 class="font-serif text-base text-parchment-primary-dark font-bold">Chapters & Progress</h3>
+              <button @click="isMobileMenuOpen = false" class="p-1.5 text-parchment-neutral/50 hover:text-parchment-neutral rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Progress Tracker -->
+            <div class="bg-parchment-neutral-light border border-parchment-border/60 rounded-2xl p-4 shadow-xs">
+              <h4 class="font-serif text-xs text-parchment-primary-dark/80 tracking-widest uppercase font-bold mb-2">Reading Progress</h4>
+              <div class="flex justify-between text-[11px] text-parchment-neutral/60 mb-1.5">
+                <span>Completed</span>
+                <span>{{ readCountText }} ({{ docProgress }}%)</span>
+              </div>
+              <div class="w-full bg-parchment-bg border border-parchment-border/60 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-parchment-primary h-1.5 rounded-full transition-all duration-500" :style="{ width: `${docProgress}%` }"></div>
+              </div>
+            </div>
+
+            <!-- Search -->
+            <div>
+              <div class="relative">
+                <input 
+                  v-model="searchQuery" 
+                  type="text" 
+                  placeholder="Search chapters..." 
+                  class="w-full pl-3 pr-4 py-2 rounded-xl border border-parchment-border bg-parchment-neutral-light text-parchment-neutral placeholder-parchment-neutral/40 focus:border-parchment-primary shadow-inner outline-none text-xs"
+                >
+              </div>
+            </div>
+
+            <!-- Table of Contents List -->
+            <div class="flex-grow overflow-y-auto space-y-4 pr-1">
+              <div v-for="section in filteredSections" :key="section.id" class="space-y-2">
+                <h4 v-if="section.id !== 'default'" class="text-[11px] font-bold text-parchment-neutral/70 mt-3 font-serif italic border-l-2 border-parchment-primary/30 pl-2">
+                  {{ section.title }}
+                </h4>
+                
+                <div class="space-y-1">
+                  <button
+                    v-for="chapter in section.chapters"
+                    :key="chapter.id"
+                    @click="selectChapter(chapter.id); isMobileMenuOpen = false"
+                    class="w-full text-left text-xs transition-colors py-2 px-3 rounded-lg flex items-center justify-between group hover:bg-parchment-neutral-light border-none shadow-none"
+                    :class="selectedChapterId === chapter.id 
+                      ? 'bg-parchment-primary/10 text-parchment-primary-dark font-semibold border-l-4 border-parchment-primary pl-2' 
+                      : readChapters[chapter.id] ? 'text-parchment-neutral/40 hover:text-parchment-neutral/60' : 'text-parchment-neutral/80 hover:text-parchment-neutral'"
+                  >
+                    <span class="truncate flex-1">
+                      <span class="font-serif font-bold text-parchment-neutral/40 group-hover:text-parchment-primary-dark mr-1.5">{{ chapter.numeral }}</span>
+                      {{ chapter.title }}
+                    </span>
+                    <span 
+                      @click.stop="toggleReadStatus(chapter.id)" 
+                      class="ml-2 w-4 h-4 rounded border transition-colors flex items-center justify-center cursor-pointer"
+                      :class="readChapters[chapter.id] 
+                        ? 'bg-parchment-primary/20 border-parchment-primary text-parchment-primary-dark' 
+                        : 'border-parchment-border hover:border-parchment-primary text-transparent'"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </transition>
+
       <!-- Main Layout -->
-      <main v-else class="flex-grow grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <!-- Sidebar Navigation -->
-        <aside class="lg:col-span-1 h-fit lg:sticky lg:top-24 flex flex-col gap-6 animate-fade-in-up delay-100">
+      <main v-if="!isLoading && !errorMsg" class="flex-grow grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Desktop Sidebar Navigation -->
+        <aside class="hidden lg:flex lg:col-span-1 h-fit lg:sticky lg:top-24 flex-col gap-6 animate-fade-in-up delay-100">
           <!-- Search & Progress Card -->
           <div class="bg-parchment-neutral-light border border-parchment-border rounded-3xl p-6 shadow-sm flex flex-col gap-4">
             <!-- Progress Tracker -->
