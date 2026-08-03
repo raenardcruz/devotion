@@ -231,8 +231,8 @@ func magisteriumChatHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	// If user requested LLM summary mode (or if answerText is empty in llm_summary mode), summarize citations with configured LLM (Ollama or Gemini)
-	if req.Mode == "llm_summary" && len(citations) > 0 {
+	// Default to LLM summary mode (or if explicitly requested as "llm_summary"), summarize citations with configured LLM (Ollama or Gemini)
+	if (req.Mode == "" || req.Mode == "llm_summary") && len(citations) > 0 {
 		llmProvider := settings.MagisteriumLLMProvider
 		if llmProvider == "" {
 			llmProvider = "ollama"

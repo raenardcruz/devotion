@@ -9,14 +9,15 @@ This document outlines the detailed steps required to configure, develop, test, 
 ```
 devotion/
 ├── frontend/             # Vue 3 + TypeScript + Vite (Cloudflare Pages)
-│   ├── src/              # App components, routing, & Admin view (/admin)
+│   ├── src/              # App components, routing, Magisterium Sanctuary, & Admin view (/admin)
 │   ├── package.json      # Dependencies and scripts
 │   └── vite.config.ts    # Vite configuration
 ├── backend/              # Go 1.25 REST API
 │   ├── main.go           # Server startup & routing setup
 │   ├── db.go             # PostgreSQL connection & settings persistence
 │   ├── admin_handler.go  # Admin auth & settings endpoints
-│   ├── bible_context.go  # Dynamic Bible context generator (Ollama / Gemini)
+│   ├── bible_context.go  # Dynamic Bible context generator & fact checking (Ollama / Gemini / Magisterium)
+│   ├── magisterium_chat.go # Magisterium AI chat, citation search, & custom LLM summaries
 │   ├── go.mod            # Go modules definition
 │   ├── Dockerfile        # Container build definition
 │   └── docker-compose.yml# Multi-container setup (API + Redis + PostgreSQL)
@@ -40,7 +41,7 @@ Ensure the following runtimes and services are available on your development hos
 
 ## 2. Environment Configuration File (.env)
 
-The `.env` file contains system connection details (database, redis, ollama url). AI configuration settings (Gemini API Key, active provider, model, and context instruction) are stored in PostgreSQL and managed directly via the `/admin` settings page.
+The `.env` file contains system connection details (database, redis, ollama url). AI configuration settings (Gemini API Key, Magisterium API Key, active providers, models, and context instruction) are stored in PostgreSQL and managed directly via the `/admin` settings page.
 
 ### Backend Environment File (`.env` or `backend/.env`)
 ```env
@@ -66,6 +67,10 @@ REDIS_URL=host.docker.internal:6379
 
 # Ollama Endpoint
 OLLAMA_URL=http://host.docker.internal:11434
+
+# Magisterium AI API (Optional env fallback override; managed via /admin settings)
+MAGISTERIUM_API_KEY=magisterium-key-...
+MAGISTERIUM_API_URL=https://www.magisterium.com/api/v1/search
 ```
 
 ### Frontend Environment File (`frontend/.env`)
@@ -78,22 +83,35 @@ VITE_API_TOKEN=your_strong_api_token_here
 
 ## 3. Admin Settings Page (`/admin`)
 
-The Admin settings page allows live customization of AI generation settings.
+The Admin settings page allows live customization of AI generation & fact-checking settings.
 
 1. Navigate to `http://localhost:5173/#/admin` (or `/admin`).
 2. Log in with credentials:
    - **Username**: `admin`
    - **Password**: `admin`
 3. Features configured in Admin Settings:
-   - **AI Provider**: Switch between **Ollama (Local)** and **Google Gemini**.
+   - **AI Context Provider**: Switch between **Ollama (Local)** and **Google Gemini**.
+   - **Fact-Checker Provider**: Switch between **Google Gemini** and **Magisterium AI** (Magisterial Doctrine Search & Verification).
+   - **Magisterium LLM Provider**: Select provider (**Ollama** or **Google Gemini**) for generating custom LLM summaries from Magisterium search citations.
    - **Gemini API Key**: Input & store `GEMINI_API_KEY` in PostgreSQL DB (read exclusively from database).
+   - **Magisterium API Key**: Input & store `MAGISTERIUM_API_KEY` in PostgreSQL DB for Magisterium AI search & fact-checking.
    - **Bible API Key**: Input & store `BIBLE_API_KEY` in PostgreSQL DB (read exclusively from database).
    - **Model Selection**: Select from available Ollama or Gemini models.
    - **Context Instruction**: Modify prompt instructions given to the AI, with support for `{{citation}}` and `{{passage_text}}` dynamic placeholders.
 
 ---
 
-## 4. Running Backend Locally
+## 4. Magisterium AI Sanctuary & Custom LLM Summaries
+
+The **Magisterium AI Sanctuary** (`/magisterium-chat`) allows users to query authentic Catholic Magisterial sources (Catechism of the Catholic Church, Papal Encyclicals, Ecumenical Councils, Sacred Scripture, and Doctors of the Church).
+
+- **Default Response Mode**: Defaults to **Custom LLM Summary** (`llm_summary`), synthesizing retrieved Magisterium search citations via the configured LLM provider (Ollama or Gemini) with inline document attributions.
+- **Direct Magisterium AI Mode**: Can be toggled to return direct answer responses from the Magisterium AI API engine.
+- **Public Sanctuary & Share Links**: Discussions can be saved and published to the PostgreSQL database, generating public share links (`/#/magisterium-chat/:id`).
+
+---
+
+## 5. Running Backend Locally
 
 1. Open terminal and enter `backend/`:
    ```bash
@@ -124,7 +142,7 @@ docker-compose up --build
 
 ---
 
-## 5. Running Frontend Locally
+## 6. Running Frontend Locally
 
 1. Open terminal and enter `frontend/`:
    ```bash
@@ -143,7 +161,7 @@ docker-compose up --build
 
 ---
 
-## 6. Build & Deployment Steps
+## 7. Build & Deployment Steps
 
 ### Frontend Deployment (Cloudflare Pages)
 
