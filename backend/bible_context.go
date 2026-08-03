@@ -161,21 +161,20 @@ func FactCheckBibleContext(ctx context.Context, citation string, rawContext stri
 	}
 
 	settings := GetSettings()
-	factCheckPrompt := fmt.Sprintf(`You are a meticulous Catholic Bible scholar and editor.
-Your task is to fact-check and correct the provided Bible Context for citation "%s".
 
-Passage Text (Ground Truth):
-%s
+	factCheckPrompt := fmt.Sprintf(`You are a meticulous Catholic Bible scholar, historian, and editor.
+Your task is to fact-check and correct the ENTIRE provided Bible Context for Scripture citation "%s" from start to finish.
 
-Draft Bible Context to Fact-Check:
+Draft Bible Context to Fact-Check (Entire Text):
 %s
 
 Fact-Checking Instructions:
-1. Verify all historical, geographical, linguistic, and theological statements against Catholic Scripture and Church teaching.
-2. Correct any factual inaccuracies, misattributed quotes, hallucinated Catechism (CCC) paragraph numbers, or misquoted scripture verses.
-3. If an unverified exact CCC paragraph number is present, remove the specific number and refer to the general Catholic doctrine instead.
-4. CRITICAL: Strictly preserve the exact tone, structure, paragraph layout, headings, and Markdown formatting (bold, italics, lists) of the draft. Do NOT alter the format or structure—only correct factual or citation errors.
-5. Return ONLY the final corrected context text with no added commentary or metadata.`, citation, passageText, rawContext)
+1. Thoroughly review EVERY paragraph, section, and sentence of the entire draft context above for Scripture citation "%s".
+2. Fact-check ALL statements across all categories: historical background, geographical & cultural details, linguistic analysis, literary structure, theological claims, scripture cross-references, and Catholic Church teaching/doctrine.
+3. Correct any factual errors, misquoted verses, misattributed author/saint quotes, or hallucinated Catechism (CCC) paragraph numbers.
+4. If an unverified exact CCC paragraph number is present, remove the specific number and refer to the general Catholic doctrine instead.
+5. CRITICAL: Preserve the exact tone, section headings, paragraph layout, and Markdown formatting (bold, italics, bullet lists) of the draft. Do NOT omit any sections or rewrite non-factual content—only correct factual, doctrinal, and citation inaccuracies across the entire context.
+6. Return ONLY the final, fully fact-checked context text with no added commentary or metadata.`, citation, rawContext, citation)
 
 	req := &model.LLMRequest{
 		Contents: []*genai.Content{
@@ -289,19 +288,20 @@ Fact-Checking Instructions:
 
 		// Use retrieved Magisterium teaching excerpts to refine and verify the specific doctrine/CCC/saints in the draft context
 		magisteriumEvidence := strings.Join(retrievedCitations, "\n\n")
-		verificationPrompt := fmt.Sprintf(`You are a Catholic theological editor. Verify and refine the specific Catholic teachings, Catechism (CCC) references, and Saints/Doctors of the Church mentioned in the draft context for "%s".
+		verificationPrompt := fmt.Sprintf(`You are a Catholic theological editor and scholar. Your task is to fact-check and refine the ENTIRE draft Bible context for Scripture citation "%s" against authentic Catholic sources.
 
 Authentic Magisterial Sources (Ground Truth Excerpts):
 %s
 
-Draft Context:
+Draft Context to Fact-Check (Entire Text):
 %s
 
 Instructions:
-1. Cross-reference the Catholic teachings, CCC references, and Saints mentioned in the draft context against the Magisterial sources above.
-2. Correct any misquotations, wrong attributions, or hallucinated paragraph numbers.
-3. Keep the original structure, headings, tone, and formatting of the draft context completely intact.
-4. Return ONLY the final corrected context with no additional commentary.`, citation, magisteriumEvidence, rawContext)
+1. Review the ENTIRE draft context from start to finish for Scripture citation "%s", including historical context, literary structure, scriptural analysis, and theological statements.
+2. Cross-reference all Catholic teachings, CCC references, Saints/Doctors of the Church, and biblical claims against the authentic sources and scripture passage.
+3. Correct any misquotations, factual errors, wrong attributions, or hallucinated paragraph numbers anywhere in the text.
+4. Keep the original structure, headings, tone, and formatting of the entire draft context completely intact. Do NOT drop any sections.
+5. Return ONLY the final fully fact-checked context with no additional commentary.`, citation, magisteriumEvidence, rawContext, citation)
 
 		reqVerification := &model.LLMRequest{
 			Contents: []*genai.Content{
