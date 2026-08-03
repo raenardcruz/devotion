@@ -119,6 +119,33 @@ Retrieves historical and theological context for a scripture passage.
     }
     ```
 
+#### 4. Magisterium AI Q&A / Search
+Submits a query to Magisterium AI and receives grounded answers with citations.
+* **Endpoint:** `/magisterium/chat`
+* **Method:** `POST`
+* **Request Body:**
+  ```json
+  {
+    "messages": [
+      { "role": "user", "content": "What does the Catechism teach about prayer?" }
+    ],
+    "mode": "llm_summary"
+  }
+  ```
+  *(Note: `mode` defaults to `"llm_summary"` which generates a custom summary via Ollama/Gemini using search citations. Set to `"magisterium"` for direct Magisterium API answer strings.)*
+* **Success Response:** `200 OK` with response text, citations array, and usage info.
+
+#### 5. Save Public Sanctuary Conversation
+Publishes a conversation to the public database for community sharing.
+* **Endpoint:** `/magisterium/conversations/save`
+* **Method:** `POST`
+* **Request Body:** `{ "id": "...", "author_name": "...", "title": "...", "messages": [...] }`
+
+#### 6. List Public Sanctuary Conversations
+Retrieves all published community conversations.
+* **Endpoint:** `/magisterium/conversations/public`
+* **Method:** `GET`
+
 ---
 
 ## Frontend Integration Example (JavaScript Fetch)

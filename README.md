@@ -80,10 +80,21 @@ The Admin settings dashboard allows live customization of AI providers and conte
 
 **Settings Available:**
 1. **AI Generation Provider**: Toggle between **Ollama (Local)** and **Google Gemini**.
-2. **Gemini API Key**: Saved to & read strictly from PostgreSQL database.
-3. **Bible API Key**: Saved to & read strictly from PostgreSQL database.
-4. **Model Selection**: Dynamic dropdown populated from Ollama tags or Gemini model options.
-5. **Bible Context Instruction**: Custom prompt template for scripture context generation.
+2. **Fact-Checker Provider**: Toggle between **Google Gemini** and **Magisterium AI** (Doctrine Search & Verify).
+3. **Magisterium LLM Provider**: Select provider (**Ollama** or **Google Gemini**) for Custom LLM Summaries of Magisterium citations.
+4. **Gemini API Key**: Saved to & read strictly from PostgreSQL database.
+5. **Magisterium API Key**: Input & store `MAGISTERIUM_API_KEY` in PostgreSQL DB for Magisterium search & fact-checking.
+6. **Bible API Key**: Saved to & read strictly from PostgreSQL database.
+7. **Model Selection**: Dynamic dropdown populated from Ollama tags or Gemini model options.
+8. **Bible Context Instruction**: Custom prompt template for scripture context generation.
+
+---
+
+## 📜 Magisterium AI Sanctuary (`/magisterium-chat`)
+
+- Grounded in Sacred Scripture, Catechism of the Catholic Church, Encyclicals, and Ecumenical Council texts.
+- **Default Response Mode**: **Custom LLM Summary** (`llm_summary`), synthesizing retrieved citations via Ollama or Gemini with inline references.
+- **Public Sanctuary**: Save and publish discussions to PostgreSQL DB to generate public share links (`/#/magisterium-chat/:id`).
 
 ---
 
