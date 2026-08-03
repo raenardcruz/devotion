@@ -56,11 +56,171 @@
         </transition>
       </div>
 
+      <!-- Mobile Navigation Trigger Button -->
+      <div class="lg:hidden mb-4 flex items-center justify-between bg-parchment-neutral-light border border-parchment-border rounded-2xl p-3 shadow-sm">
+        <div class="flex items-center gap-2 overflow-hidden pr-2">
+          <span class="text-parchment-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </span>
+          <span class="font-serif text-xs font-semibold text-parchment-primary-dark truncate">
+            {{ activeSession ? activeSession.title : 'Chat Conversations' }}
+          </span>
+        </div>
+        <button 
+          @click="isMobileMenuOpen = true" 
+          class="px-3 py-1.5 bg-parchment-primary text-white text-xs font-medium rounded-xl hover:bg-parchment-primary-dark transition-all shadow-xs shrink-0 flex items-center gap-1.5"
+        >
+          <span>My Chats</span>
+        </button>
+      </div>
+
+      <!-- Mobile Navigation Drawer -->
+      <transition 
+        enter-active-class="transition duration-300 ease-out" 
+        enter-from-class="opacity-0" 
+        enter-to-class="opacity-100" 
+        leave-active-class="transition duration-200 ease-in" 
+        leave-from-class="opacity-100" 
+        leave-to-class="opacity-0"
+      >
+        <div v-if="isMobileMenuOpen" class="fixed inset-0 z-50 flex justify-start lg:hidden" @click="isMobileMenuOpen = false">
+          <!-- Backdrop -->
+          <div class="absolute inset-0 bg-parchment-neutral/40 backdrop-blur-xs"></div>
+          
+          <!-- Panel Content -->
+          <div class="relative w-4/5 max-w-xs bg-parchment-bg h-full shadow-2xl p-4 flex flex-col z-10 overflow-y-auto border-r border-parchment-border" @click.stop>
+            <div class="flex items-center justify-between pb-3 border-b border-parchment-border mb-3">
+              <h3 class="font-serif text-base text-parchment-primary-dark font-bold">Magisterium Sanctuary</h3>
+              <button @click="isMobileMenuOpen = false" class="p-1.5 text-parchment-neutral/50 hover:text-parchment-neutral rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Sidebar Tabs inside Mobile Drawer -->
+            <div class="grid grid-cols-2 gap-1 p-1 bg-parchment-neutral-light border border-parchment-border/60 rounded-2xl mb-3 text-center text-xs font-serif font-bold">
+              <button 
+                @click="sidebarTab = 'local'"
+                class="py-1.5 rounded-xl transition-all"
+                :class="[sidebarTab === 'local' ? 'bg-parchment-primary text-white shadow-2xs' : 'text-parchment-neutral/70 hover:text-parchment-primary-dark']"
+              >
+                My Chats
+              </button>
+              <button 
+                @click="sidebarTab = 'public'"
+                class="py-1.5 rounded-xl transition-all"
+                :class="[sidebarTab === 'public' ? 'bg-parchment-primary text-white shadow-2xs' : 'text-parchment-neutral/70 hover:text-parchment-primary-dark']"
+              >
+                Public Sanctuary
+              </button>
+            </div>
+
+            <!-- Sidebar Header for Local -->
+            <div v-if="sidebarTab === 'local'" class="flex items-center justify-between pb-3 mb-3 border-b border-parchment-border/60">
+              <span class="font-serif font-bold text-[11px] uppercase tracking-wider text-parchment-primary-dark">Saved Conversations</span>
+              <button 
+                @click="createNewSession(); isMobileMenuOpen = false" 
+                class="text-xs bg-parchment-primary text-white px-3 py-1.5 rounded-xl font-semibold hover:bg-parchment-primary-dark transition-all shadow-xs flex items-center space-x-1"
+              >
+                <span>+ New Chat</span>
+              </button>
+            </div>
+
+            <!-- Sidebar Header for Public -->
+            <div v-else class="flex items-center justify-between pb-3 mb-3 border-b border-parchment-border/60">
+              <span class="font-serif font-bold text-[11px] uppercase tracking-wider text-amber-950">Community Discussions</span>
+              <button 
+                @click="fetchPublicConversations" 
+                class="text-[11px] text-amber-900 hover:text-amber-950 underline font-semibold flex items-center space-x-1"
+              >
+                <span>Refresh</span>
+              </button>
+            </div>
+
+            <!-- Local Sessions Scroll List -->
+            <div v-if="sidebarTab === 'local'" class="overflow-y-auto space-y-2.5 flex-1 scrollbar-thin pr-1">
+              <div 
+                v-for="session in chatSessions" 
+                :key="session.id"
+                @click="selectSession(session.id); isMobileMenuOpen = false"
+                class="p-3 rounded-2xl border text-left cursor-pointer transition-all flex items-center justify-between group relative overflow-hidden"
+                :class="[activeSessionId === session.id ? 'bg-amber-100/90 border-amber-300 shadow-xs' : 'bg-parchment-bg/70 border-parchment-border/50 hover:bg-parchment-bg hover:border-parchment-border']"
+              >
+                <div class="min-w-0 flex-1 pr-2">
+                  <div class="text-xs font-semibold text-parchment-primary-dark truncate font-serif">
+                    {{ session.title || 'New Conversation' }}
+                  </div>
+                  <div class="text-[10px] text-parchment-neutral/60 mt-1 flex items-center space-x-2">
+                    <span>{{ formatDate(session.updatedAt) }}</span>
+                    <span class="w-1 h-1 rounded-full bg-parchment-neutral/30"></span>
+                    <span>{{ session.messages.length }} msgs</span>
+                  </div>
+                </div>
+
+                <button 
+                  @click.stop="deleteSession(session.id)"
+                  class="opacity-0 group-hover:opacity-100 text-stone-400 hover:text-red-600 transition-all p-1.5 rounded-lg hover:bg-red-50"
+                  title="Delete Chat"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
+
+              <div v-if="chatSessions.length === 0" class="text-center py-8 px-4 text-xs text-parchment-neutral/50 italic space-y-2">
+                <div class="text-2xl opacity-40">✍️</div>
+                <p>No saved conversations yet. Click "+ New Chat" to begin a discussion.</p>
+              </div>
+            </div>
+
+            <!-- Public Conversations Scroll List -->
+            <div v-else class="overflow-y-auto space-y-2.5 flex-1 scrollbar-thin pr-1">
+              <div 
+                v-for="pub in publicConversations" 
+                :key="pub.id"
+                @click="loadPublicSession(pub); isMobileMenuOpen = false"
+                class="p-3 rounded-2xl border text-left cursor-pointer transition-all flex items-center justify-between group relative overflow-hidden bg-amber-50/70 border-amber-200/80 hover:bg-amber-100/70"
+                :class="[activeSessionId === pub.id ? 'ring-2 ring-amber-500 bg-amber-100/90' : '']"
+              >
+                <div class="min-w-0 flex-1 pr-2">
+                  <div class="text-xs font-bold text-amber-950 truncate font-serif">
+                    {{ pub.title || 'Public Discussion' }}
+                  </div>
+                  <div class="text-[10px] text-amber-900/80 mt-1 flex items-center space-x-1.5 font-serif">
+                    <span class="font-semibold text-amber-950">By {{ pub.author_name }}</span>
+                    <span class="w-1 h-1 rounded-full bg-amber-400"></span>
+                    <span>{{ formatIsoDate(pub.created_at) }}</span>
+                  </div>
+                </div>
+                <button 
+                  @click.stop="copyPublicShareLink(pub.id)"
+                  class="text-[10px] bg-amber-200/90 hover:bg-amber-300 text-amber-950 font-bold px-2 py-1 rounded-lg border border-amber-300 flex items-center space-x-1 transition-colors"
+                  title="Copy Public Share Link"
+                >
+                  <span>🔗 Share</span>
+                </button>
+              </div>
+
+              <div v-if="publicConversations.length === 0" class="text-center py-8 px-4 text-xs text-amber-900/60 italic space-y-2 font-serif">
+                <div class="text-2xl opacity-40">🌐</div>
+                <p>No public community chats published yet. Be the first to share your Q&A!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </transition>
+
       <!-- Main Layout: Sidebar & Chat Container -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow items-start">
         
-        <!-- Sidebar Navigation: Local & Public Chat Sessions -->
-        <aside class="lg:col-span-4 xl:col-span-3 bg-parchment-neutral-light/80 border border-parchment-border rounded-3xl p-4 flex flex-col shadow-sm h-auto max-h-[400px] lg:max-h-[750px] lg:h-full backdrop-blur-xs">
+        <!-- Desktop Sidebar Navigation: Local & Public Chat Sessions -->
+        <aside class="hidden lg:flex lg:col-span-4 xl:col-span-3 bg-parchment-neutral-light/80 border border-parchment-border rounded-3xl p-4 flex-col shadow-sm h-auto max-h-[400px] lg:max-h-[750px] lg:h-full backdrop-blur-xs">
           <!-- Sidebar Tabs -->
           <div class="grid grid-cols-2 gap-1 p-1 bg-parchment-bg border border-parchment-border/60 rounded-2xl mb-3 text-center text-xs font-serif font-bold">
             <button 
@@ -556,6 +716,7 @@ const sidebarTab = ref<'local' | 'public'>('local');
 const chatSessions = ref<ChatSession[]>([]);
 const publicConversations = ref<PublicConversation[]>([]);
 const activeSessionId = ref<string>('');
+const isMobileMenuOpen = ref(false);
 const inputQuery = ref('');
 const completionMode = ref<'magisterium' | 'llm_summary'>('llm_summary');
 const isLoading = ref(false);
@@ -584,8 +745,12 @@ const authorName = ref('');
 const isPublishing = ref(false);
 const publishMessage = ref<string | null>(null);
 
+const activeSession = computed(() => {
+  return chatSessions.value.find(s => s.id === activeSessionId.value) || null;
+});
+
 const activeMessages = computed(() => {
-  const current = chatSessions.value.find(s => s.id === activeSessionId.value);
+  const current = activeSession.value;
   return current ? current.messages : [];
 });
 

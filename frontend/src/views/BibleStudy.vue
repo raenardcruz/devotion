@@ -49,6 +49,7 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const savedVerses = ref<SavedVerse[]>([]);
 const expandedIds = ref<Set<string>>(new Set());
+const isMobileSelectorOpen = ref(false);
 
 const cleanContext = (contextStr?: string) => {
   if (!contextStr) return '';
@@ -272,7 +273,7 @@ const getSnippet = (text: string) => {
     <TopNav />
 
     <!-- Main Layout Container -->
-    <main class="flex-grow max-w-3xl mx-auto w-full px-4 py-8 flex flex-col">
+    <div class="relative z-10 max-w-7xl mx-auto px-4 py-8 md:py-12 flex flex-col min-h-screen w-full">
       <!-- Title Header -->
       <header class="text-center mb-8 animate-fade-in-down">
         <span class="text-parchment-primary font-bold tracking-[0.25em] text-xs uppercase block mb-1">
@@ -286,173 +287,171 @@ const getSnippet = (text: string) => {
         </p>
       </header>
 
-      <!-- Selector & Input Section -->
-      <ParchmentCard class="shadow-sm mb-8 animate-fade-in-up">
-        <AppTabs :tabs="tabs" v-model="activeTab" class="mb-6" />
+      <!-- Mobile Navigation Trigger Button -->
+      <div class="lg:hidden mb-4 flex items-center justify-between bg-parchment-neutral-light border border-parchment-border rounded-2xl p-3 shadow-sm">
+        <div class="flex items-center gap-2 overflow-hidden pr-2">
+          <span class="text-parchment-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+          </span>
+          <span class="font-serif text-xs font-semibold text-parchment-primary-dark truncate">
+            {{ selectedBook }} {{ chapterInput ? chapterInput : '' }}{{ verseStart ? ':' + verseStart : '' }}
+          </span>
+        </div>
+        <button 
+          @click="isMobileSelectorOpen = true" 
+          class="px-3 py-1.5 bg-parchment-primary text-white text-xs font-medium rounded-xl hover:bg-parchment-primary-dark transition-all shadow-xs shrink-0 flex items-center gap-1.5"
+        >
+          <span>Select Passage</span>
+        </button>
+      </div>
 
-        <transition name="fade" mode="out-in">
-          <div :key="activeTab">
-            <!-- TAB 1: STRUCTURED SELECTOR -->
-            <div v-if="activeTab === 'selector'" class="space-y-4">
-              <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                <!-- Book Dropdown Input -->
-                <div class="relative md:col-span-2">
-                  <label class="block text-[11px] font-bold uppercase tracking-wider text-parchment-neutral/60 mb-2">
-                    Bible Book
-                  </label>
+      <!-- Mobile Navigation Drawer -->
+      <transition 
+        enter-active-class="transition duration-300 ease-out" 
+        enter-from-class="opacity-0" 
+        enter-to-class="opacity-100" 
+        leave-active-class="transition duration-200 ease-in" 
+        leave-from-class="opacity-100" 
+        leave-to-class="opacity-0"
+      >
+        <div v-if="isMobileSelectorOpen" class="fixed inset-0 z-50 flex justify-start lg:hidden" @click="isMobileSelectorOpen = false">
+          <!-- Backdrop -->
+          <div class="absolute inset-0 bg-parchment-neutral/40 backdrop-blur-xs"></div>
+          
+          <!-- Panel Content -->
+          <div class="relative w-4/5 max-w-xs bg-parchment-bg h-full shadow-2xl p-4 flex flex-col z-10 overflow-y-auto border-r border-parchment-border space-y-4" @click.stop>
+            <div class="flex items-center justify-between pb-3 border-b border-parchment-border">
+              <h3 class="font-serif text-base text-parchment-primary-dark font-bold">Passage Selector</h3>
+              <button @click="isMobileSelectorOpen = false" class="p-1.5 text-parchment-neutral/50 hover:text-parchment-neutral rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Mobile Selector Form Card inside Drawer -->
+            <ParchmentCard class="shadow-sm">
+              <AppTabs :tabs="tabs" v-model="activeTab" class="mb-4" />
+              <div v-if="activeTab === 'selector'" class="space-y-3">
+                <!-- Book Dropdown -->
+                <div>
+                  <label class="block text-[11px] font-bold uppercase tracking-wider text-parchment-neutral/60 mb-1">Bible Book</label>
                   <button 
                     type="button"
                     @click="showBookDropdown = !showBookDropdown"
-                    class="w-full text-left bg-parchment-bg border border-parchment-border/70 hover:border-parchment-primary/50 px-4 py-3 rounded-2xl flex items-center justify-between text-sm transition-all focus:outline-none focus:ring-1 focus:ring-parchment-primary"
+                    class="w-full text-left bg-parchment-bg border border-parchment-border/70 hover:border-parchment-primary/50 px-3 py-2 rounded-xl flex items-center justify-between text-xs transition-all"
                   >
-                    <span class="font-medium text-parchment-neutral">{{ selectedBook || 'Select a Book' }}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-parchment-neutral/50 transition-transform duration-200" :class="{ 'rotate-180': showBookDropdown }">
+                    <span class="font-medium text-parchment-neutral truncate">{{ selectedBook || 'Select a Book' }}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-parchment-neutral/50 shrink-0" :class="{ 'rotate-180': showBookDropdown }">
                       <path d="m6 9 6 6 6-6"></path>
                     </svg>
                   </button>
-
-                  <!-- Custom Searchable Dropdown Overlay -->
-                  <div v-if="showBookDropdown" class="absolute z-50 left-0 right-0 mt-2 bg-parchment-bg border border-parchment-border rounded-2xl shadow-xl max-h-72 overflow-y-auto p-2">
-                    <div class="sticky top-0 bg-parchment-bg pb-2 pt-1 border-b border-parchment-border/30 mb-2">
-                      <div class="relative">
-                        <input 
-                          type="text"
-                          v-model="bookSearchQuery"
-                          placeholder="Search books..."
-                          class="w-full bg-parchment-neutral-light/50 border border-parchment-border/40 text-xs px-3 py-2 pl-8 rounded-xl focus:outline-none focus:border-parchment-primary text-parchment-neutral"
-                        />
-                        <svg class="absolute left-2.5 top-2.5 text-parchment-neutral/40" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <circle cx="11" cy="11" r="8"></circle>
-                          <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
-                        </svg>
-                      </div>
-                    </div>
-                    
-                    <div v-if="filteredBooks.length === 0" class="text-center text-xs text-parchment-neutral/40 py-4">
-                      No books found
-                    </div>
-                    
-                    <div v-else-if="!bookSearchQuery" class="space-y-3">
-                      <div v-for="cat in categories" :key="cat.name">
-                        <div class="text-[9px] font-bold text-parchment-primary uppercase tracking-wider px-2 mb-1">{{ cat.name }}</div>
-                        <div class="grid grid-cols-2 gap-1">
-                          <button 
-                            v-for="book in cat.books" 
-                            :key="book"
-                            @click="selectBook(book)"
-                            class="text-left text-xs px-2.5 py-1.5 rounded-lg hover:bg-parchment-neutral-light transition-all text-parchment-neutral"
-                            :class="{ '!bg-parchment-primary-dark !text-white font-bold': selectedBook === book }"
-                          >
-                            {{ book }}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div v-else class="grid grid-cols-2 gap-1">
-                      <button 
-                        v-for="book in filteredBooks" 
-                        :key="book"
-                        @click="selectBook(book)"
-                        class="text-left text-xs px-2.5 py-1.5 rounded-lg hover:bg-parchment-neutral-light transition-all text-parchment-neutral"
-                        :class="{ '!bg-parchment-primary-dark !text-white font-bold': selectedBook === book }"
-                      >
-                        {{ book }}
-                      </button>
+                  <div v-if="showBookDropdown" class="mt-2 bg-parchment-bg border border-parchment-border rounded-xl shadow-xl max-h-56 overflow-y-auto p-2 space-y-2">
+                    <input type="text" v-model="bookSearchQuery" placeholder="Search books..." class="w-full bg-parchment-neutral-light/50 border border-parchment-border/40 text-xs px-2.5 py-1.5 rounded-lg text-parchment-neutral outline-none mb-1"/>
+                    <div class="grid grid-cols-1 gap-1">
+                      <button v-for="book in filteredBooks" :key="book" type="button" @click="selectBook(book)" class="text-left text-xs px-2 py-1 rounded hover:bg-parchment-neutral-light truncate" :class="{ 'bg-parchment-primary/10 text-parchment-primary-dark font-bold': selectedBook === book }">{{ book }}</button>
                     </div>
                   </div>
                 </div>
 
                 <!-- Chapter Input -->
                 <div>
-                  <label class="block text-[11px] font-bold uppercase tracking-wider text-parchment-neutral/60 mb-2">
-                    Chapter
-                  </label>
-                  <input 
-                    type="number"
-                    v-model="chapterInput"
-                    placeholder="Ch"
-                    min="1"
-                    class="w-full bg-parchment-bg border border-parchment-border/70 focus:border-parchment-primary/60 px-4 py-3 rounded-2xl text-sm text-center text-parchment-neutral focus:outline-none"
-                  />
+                  <label class="block text-[11px] font-bold uppercase tracking-wider text-parchment-neutral/60 mb-1">Chapter</label>
+                  <input type="number" v-model="chapterInput" placeholder="e.g. 3" min="1" class="w-full bg-parchment-bg border border-parchment-border/70 px-3 py-2 rounded-xl text-xs text-parchment-neutral outline-none"/>
                 </div>
 
                 <!-- Verse Selector -->
                 <div>
-                  <label class="block text-[11px] font-bold uppercase tracking-wider text-parchment-neutral/60 mb-2">
-                    Verse(s)
-                  </label>
+                  <label class="block text-[11px] font-bold uppercase tracking-wider text-parchment-neutral/60 mb-1">Verse Range</label>
                   <div class="flex items-center space-x-1.5">
-                    <input 
-                      type="number"
-                      v-model="verseStart"
-                      placeholder="Start"
-                      min="1"
-                      class="w-full bg-parchment-bg border border-parchment-border/70 focus:border-parchment-primary/60 px-2 py-3 rounded-2xl text-sm text-center text-parchment-neutral focus:outline-none"
-                    />
+                    <input type="number" v-model="verseStart" placeholder="Start" min="1" class="w-full bg-parchment-bg border border-parchment-border/70 px-2 py-2 rounded-xl text-xs text-center text-parchment-neutral outline-none"/>
                     <span class="text-parchment-neutral/40 text-xs font-bold">—</span>
-                    <input 
-                      type="number"
-                      v-model="verseEnd"
-                      placeholder="End"
-                      min="1"
-                      class="w-full bg-parchment-bg border border-parchment-border/70 focus:border-parchment-primary/60 px-2 py-3 rounded-2xl text-sm text-center text-parchment-neutral focus:outline-none"
-                    />
+                    <input type="number" v-model="verseEnd" placeholder="End" min="1" class="w-full bg-parchment-bg border border-parchment-border/70 px-2 py-2 rounded-xl text-xs text-center text-parchment-neutral outline-none"/>
                   </div>
+                </div>
+              </div>
+
+              <!-- Direct Search -->
+              <div v-else class="space-y-2">
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-parchment-neutral/60 mb-1">Citation</label>
+                <input type="text" v-model="manualQuery" @keyup.enter="getContext(); isMobileSelectorOpen = false" placeholder="e.g. John 3:16" class="w-full bg-parchment-bg border border-parchment-border/70 px-3 py-2 rounded-xl text-xs text-parchment-neutral outline-none"/>
+              </div>
+
+              <div class="mt-4 pt-3 border-t border-parchment-border/30">
+                <AppButton variant="primary" :disabled="loading" @click="getContext(); isMobileSelectorOpen = false" class="w-full text-xs py-2">Explore Context</AppButton>
+              </div>
+            </ParchmentCard>
+          </div>
+        </div>
+      </transition>
+
+      <!-- Main Layout Grid -->
+      <main class="flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Sidebar Navigation (Desktop) -->
+        <aside class="hidden lg:block lg:col-span-4 xl:col-span-4 h-fit lg:sticky lg:top-24 flex flex-col gap-6 animate-fade-in-up delay-100">
+          <ParchmentCard class="shadow-sm">
+            <h3 class="font-serif text-sm mb-4 text-parchment-primary-dark/80 tracking-widest uppercase font-bold border-b border-parchment-border/40 pb-2.5">Passage Selector</h3>
+            <AppTabs :tabs="tabs" v-model="activeTab" class="mb-4" />
+
+            <div v-if="activeTab === 'selector'" class="space-y-4">
+              <!-- Book Dropdown -->
+              <div class="relative">
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-parchment-neutral/60 mb-1.5">Bible Book</label>
+                <button type="button" @click="showBookDropdown = !showBookDropdown" class="w-full text-left bg-parchment-bg border border-parchment-border/70 hover:border-parchment-primary/50 px-3.5 py-2.5 rounded-xl flex items-center justify-between text-xs transition-all">
+                  <span class="font-medium text-parchment-neutral truncate">{{ selectedBook || 'Select a Book' }}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-parchment-neutral/50 shrink-0" :class="{ 'rotate-180': showBookDropdown }"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+                <div v-if="showBookDropdown" class="absolute z-50 left-0 right-0 mt-1 bg-parchment-bg border border-parchment-border rounded-xl shadow-xl max-h-60 overflow-y-auto p-2 space-y-2">
+                  <input type="text" v-model="bookSearchQuery" placeholder="Search books..." class="w-full bg-parchment-neutral-light/50 border border-parchment-border/40 text-xs px-2.5 py-1.5 rounded-lg text-parchment-neutral outline-none mb-1"/>
+                  <div class="grid grid-cols-1 gap-1">
+                    <button v-for="book in filteredBooks" :key="book" type="button" @click="selectBook(book)" class="text-left text-xs px-2.5 py-1.5 rounded-lg hover:bg-parchment-neutral-light truncate" :class="{ 'bg-parchment-primary/10 text-parchment-primary-dark font-bold': selectedBook === book }">{{ book }}</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chapter Input -->
+              <div>
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-parchment-neutral/60 mb-1.5">Chapter</label>
+                <input type="number" v-model="chapterInput" placeholder="e.g. 3" min="1" class="w-full bg-parchment-bg border border-parchment-border/70 px-3.5 py-2.5 rounded-xl text-xs text-parchment-neutral outline-none"/>
+              </div>
+
+              <!-- Verse Range -->
+              <div>
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-parchment-neutral/60 mb-1.5">Verse Range</label>
+                <div class="flex items-center space-x-2">
+                  <input type="number" v-model="verseStart" placeholder="Start" min="1" class="w-full bg-parchment-bg border border-parchment-border/70 px-2.5 py-2 rounded-xl text-xs text-center text-parchment-neutral outline-none"/>
+                  <span class="text-parchment-neutral/40 text-xs font-bold">—</span>
+                  <input type="number" v-model="verseEnd" placeholder="End" min="1" class="w-full bg-parchment-bg border border-parchment-border/70 px-2.5 py-2 rounded-xl text-xs text-center text-parchment-neutral outline-none"/>
                 </div>
               </div>
             </div>
 
-            <!-- TAB 2: MANUAL SEARCH -->
-            <div v-else class="space-y-2">
-              <label class="block text-[11px] font-bold uppercase tracking-wider text-parchment-neutral/60 mb-2">
-                Bible Passage Citation
-              </label>
-              <div class="relative">
-                <input 
-                  type="text"
-                  v-model="manualQuery"
-                  @keyup.enter="getContext"
-                  placeholder="e.g. John 3:16, Genesis 1:1-5, Romans 8:28"
-                  class="w-full bg-parchment-bg border border-parchment-border/70 focus:border-parchment-primary/60 px-4 py-3 rounded-2xl text-sm text-parchment-neutral focus:outline-none pl-11 shadow-inner"
-                />
-                <svg class="absolute left-4 top-3.5 text-parchment-neutral/40" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
-                </svg>
-              </div>
+            <!-- Direct Search -->
+            <div v-else class="space-y-3">
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-parchment-neutral/60 mb-1.5">Passage Citation</label>
+              <input type="text" v-model="manualQuery" @keyup.enter="getContext" placeholder="e.g. John 3:16" class="w-full bg-parchment-bg border border-parchment-border/70 px-3.5 py-2.5 rounded-xl text-xs text-parchment-neutral outline-none"/>
             </div>
-          </div>
-        </transition>
 
-        <!-- Action Button & Inline Error -->
-        <div class="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-parchment-border/30">
-          <div v-if="error" class="text-xs text-[#8B2635] font-semibold flex items-center gap-1.5">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" x2="12" y1="8" y2="12"></line>
-              <line x1="12" x2="12.01" y1="16" y2="16"></line>
-            </svg>
-            {{ error }}
-          </div>
-          <div v-else class="text-xs text-parchment-neutral/40 italic">
-            * Fetches scripture translation and Catholic theological commentary.
-          </div>
-          <AppButton 
-            variant="primary" 
-            @click="getContext"
-            :disabled="loading"
-            class="sm:w-auto w-full justify-center flex items-center gap-2 shadow-sm hover:shadow active:scale-95 transition-all !px-6"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" x2="12" y1="15" y2="3"></line>
-            </svg>
-            Fetch Context
-          </AppButton>
-        </div>
-      </ParchmentCard>
+            <div v-if="error" class="text-xs text-[#8B2635] font-semibold mt-3">
+              {{ error }}
+            </div>
+
+            <div class="mt-5 pt-4 border-t border-parchment-border/30">
+              <AppButton variant="primary" :disabled="loading" @click="getContext" class="w-full text-xs py-2.5">
+                <span v-if="loading">Exploring...</span>
+                <span v-else>Explore Context</span>
+              </AppButton>
+            </div>
+          </ParchmentCard>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="lg:col-span-8 xl:col-span-8 flex flex-col gap-6 animate-fade-in-up delay-150">
 
       <!-- Custom Loading Animation Overlay / Section -->
       <div v-if="loading" class="flex-grow flex flex-col items-center justify-center py-20 space-y-5 animate-fade-in-up">
@@ -605,7 +604,9 @@ const getSnippet = (text: string) => {
           </div>
         </transition-group>
       </div>
-    </main>
+        </div>
+      </main>
+    </div>
 
     <!-- Global Footer -->
     <BottomNav />
