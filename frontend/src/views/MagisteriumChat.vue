@@ -658,7 +658,6 @@ const publicConversations = ref<PublicConversation[]>([]);
 const activeSessionId = ref<string>('');
 const isMobileMenuOpen = ref(false);
 const inputQuery = ref('');
-const completionMode = ref<'magisterium' | 'llm_summary'>('llm_summary');
 const isLoading = ref(false);
 const chatError = ref<string | null>(null);
 const chatContainer = ref<HTMLDivElement | null>(null);
