@@ -1,5 +1,5 @@
 <template>
-  <footer class="w-full bg-parchment-bg border-t border-parchment-border py-2 px-6 flex items-center justify-around fixed bottom-0 left-0 right-0 z-40">
+  <footer class="w-full bg-parchment-bg/95 backdrop-blur-md border-t border-parchment-border/80 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] px-4 flex items-center justify-around fixed bottom-0 left-0 right-0 z-40 shadow-lg">
     <!-- Home Tab -->
     <router-link to="/" class="flex flex-col items-center group transition-all duration-300">
       <div 

@@ -9,7 +9,7 @@
         <h2 class="text-3xl md:text-5xl font-serif text-stone-100 tracking-tight drop-shadow-md">
             {{ currentMystery.title }}
         </h2>
-        <p class="text-stone-400 text-sm md:text-base max-w-lg mx-auto leading-relaxed italic opacity-80">
+        <p class="text-stone-400 text-sm md:text-base max-w-lg mx-auto leading-relaxed opacity-80">
             {{ currentMystery.description }}
         </p>
         <div v-if="currentMystery.virtues && currentMystery.virtues.length" class="flex flex-wrap justify-center gap-2 pt-1">

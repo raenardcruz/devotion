@@ -79,30 +79,30 @@ func magisteriumChatHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Prepare query: if multiple conversation turns exist, format past turn context into query
-	var queryBuilder strings.Builder
-	if len(req.Messages) > 1 {
-		queryBuilder.WriteString("Conversation Context:\n")
-		// Include up to 6 previous turns for context
-		startIdx := 0
-		if len(req.Messages) > 7 {
-			startIdx = len(req.Messages) - 7
-		}
-		for i := startIdx; i < len(req.Messages)-1; i++ {
-			msg := req.Messages[i]
-			roleLabel := "User"
-			if msg.Role == "assistant" {
-				roleLabel = "Assistant"
-			}
-			queryBuilder.WriteString(fmt.Sprintf("%s: %s\n", roleLabel, msg.Content))
-		}
-		queryBuilder.WriteString("\nFollow-up Question: ")
-		queryBuilder.WriteString(req.Messages[len(req.Messages)-1].Content)
-	} else {
-		queryBuilder.WriteString(req.Messages[len(req.Messages)-1].Content)
+	llmProvider := settings.MagisteriumLLMProvider
+	if llmProvider == "" {
+		llmProvider = "ollama"
 	}
 
-	fullQuery := queryBuilder.String()
+	// Prepare query: if multiple conversation turns exist, generate a standalone search prompt via LLM using conversation history (excluding documents)
+	var searchQuery string
+	latestQuestion := req.Messages[len(req.Messages)-1].Content
+
+	if len(req.Messages) > 1 {
+		log.Printf("[magisteriumChatHandler] Follow-up detected (%d messages). Generating standalone query via LLM (%s)...", len(req.Messages), llmProvider)
+		generatedQuery, err := generateStandaloneQueryWithLLM(r.Context(), req.Messages, llmProvider, settings)
+		if err != nil {
+			log.Printf("[magisteriumChatHandler] Warning: failed to generate standalone query via LLM: %v. Falling back to latest user question.", err)
+			searchQuery = latestQuestion
+		} else if strings.TrimSpace(generatedQuery) != "" {
+			searchQuery = generatedQuery
+			log.Printf("[magisteriumChatHandler] Generated standalone query for Magisterium API: %s", searchQuery)
+		} else {
+			searchQuery = latestQuestion
+		}
+	} else {
+		searchQuery = latestQuestion
+	}
 
 	// Call Magisterium API endpoint
 	magisteriumURL := os.Getenv("MAGISTERIUM_API_URL")
@@ -111,8 +111,7 @@ func magisteriumChatHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	payload := map[string]interface{}{
-		"query":      fullQuery,
-		"messages":   req.Messages,
+		"query":      searchQuery,
 		"numResults": 5,
 	}
 
@@ -389,6 +388,114 @@ Instructions:
 
 	return strings.TrimSpace(summaryBuilder.String()), nil
 }
+
+// generateStandaloneQueryWithLLM uses the configured LLM provider (Ollama or Gemini) to process conversation history
+// and reformulate a follow-up user message into a concise standalone search query for Magisterium AI.
+func generateStandaloneQueryWithLLM(ctx context.Context, messages []MagisteriumChatMessage, provider string, settings Settings) (string, error) {
+	if len(messages) == 0 {
+		return "", nil
+	}
+
+	var chatHistory strings.Builder
+	// Include recent turns up to 6 for history context, stripping any document attachments
+	startIdx := 0
+	if len(messages) > 7 {
+		startIdx = len(messages) - 7
+	}
+	for i := startIdx; i < len(messages)-1; i++ {
+		msg := messages[i]
+		roleLabel := "User"
+		if msg.Role == "assistant" {
+			roleLabel = "Assistant"
+		}
+		// Truncate message text if exceptionally long to conserve prompt budget
+		content := msg.Content
+		if len(content) > 1000 {
+			content = content[:1000] + "... [truncated]"
+		}
+		chatHistory.WriteString(fmt.Sprintf("%s: %s\n\n", roleLabel, content))
+	}
+
+	latestQuestion := messages[len(messages)-1].Content
+
+	prompt := fmt.Sprintf(`Given the following conversation history and a follow-up question, reformulate the follow-up question into a clear, standalone search query to look up Catholic magisterial documents.
+Do NOT answer the question. Do NOT include any explanations, document text, preamble, or commentary. Output ONLY the standalone search query string.
+
+Conversation History:
+%s
+
+Follow-up Question: %s
+
+Standalone Search Query:`, chatHistory.String(), latestQuestion)
+
+	req := &model.LLMRequest{
+		Contents: []*genai.Content{
+			genai.NewContentFromText(prompt, "user"),
+		},
+	}
+
+	var resultBuilder strings.Builder
+
+	if provider == "gemini" {
+		apiKey := settings.GeminiAPIKey
+		if apiKey == "" {
+			return "", fmt.Errorf("Gemini API key not configured in Admin Settings")
+		}
+		selectedModel := settings.GeminiModel
+		if selectedModel == "" {
+			selectedModel = "gemini-3.1-flash-lite"
+		}
+		gModel, err := geminiModel.NewModel(ctx, selectedModel, &genai.ClientConfig{
+			APIKey: apiKey,
+		})
+		if err != nil {
+			return "", fmt.Errorf("failed to initialize Gemini model for query generation: %w", err)
+		}
+		seq := gModel.GenerateContent(ctx, req, false)
+		for resp, err := range seq {
+			if err != nil {
+				return "", fmt.Errorf("error generating query with Gemini: %w", err)
+			}
+			if resp.Content != nil {
+				for _, part := range resp.Content.Parts {
+					if part.Text != "" {
+						resultBuilder.WriteString(part.Text)
+					}
+				}
+			}
+		}
+	} else {
+		// Default to Ollama
+		ollamaURL := os.Getenv("OLLAMA_URL")
+		if ollamaURL == "" {
+			ollamaURL = "http://localhost:11434"
+		}
+		selectedModel := settings.OllamaModel
+		if selectedModel == "" {
+			selectedModel = "gemma4:cloud"
+		}
+		oModel := ollama.NewModel(selectedModel, ollamaURL)
+		seq := oModel.GenerateContent(ctx, req, false)
+		for resp, err := range seq {
+			if err != nil {
+				return "", fmt.Errorf("error generating query with Ollama: %w", err)
+			}
+			if resp.Content != nil {
+				for _, part := range resp.Content.Parts {
+					if part.Text != "" {
+						resultBuilder.WriteString(part.Text)
+					}
+				}
+			}
+		}
+	}
+
+	query := strings.TrimSpace(resultBuilder.String())
+	// Strip quotes if the LLM wrapped the query in quotation marks
+	query = strings.Trim(query, `"'` + "`")
+	return query, nil
+}
+
 
 type SavePublicConversationRequest struct {
 	ID         string          `json:"id"`

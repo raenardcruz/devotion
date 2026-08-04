@@ -1,21 +1,21 @@
 <template>
-  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-24 selection:bg-parchment-primary/20">
+  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-28 sm:pb-20 selection:bg-parchment-primary/20">
     <!-- Global Header -->
     <TopNav />
 
     <!-- Main Content -->
-    <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-8 flex flex-col">
+    <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-6 md:py-8 flex flex-col">
       
       <!-- Sub-header & Controls Row -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-parchment-border pb-4 mb-4 gap-4 animate-fade-in-down">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-parchment-border pb-4 mb-4 gap-3.5 animate-fade-in-down">
           <h1 class="font-serif text-2xl md:text-3xl text-parchment-neutral font-medium">
               {{ displaySetName }}
           </h1>
           
           <!-- Audio Controls & Language Toggle -->
-          <div class="flex flex-wrap items-center gap-3 sm:gap-4">
+          <div class="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 sm:gap-3.5">
               <!-- Auto Play Toggle Switch -->
-              <label class="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-wider text-parchment-neutral/50 cursor-pointer select-none">
+              <label class="flex items-center space-x-1.5 text-[10px] font-bold uppercase tracking-wider text-parchment-neutral/60 cursor-pointer select-none">
                   <span>Auto-Play</span>
                   <input type="checkbox" v-model="autoPlay" class="sr-only peer" />
                   <div class="relative w-8 h-4.5 bg-parchment-neutral-light border border-parchment-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-parchment-neutral/40 peer-checked:after:bg-parchment-primary after:border-parchment-border after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-parchment-primary/10"></div>
@@ -125,7 +125,7 @@
             <!-- Meditation Quote Card -->
             <div class="bg-parchment-neutral-light/50 border border-parchment-border border-l-4 border-l-parchment-primary rounded-3xl p-6 shadow-sm">
                 <transition name="fade-slide" mode="out-in">
-                  <p :key="currentVisual.meditation" class="font-serif italic text-sm md:text-base text-parchment-neutral/80 leading-relaxed">
+                  <p :key="currentVisual.meditation" class="font-seriftext-sm md:text-base text-parchment-neutral/80 leading-relaxed">
                       {{ currentVisual.meditation }}
                   </p>
                 </transition>
@@ -224,7 +224,7 @@
                     />
                     <div class="flex-grow min-w-0">
                       <div class="text-xs font-bold text-parchment-neutral truncate">{{ prayer.name }}</div>
-                      <div v-if="prayer.latinName" class="text-[9px] text-parchment-neutral/40 italic truncate">{{ prayer.latinName }}</div>
+                      <div v-if="prayer.latinName" class="text-[9px] text-parchment-neutral/40truncate">{{ prayer.latinName }}</div>
                     </div>
                   </label>
                 </div>
@@ -252,7 +252,7 @@
                     />
                     <div class="flex-grow min-w-0">
                       <div class="text-xs font-bold text-parchment-neutral truncate">{{ prayer.name }}</div>
-                      <div v-if="prayer.latinName" class="text-[9px] text-parchment-neutral/40 italic truncate">{{ prayer.latinName }}</div>
+                      <div v-if="prayer.latinName" class="text-[9px] text-parchment-neutral/40truncate">{{ prayer.latinName }}</div>
                     </div>
                   </label>
                 </div>

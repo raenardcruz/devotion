@@ -363,7 +363,7 @@ const formatParagraph = (text: string): string => {
   let html = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
   
-  // Convert markdown italic (*text*) to HTML <em>text</em>
+  // Convert markdown(*text*) to HTML <em>text</em>
   html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
   html = html.replace(/_(.*?)_/g, '<em>$1</em>');
   
@@ -381,7 +381,7 @@ const isFirstTextPara = (idx: number): boolean => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-24 selection:bg-parchment-primary/20">
+  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-28 sm:pb-20 selection:bg-parchment-primary/20">
     <!-- Global Header -->
     <TopNav />
 
@@ -477,7 +477,7 @@ const isFirstTextPara = (idx: number): boolean => {
       <!-- Loading / Error States -->
       <div v-if="isLoading" class="flex-grow flex flex-col items-center justify-center py-20 gap-4">
         <div class="w-12 h-12 border-4 border-parchment-primary/30 border-t-parchment-primary rounded-full animate-spin"></div>
-        <p class="font-serif italic text-parchment-neutral/60 text-sm">Loading church father writings...</p>
+        <p class="font-seriftext-parchment-neutral/60 text-sm">Loading church father writings...</p>
       </div>
 
       <div v-else-if="errorMsg" class="flex-grow flex flex-col items-center justify-center py-20 text-center max-w-md mx-auto gap-4">
@@ -565,7 +565,7 @@ const isFirstTextPara = (idx: number): boolean => {
             <!-- Table of Contents List -->
             <div class="flex-grow overflow-y-auto space-y-4 pr-1">
               <div v-for="section in filteredSections" :key="section.id" class="space-y-2">
-                <h4 v-if="section.id !== 'default'" class="text-[11px] font-bold text-parchment-neutral/70 mt-3 font-serif italic border-l-2 border-parchment-primary/30 pl-2">
+                <h4 v-if="section.id !== 'default'" class="text-[11px] font-bold text-parchment-neutral/70 mt-3 font-serifborder-l-2 border-parchment-primary/30 pl-2">
                   {{ section.title }}
                 </h4>
                 
@@ -641,7 +641,7 @@ const isFirstTextPara = (idx: number): boolean => {
             <div class="space-y-4">
               <div v-for="section in filteredSections" :key="section.id" class="space-y-2">
                 <!-- Section Header (if not default) -->
-                <h4 v-if="section.id !== 'default'" class="text-[11px] font-bold text-parchment-neutral/70 mt-3 font-serif italic border-l-2 border-parchment-primary/30 pl-2">
+                <h4 v-if="section.id !== 'default'" class="text-[11px] font-bold text-parchment-neutral/70 mt-3 font-serifborder-l-2 border-parchment-primary/30 pl-2">
                   {{ section.title }}
                 </h4>
                 
@@ -701,7 +701,7 @@ const isFirstTextPara = (idx: number): boolean => {
                   :key="idx" 
                   :class="[
                     isBlockquote(para) 
-                      ? 'text-center italic my-8 px-10 md:px-16 text-parchment-primary-dark/85 text-sm md:text-base leading-relaxed font-serif max-w-xl mx-auto font-medium' 
+                      ? 'text-centermy-8 px-10 md:px-16 text-parchment-primary-dark/85 text-sm md:text-base leading-relaxed font-serif max-w-xl mx-auto font-medium' 
                       : 'text-justify leading-relaxed text-parchment-neutral/90 font-serif text-[16.5px] md:text-[18px] tracking-wide mb-4'
                   ]"
                   :style="(!isBlockquote(para) && !isFirstTextPara(idx)) ? { textIndent: '1.75rem' } : {}"
@@ -725,7 +725,7 @@ const isFirstTextPara = (idx: number): boolean => {
               </div>
             </div>
 
-            <div v-else class="flex-grow flex items-center justify-center text-parchment-neutral/40 font-serif italic text-base">
+            <div v-else class="flex-grow flex items-center justify-center text-parchment-neutral/40 font-seriftext-base">
               Select a chapter to begin reading
             </div>
 

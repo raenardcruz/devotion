@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-24 selection:bg-parchment-primary/20">
+  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-28 sm:pb-20 selection:bg-parchment-primary/20">
     <!-- Global Header -->
     <TopNav />
 
@@ -10,10 +10,10 @@
         <span class="text-parchment-primary font-bold tracking-[0.25em] text-xs uppercase block mb-3">
           The Word of the Day
         </span>
-        <h2 class="font-serif text-2xl md:text-3xl text-parchment-neutral italic mb-3 leading-snug">
+        <h2 class="font-serif text-2xl md:text-3xl text-parchment-neutralmb-3 leading-snug">
           "Abide in My love."
         </h2>
-        <p class="text-parchment-neutral/70 italic text-sm leading-relaxed max-w-md mx-auto">
+        <p class="text-parchment-neutral/70text-sm leading-relaxed max-w-md mx-auto">
           Reflect on the sacred rhythms of the liturgical year and find peace in the quiet moments of the day.
         </p>
       </div>

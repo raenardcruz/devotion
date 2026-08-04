@@ -18,7 +18,7 @@
                     <p 
                         v-else
                         class="text-xl md:text-2xl font-serif leading-relaxed text-parchment-neutral whitespace-pre-line transition-all duration-300"
-                        :class="{ 'italic text-parchment-secondary': showLatin && currentStep.latin }"
+                        :class="{ 'text-parchment-secondary': showLatin && currentStep.latin }"
                     >
                         {{ (showLatin && currentStep.latin) ? currentStep.latin : currentStep.content }}
                     </p>
@@ -26,7 +26,7 @@
                     <!-- Latin Translation Reference (Hidden if interlinear is active) -->
                     <p 
                         v-if="showLatin && currentStep.latin && !interlinearWords"
-                        class="mt-4 text-xs font-sans leading-relaxed text-parchment-neutral/50 max-w-xl mx-auto opacity-70 italic border-t border-parchment-border/40 pt-4"
+                        class="mt-4 text-xs font-sans leading-relaxed text-parchment-neutral/50 max-w-xl mx-auto opacity-70 border-t border-parchment-border/40 pt-4"
                     >
                         {{ currentStep.content }}
                     </p>

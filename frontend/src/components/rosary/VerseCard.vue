@@ -21,7 +21,7 @@
                             <h3 class="font-serif text-2xl md:text-3xl text-parchment-primary-dark font-medium">
                                 {{ showLatin ? 'Rosarium Finitum Est' : 'Rosary Completed' }}
                             </h3>
-                            <p class="text-sm md:text-base font-serif italic text-parchment-neutral/70 leading-relaxed max-w-md mx-auto">
+                            <p class="text-sm md:text-base font-seriftext-parchment-neutral/70 leading-relaxed max-w-md mx-auto">
                                 "{{ showLatin ? currentStep.latin : currentStep.content }}"
                             </p>
                         </div>
@@ -58,7 +58,7 @@
 
                         <!-- Mystery Description & Virtues -->
                         <div v-if="currentStep.type === 'mystery-header'" class="space-y-4 my-4 animate-fade-in-up">
-                            <p class="text-base md:text-lg font-serif italic text-parchment-neutral/80 leading-relaxed">
+                            <p class="text-base md:text-lg font-seriftext-parchment-neutral/80 leading-relaxed">
                                 {{ currentStep.description }}
                             </p>
                             <div v-if="currentStep.virtues && currentStep.virtues.length" class="flex flex-wrap items-center gap-2 pt-2 border-t border-parchment-border/10">
@@ -75,7 +75,7 @@
 
                         <!-- Scripture Verse (Mockup blockquote style, always English) -->
                         <div v-if="currentStep.verse" class="border-l-4 border-parchment-primary pl-4 py-1.5 my-4">
-                            <p class="text-base md:text-lg font-serif italic text-parchment-neutral/80 leading-relaxed mb-2.5">
+                            <p class="text-base md:text-lg font-seriftext-parchment-neutral/80 leading-relaxed mb-2.5">
                                 "{{ currentStep.verse.text }}"
                             </p>
                             <!-- Relocated & Linked Bible Citation -->
@@ -138,7 +138,7 @@
                                 <p 
                                     v-else-if="currentStep.content"
                                     class="text-base md:text-lg font-sans leading-relaxed text-parchment-neutral/90 whitespace-pre-line"
-                                    :class="{ 'font-serif italic text-parchment-primary-dark': showLatin && currentStep.latin }"
+                                    :class="{ 'font-seriftext-parchment-primary-dark': showLatin && currentStep.latin }"
                                 >
                                     {{ (showLatin && currentStep.latin) ? currentStep.latin : currentStep.content }}
                                 </p>
