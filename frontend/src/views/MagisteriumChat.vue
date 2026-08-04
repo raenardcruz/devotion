@@ -1,55 +1,20 @@
 <template>
-  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-20 selection:bg-parchment-primary/20">
+  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-28 sm:pb-20 selection:bg-parchment-primary/20">
     <TopNav />
 
-    <main class="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 flex-grow w-full flex flex-col">
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-4 flex-grow w-full flex flex-col">
       <!-- Page Header -->
-      <div class="text-center mb-6">
-        <div class="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-parchment-neutral-light border border-parchment-border/70 mb-2.5 text-xs text-parchment-primary font-semibold uppercase tracking-wider shadow-2xs">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
-          <span>Grounded in Sacred Tradition & Church Doctrine</span>
-        </div>
-        <h1 class="text-3xl md:text-4xl font-serif font-bold text-parchment-primary-dark tracking-tight mb-1">
+      <div class="text-center mb-3">
+        <h1 class="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-parchment-primary-dark tracking-tight mb-1">
           Magisterium AI Sanctuary
         </h1>
-        <p class="text-parchment-neutral/70 text-xs md:text-sm max-w-2xl mx-auto font-serif">
-          Engage in Catholic Q&A, Biblical Reflection, and Magisterial Search powered by Magisterium AI.
+        <p class="text-parchment-neutral/70 text-xs sm:text-sm max-w-2xl mx-auto font-serif">
+          Grounded in Sacred Tradition, Church Doctrine, and Catholic Scriptures
         </p>
-
-        <!-- Status & Rate Limit Bar -->
-        <div class="mt-4 max-w-2xl mx-auto bg-amber-50/80 border border-amber-200/90 rounded-2xl p-3.5 text-xs text-amber-950 flex items-center justify-between shadow-sm backdrop-blur-xs">
-          <div class="flex items-center space-x-3">
-            <div class="w-8 h-8 rounded-xl bg-amber-200/60 border border-amber-300 flex items-center justify-center text-amber-900 font-serif font-bold text-sm shadow-2xs">
-              📜
-            </div>
-            <div class="text-left">
-              <span class="font-bold text-amber-950 uppercase tracking-wider text-[10px] block">Magisterium API Quota & Usage</span>
-              <span class="text-[11px] text-amber-900/90 font-serif">
-                <span v-if="apiUsage?.remaining !== undefined">
-                  Remaining Capacity: <strong>{{ apiUsage.remaining }}</strong> <span v-if="apiUsage.limit">/ {{ apiUsage.limit }}</span> queries
-                </span>
-                <span v-else>
-                  Rate Limits: <strong>15 req/min</strong> (Search) • <strong>2 req/min</strong> (Q&A Pipeline)
-                </span>
-              </span>
-            </div>
-          </div>
-          <a 
-            href="https://www.magisterium.com" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            class="text-[11px] bg-parchment-primary text-white font-medium px-3 py-1.5 rounded-xl hover:bg-parchment-primary-dark transition-all shadow-xs flex items-center space-x-1"
-          >
-            <span>Console</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-          </a>
-        </div>
 
         <!-- Copy Toast Banner -->
         <transition name="fade">
-          <div v-if="copyNotice" class="mt-3 max-w-md mx-auto p-2.5 bg-emerald-100 border border-emerald-300 text-emerald-950 font-bold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-2">
+          <div v-if="copyNotice" class="mt-2 max-w-md mx-auto p-2 bg-emerald-100 border border-emerald-300 text-emerald-950 font-bold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-2">
             <span>✅</span>
             <span>{{ copyNotice }}</span>
           </div>
@@ -173,7 +138,7 @@
                 </button>
               </div>
 
-              <div v-if="chatSessions.length === 0" class="text-center py-8 px-4 text-xs text-parchment-neutral/50 italic space-y-2">
+              <div v-if="chatSessions.length === 0" class="text-center py-8 px-4 text-xs text-parchment-neutral/50space-y-2">
                 <div class="text-2xl opacity-40">✍️</div>
                 <p>No saved conversations yet. Click "+ New Chat" to begin a discussion.</p>
               </div>
@@ -207,7 +172,7 @@
                 </button>
               </div>
 
-              <div v-if="publicConversations.length === 0" class="text-center py-8 px-4 text-xs text-amber-900/60 italic space-y-2 font-serif">
+              <div v-if="publicConversations.length === 0" class="text-center py-8 px-4 text-xs text-amber-900/60space-y-2 font-serif">
                 <div class="text-2xl opacity-40">🌐</div>
                 <p>No public community chats published yet. Be the first to share your Q&A!</p>
               </div>
@@ -220,7 +185,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow items-start">
         
         <!-- Desktop Sidebar Navigation: Local & Public Chat Sessions -->
-        <aside class="hidden lg:flex lg:col-span-4 xl:col-span-3 bg-parchment-neutral-light/80 border border-parchment-border rounded-3xl p-4 flex-col shadow-sm h-auto max-h-[400px] lg:max-h-[750px] lg:h-full backdrop-blur-xs">
+        <aside class="hidden lg:flex lg:col-span-4 xl:col-span-3 bg-parchment-neutral-light/80 border border-parchment-border rounded-3xl p-4 flex-col shadow-sm h-full max-h-[720px] lg:max-h-[820px] backdrop-blur-xs">
           <!-- Sidebar Tabs -->
           <div class="grid grid-cols-2 gap-1 p-1 bg-parchment-bg border border-parchment-border/60 rounded-2xl mb-3 text-center text-xs font-serif font-bold">
             <button 
@@ -262,7 +227,7 @@
           </div>
 
           <!-- Local Sessions Scroll List -->
-          <div v-if="sidebarTab === 'local'" class="overflow-y-auto space-y-2.5 flex-1 scrollbar-thin pr-1 max-h-[300px] lg:max-h-[620px]">
+          <div v-if="sidebarTab === 'local'" class="overflow-y-auto space-y-2.5 flex-1 scrollbar-thin pr-1 max-h-[300px] lg:max-h-[680px]">
             <div 
               v-for="session in chatSessions" 
               :key="session.id"
@@ -294,14 +259,14 @@
               </button>
             </div>
 
-            <div v-if="chatSessions.length === 0" class="text-center py-8 px-4 text-xs text-parchment-neutral/50 italic space-y-2">
+            <div v-if="chatSessions.length === 0" class="text-center py-8 px-4 text-xs text-parchment-neutral/50space-y-2">
               <div class="text-2xl opacity-40">✍️</div>
               <p>No saved conversations yet. Click "+ New Chat" to begin a discussion.</p>
             </div>
           </div>
 
           <!-- Public Conversations Scroll List -->
-          <div v-else class="overflow-y-auto space-y-2.5 flex-1 scrollbar-thin pr-1 max-h-[300px] lg:max-h-[620px]">
+          <div v-else class="overflow-y-auto space-y-2.5 flex-1 scrollbar-thin pr-1 max-h-[300px] lg:max-h-[680px]">
             <div 
               v-for="pub in publicConversations" 
               :key="pub.id"
@@ -328,7 +293,7 @@
               </button>
             </div>
 
-            <div v-if="publicConversations.length === 0" class="text-center py-8 px-4 text-xs text-amber-900/60 italic space-y-2 font-serif">
+            <div v-if="publicConversations.length === 0" class="text-center py-8 px-4 text-xs text-amber-900/60space-y-2 font-serif">
               <div class="text-2xl opacity-40">🌐</div>
               <p>No public community chats published yet. Be the first to share your Q&A!</p>
             </div>
@@ -336,7 +301,7 @@
         </aside>
 
         <!-- Main Chat Box Panel -->
-        <div class="lg:col-span-8 xl:col-span-9 flex flex-col bg-parchment-neutral-light/60 border border-parchment-border rounded-3xl shadow-sm overflow-hidden h-[550px] sm:h-[650px] lg:h-[750px]">
+        <div class="lg:col-span-8 xl:col-span-9 flex flex-col bg-parchment-neutral-light/60 border border-parchment-border rounded-3xl shadow-sm overflow-hidden h-[calc(100dvh-11rem)] min-h-[500px] sm:h-[720px] lg:h-[820px]">
           
           <!-- Scrollable Chat Window -->
           <div ref="chatContainer" class="flex-1 p-5 md:p-8 overflow-y-auto space-y-6 scrollbar-thin">
@@ -528,72 +493,47 @@
           </div>
 
           <!-- Bottom Chat Input Bar -->
-          <div class="p-4 bg-parchment-neutral-light/90 border-t border-parchment-border backdrop-blur-xs space-y-2.5">
-            <!-- Mode Selector Bar -->
-            <div class="flex items-center justify-between px-1 text-xs font-serif">
-              <span class="text-stone-600 font-semibold flex items-center space-x-1">
-                <span>Response Mode:</span>
-              </span>
-              <div class="inline-flex p-0.5 bg-stone-200/80 border border-parchment-border/70 rounded-xl shadow-inner">
-                <button
-                  type="button"
-                  @click="completionMode = 'magisterium'"
-                  class="px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center space-x-1"
-                  :class="[completionMode === 'magisterium' ? 'bg-amber-800 text-white shadow-2xs' : 'text-stone-700 hover:text-amber-900']"
-                  title="Use direct Magisterium AI answer engine"
-                >
-                  <span>📜 Direct Magisterium AI</span>
-                </button>
-                <button
-                  type="button"
-                  @click="completionMode = 'llm_summary'"
-                  class="px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center space-x-1"
-                  :class="[completionMode === 'llm_summary' ? 'bg-amber-800 text-white shadow-2xs' : 'text-stone-700 hover:text-amber-900']"
-                  title="Search citations and generate summary with configured LLM (Ollama or Gemini)"
-                >
-                  <span>🤖 Custom LLM Summary</span>
-                </button>
-              </div>
-            </div>
-
-            <form @submit.prevent="sendMessage" class="flex items-center space-x-3">
-              <input
+          <div class="p-3 sm:p-3.5 bg-parchment-neutral-light/95 border-t border-parchment-border backdrop-blur-md space-y-2">
+            <form @submit.prevent="sendMessage" class="flex items-end space-x-2 sm:space-x-3">
+              <textarea
+                ref="textareaRef"
                 v-model="inputQuery"
-                type="text"
+                rows="1"
                 placeholder="Ask a question on Catholic scripture, doctrine, or Church teaching..."
                 :disabled="isLoading"
-                class="flex-1 px-5 py-3.5 bg-white border border-parchment-border rounded-2xl text-sm text-stone-800 placeholder-parchment-neutral/40 focus:outline-none focus:ring-2 focus:ring-parchment-primary focus:border-transparent transition-all shadow-2xs disabled:opacity-60 font-serif"
-              />
+                @keydown.enter.exact.prevent="sendMessage"
+                @input="adjustTextareaHeight"
+                class="flex-1 px-4 py-2.5 sm:py-3 bg-white border border-parchment-border rounded-2xl text-xs sm:text-sm text-stone-800 placeholder-parchment-neutral/40 focus:outline-none focus:ring-2 focus:ring-parchment-primary focus:border-transparent transition-all shadow-2xs disabled:opacity-60 font-serif resize-none min-h-[44px] max-h-36 overflow-y-auto leading-relaxed scrollbar-thin"
+              ></textarea>
+
+              <!-- Publish to Public Sanctuary Toggle Icon Button -->
+              <button 
+                type="button" 
+                @click="openPublishModal"
+                :disabled="activeMessages.length === 0"
+                class="p-3 bg-amber-100/90 hover:bg-amber-200 text-amber-950 border border-amber-300/80 rounded-2xl transition-all shadow-2xs flex items-center justify-center shrink-0 disabled:opacity-40 disabled:cursor-not-allowed group h-[44px] w-[44px]"
+                title="Publish Conversation to Public Sanctuary"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-900 group-hover:scale-110 transition-transform">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="2" y1="12" x2="22" y2="12"></line>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+              </button>
+
               <AppButton
                 type="submit"
                 variant="primary"
                 :disabled="isLoading || !inputQuery.trim()"
-                class="py-3.5 px-6 rounded-2xl flex items-center space-x-2 font-semibold shadow-xs"
+                class="h-[44px] px-4 sm:px-6 rounded-2xl flex items-center space-x-2 font-semibold shadow-xs shrink-0"
               >
-                <span>Send</span>
+                <span class="hidden sm:inline">Send</span>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="22" y1="2" x2="11" y2="13"></line>
                   <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                 </svg>
               </AppButton>
             </form>
-            <div class="mt-3 flex items-center justify-between text-[11px] text-parchment-neutral/60 px-1 font-serif border-t border-parchment-border/40 pt-2.5">
-              <div class="flex items-center space-x-2">
-                <span>Auto-saved to local browser storage</span>
-                <button 
-                  v-if="activeMessages.length > 0"
-                  @click="openPublishModal"
-                  class="ml-2 px-2.5 py-1 rounded-lg bg-amber-100/90 text-amber-950 border border-amber-300/80 font-bold hover:bg-amber-200 transition-all flex items-center space-x-1 shadow-2xs"
-                >
-                  <span>🌐 Publish to Public Sanctuary</span>
-                </button>
-              </div>
-
-              <router-link to="/admin" class="hover:text-parchment-primary transition-colors flex items-center space-x-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                <span>API Settings</span>
-              </router-link>
-            </div>
           </div>
         </div>
 
@@ -657,7 +597,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import TopNav from '../components/common/TopNav.vue';
 import BottomNav from '../components/common/BottomNav.vue';
@@ -722,8 +662,27 @@ const completionMode = ref<'magisterium' | 'llm_summary'>('llm_summary');
 const isLoading = ref(false);
 const chatError = ref<string | null>(null);
 const chatContainer = ref<HTMLDivElement | null>(null);
+const textareaRef = ref<HTMLTextAreaElement | null>(null);
 const messageRefs = ref<HTMLElement[]>([]);
 const apiUsage = ref<ApiUsage | null>(null);
+
+const adjustTextareaHeight = () => {
+  if (textareaRef.value) {
+    textareaRef.value.style.height = 'auto';
+    const newHeight = Math.min(textareaRef.value.scrollHeight, 144);
+    textareaRef.value.style.height = `${newHeight}px`;
+  }
+};
+
+watch(inputQuery, (val) => {
+  if (!val) {
+    if (textareaRef.value) {
+      textareaRef.value.style.height = 'auto';
+    }
+  } else {
+    nextTick(adjustTextareaHeight);
+  }
+});
 
 // Toast Banner / Copy state
 const copyNotice = ref<string | null>(null);
@@ -985,7 +944,7 @@ const formatResponse = (text: string) => {
   html = html.replace(/^# (.*$)/gim, '<h1 class="text-xl font-bold font-serif text-amber-950 mt-5 mb-2 pb-1 border-b border-amber-300">$1</h1>');
 
   // Blockquotes
-  html = html.replace(/^\&gt; (.*$)/gim, '<blockquote class="border-l-4 border-amber-500 pl-3 py-1 my-2 italic text-stone-700 bg-amber-50/50 rounded-r-lg">$1</blockquote>');
+  html = html.replace(/^\&gt; (.*$)/gim, '<blockquote class="border-l-4 border-amber-500 pl-3 py-1 my-2text-stone-700 bg-amber-50/50 rounded-r-lg">$1</blockquote>');
 
   // Bold & Italics
   html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
@@ -1044,7 +1003,7 @@ const sendMessage = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         messages: payloadMessages,
-        mode: completionMode.value,
+        mode: 'llm_summary',
       }),
     });
 

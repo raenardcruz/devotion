@@ -268,7 +268,7 @@ const getSnippet = (text: string) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-24 selection:bg-parchment-primary/20">
+  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-28 sm:pb-20 selection:bg-parchment-primary/20">
     <!-- Global Header -->
     <TopNav />
 
@@ -282,7 +282,7 @@ const getSnippet = (text: string) => {
         <h1 class="text-3xl md:text-5xl font-serif text-parchment-primary-dark font-medium my-2">
           Context Explorer
         </h1>
-        <p class="text-parchment-neutral/70 italic text-sm max-w-md mx-auto leading-relaxed">
+        <p class="text-parchment-neutral/70text-sm max-w-md mx-auto leading-relaxed">
           Unveil the historical context, theological layers, and original scriptures of any biblical passage.
         </p>
       </header>
@@ -466,7 +466,7 @@ const getSnippet = (text: string) => {
         </div>
         <div class="text-center space-y-1">
           <p class="text-parchment-neutral/80 font-medium text-sm">Searching the Sacred Scriptures...</p>
-          <p class="text-parchment-neutral/40 italic text-xs">Unearthing historical contexts and theological commentary</p>
+          <p class="text-parchment-neutral/40text-xs">Unearthing historical contexts and theological commentary</p>
         </div>
       </div>
 
@@ -490,7 +490,7 @@ const getSnippet = (text: string) => {
             <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
             <path d="M12 8v4l3 3"></path>
           </svg>
-          <p class="text-sm font-serif italic text-parchment-neutral/50">Your Scripture history is empty.</p>
+          <p class="text-sm font-seriftext-parchment-neutral/50">Your Scripture history is empty.</p>
           <p class="text-xs text-parchment-neutral/40 mt-1">Select a passage above to research its context.</p>
         </div>
 
@@ -554,7 +554,7 @@ const getSnippet = (text: string) => {
 
               <!-- Collapsed Snippet -->
               <div v-if="!expandedIds.has(item.id)" class="text-left mt-3">
-                <p class="font-serif italic text-sm text-parchment-neutral/70 leading-relaxed">
+                <p class="font-seriftext-sm text-parchment-neutral/70 leading-relaxed">
                   "{{ getSnippet(item.content) }}"
                 </p>
               </div>

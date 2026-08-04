@@ -10,7 +10,7 @@
     <!-- Floating Chat Bubble Button -->
     <button 
       @click="toggleOpen"
-      class="fixed bottom-24 right-6 z-50 w-14 h-14 bg-parchment-primary-dark hover:bg-[#4a3c1d] text-white rounded-full flex items-center justify-center shadow-xl hover:shadow-[0_0_20px_rgba(197,160,89,0.4)] hover:-translate-y-1 transform active:scale-95 transition-all duration-300 group border border-parchment-primary/30"
+      class="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-50 w-14 h-14 bg-parchment-primary-dark hover:bg-[#4a3c1d] text-white rounded-full flex items-center justify-center shadow-xl hover:shadow-[0_0_20px_rgba(197,160,89,0.4)] hover:-translate-y-1 transform active:scale-95 transition-all duration-300 group border border-parchment-primary/30"
       :aria-label="isOpen ? 'Close Catechism Lookup' : 'Open Catechism Lookup'"
       :title="isOpen ? 'Close Catechism Lookup' : 'Quick Catechism Lookup'"
     >
@@ -27,7 +27,7 @@
     <transition name="popover-fade">
       <div 
         v-if="isOpen"
-        class="fixed bottom-40 right-6 z-50 w-[340px] sm:w-[380px] bg-parchment-neutral-light border border-parchment-border rounded-3xl shadow-[0_20px_50px_rgba(92,75,37,0.15)] overflow-hidden flex flex-col max-h-[460px] animate-fade-in"
+        class="fixed bottom-36 right-4 sm:bottom-40 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-[380px] max-w-[380px] bg-parchment-neutral-light border border-parchment-border rounded-3xl shadow-[0_20px_50px_rgba(92,75,37,0.15)] overflow-hidden flex flex-col max-h-[460px] animate-fade-in"
       >
         <!-- Popover Header -->
         <header class="px-5 py-4 border-b border-parchment-border/40 flex justify-between items-center bg-white/50 backdrop-blur-sm">

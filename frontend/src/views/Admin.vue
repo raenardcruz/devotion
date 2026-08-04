@@ -157,7 +157,7 @@ const saveSettings = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-amber-50/40 text-stone-800 pb-24">
+  <div class="min-h-screen bg-amber-50/40 text-stone-800 pb-28 sm:pb-20">
     <TopNav title="Admin Settings" />
 
     <main class="max-w-4xl mx-auto px-4 py-8">

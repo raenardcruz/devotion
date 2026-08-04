@@ -112,7 +112,7 @@ const availableTabs = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-24 selection:bg-parchment-primary/20">
+  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-28 sm:pb-20 selection:bg-parchment-primary/20">
     <!-- Global Header -->
     <TopNav />
 
@@ -127,7 +127,7 @@ const availableTabs = computed(() => {
           <h1 class="text-3xl md:text-5xl font-serif text-parchment-primary-dark font-medium my-2">
             {{ formattedDate }}
           </h1>
-          <p class="text-parchment-neutral/70 italic text-sm">
+          <p class="text-parchment-neutral/70text-sm">
             {{ formattedWeek }}
           </p>
       </header>
@@ -184,7 +184,7 @@ const availableTabs = computed(() => {
                     <h3 class="text-parchment-primary-dark text-[10px] font-bold uppercase tracking-wider">Contextual Meditation</h3>
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-900 border border-blue-200/80">🤖 AI-Assisted Reflection</span>
                   </div>
-                  <div class="text-parchment-neutral/70 italic text-xs md:text-sm leading-relaxed" v-html="renderMarkdown(cleanContext(readings.first_reading.context), contextMarkdownOptions)"></div>
+                  <div class="text-parchment-neutral/70text-xs md:text-sm leading-relaxed" v-html="renderMarkdown(cleanContext(readings.first_reading.context), contextMarkdownOptions)"></div>
                   <FactCheckCitations :citations="readings.first_reading.citations" :rawContextHtml="readings.first_reading.context" />
               </div>
             </ParchmentCard>
@@ -218,7 +218,7 @@ const availableTabs = computed(() => {
                     <h3 class="text-parchment-primary-dark text-[10px] font-bold uppercase tracking-wider">Contextual Meditation</h3>
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-900 border border-blue-200/80">🤖 AI-Assisted Reflection</span>
                   </div>
-                  <div class="text-parchment-neutral/70 italic text-xs md:text-sm leading-relaxed" v-html="renderMarkdown(cleanContext(readings.second_reading.context), contextMarkdownOptions)"></div>
+                  <div class="text-parchment-neutral/70text-xs md:text-sm leading-relaxed" v-html="renderMarkdown(cleanContext(readings.second_reading.context), contextMarkdownOptions)"></div>
                   <FactCheckCitations :citations="readings.second_reading.citations" :rawContextHtml="readings.second_reading.context" />
               </div>
             </ParchmentCard>
@@ -254,7 +254,7 @@ const availableTabs = computed(() => {
                     <h3 class="text-parchment-primary-dark text-[10px] font-bold uppercase tracking-wider">Psalm Context</h3>
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-900 border border-blue-200/80">🤖 AI-Assisted Reflection</span>
                   </div>
-                  <div class="text-parchment-neutral/70 italic text-xs md:text-sm leading-relaxed" v-html="renderMarkdown(cleanContext(readings.responsorial_psalm.context), contextMarkdownOptions)"></div>
+                  <div class="text-parchment-neutral/70text-xs md:text-sm leading-relaxed" v-html="renderMarkdown(cleanContext(readings.responsorial_psalm.context), contextMarkdownOptions)"></div>
                   <FactCheckCitations :citations="readings.responsorial_psalm.citations" :rawContextHtml="readings.responsorial_psalm.context" />
               </div>
             </ParchmentCard>
@@ -288,7 +288,7 @@ const availableTabs = computed(() => {
                     <h3 class="text-parchment-primary-dark text-[10px] font-bold uppercase tracking-wider">Gospel Reflection</h3>
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-900 border border-blue-200/80">🤖 AI-Assisted Reflection</span>
                   </div>
-                  <div class="text-parchment-neutral/70 italic text-xs md:text-sm leading-relaxed" v-html="renderMarkdown(cleanContext(readings.gospel.context), contextMarkdownOptions)"></div>
+                  <div class="text-parchment-neutral/70text-xs md:text-sm leading-relaxed" v-html="renderMarkdown(cleanContext(readings.gospel.context), contextMarkdownOptions)"></div>
                   <FactCheckCitations :citations="readings.gospel.citations" :rawContextHtml="readings.gospel.context" />
               </div>
             </ParchmentCard>

@@ -1,14 +1,14 @@
 <template>
-  <div class="flex flex-wrap gap-2 justify-center my-4">
+  <div class="flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full py-1.5 my-3 px-1 sm:justify-center sm:flex-wrap scroll-smooth">
     <button
       v-for="tab in tabs"
       :key="typeof tab === 'string' ? tab : tab.id"
       @click="selectTab(tab)"
       :class="[
-        'px-5 py-2 rounded-full text-xs md:text-sm font-bold uppercase tracking-wider transition-all duration-300 border shadow-none hover:shadow-none',
+        'px-4 sm:px-5 py-2 rounded-full text-xs md:text-sm font-bold uppercase tracking-wider transition-all duration-300 border shadow-none hover:shadow-none shrink-0 whitespace-nowrap',
         isActive(tab)
-          ? 'bg-parchment-primary text-white border-transparent'
-          : 'bg-parchment-bg text-parchment-neutral/60 border-parchment-border hover:bg-parchment-neutral-light hover:text-parchment-neutral'
+          ? 'bg-parchment-primary text-white border-transparent shadow-xs'
+          : 'bg-parchment-bg text-parchment-neutral/70 border-parchment-border/80 hover:bg-parchment-neutral-light hover:text-parchment-neutral'
       ]"
     >
       {{ typeof tab === 'string' ? tab : tab.label }}

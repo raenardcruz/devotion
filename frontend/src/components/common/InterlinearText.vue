@@ -6,7 +6,7 @@
       class="flex flex-col items-center min-w-[2.5rem]"
     >
       <span 
-        class="text-2xl md:text-3xl font-serif leading-none transition-all duration-500 italic"
+        class="text-2xl md:text-3xl font-serif leading-none transition-all duration-500"
         :class="latinClass || 'text-parchment-neutral'"
       >
         {{ pair.la }}

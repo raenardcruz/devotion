@@ -105,7 +105,7 @@ const citationMarkdownOptions = {
             </span>
           </div>
 
-          <div v-if="item.author" class="text-[11px] text-amber-900/70 italic font-serif">
+          <div v-if="item.author" class="text-[11px] text-amber-900/70 font-serif">
             — {{ item.author }}
           </div>
 

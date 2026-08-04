@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-24 selection:bg-parchment-primary/20">
+  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-28 sm:pb-20 selection:bg-parchment-primary/20">
     <!-- Global Header -->
     <TopNav />
 
@@ -56,7 +56,7 @@
             <div>
               <h3 class="text-xl md:text-2xl font-serif text-parchment-neutral font-medium mb-3 group-hover:text-parchment-primary-dark transition-colors">
                 {{ prayer.name }}
-                <span v-if="prayer.latinName" class="block text-xs font-sans text-parchment-neutral/40 italic font-normal mt-1">{{ prayer.latinName }}</span>
+                <span v-if="prayer.latinName" class="block text-xs font-sans text-parchment-neutral/40font-normal mt-1">{{ prayer.latinName }}</span>
               </h3>
               <p class="text-parchment-neutral/70 text-sm line-clamp-3 leading-relaxed">{{ prayer.default }}</p>
             </div>
@@ -211,7 +211,7 @@
               <!-- Text Content -->
               <p 
                 v-else
-                :class="[showLatin ? 'font-serif italic text-parchment-primary-dark text-lg' : 'font-serif text-base md:text-lg text-parchment-neutral/90']" 
+                :class="[showLatin ? 'font-seriftext-parchment-primary-dark text-lg' : 'font-serif text-base md:text-lg text-parchment-neutral/90']" 
                 class="whitespace-pre-line text-center"
               >
                 {{ showLatin ? selectedPrayer.latin : selectedPrayer.default }}
