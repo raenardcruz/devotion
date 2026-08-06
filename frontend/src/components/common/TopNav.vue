@@ -1,9 +1,9 @@
 <template>
-  <header class="sticky top-0 z-40 w-full bg-parchment-bg/95 backdrop-blur-md border-b border-parchment-border py-4 px-6 md:px-12 flex items-center justify-between">
+  <header class="sticky top-0 z-40 w-full bg-white/60 backdrop-blur-md border-b border-[#E9D5FF]/60 py-4 px-6 md:px-12 flex items-center justify-between">
     <!-- Left Menu Icon -->
     <button 
       @click="toggleSidebar"
-      class="text-parchment-neutral hover:text-parchment-primary transition-colors p-1.5 rounded-full hover:bg-parchment-neutral-light/50 outline-none border border-transparent shadow-none"
+      class="text-[#9333EA] hover:text-[#7E22CE] transition-colors p-1.5 rounded-full hover:bg-[#E9D5FF]/30 outline-none border border-transparent shadow-none"
       id="top-nav-menu-btn"
     >
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -15,7 +15,7 @@
 
     <!-- Center Title -->
     <router-link to="/" class="absolute left-1/2 -translate-x-1/2 flex items-center">
-      <span class="font-serif text-parchment-primary-dark text-lg md:text-xl font-medium tracking-[0.1em] hover:opacity-80 transition-opacity">
+      <span class="font-serif text-lg md:text-xl font-semibold tracking-[0.1em] hover:opacity-80 transition-opacity">
         Faith and Devotion
       </span>
     </router-link>
@@ -26,28 +26,28 @@
         <router-link 
           to="/" 
           class="text-sm font-medium tracking-wider uppercase transition-colors"
-          :class="[route.path === '/' ? 'text-parchment-primary-dark font-bold' : 'text-parchment-neutral/60 hover:text-parchment-neutral']"
+          :class="[route.path === '/' ? 'text-[#7E22CE] font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
         >
           Home
         </router-link>
         <router-link 
           to="/daily-readings" 
           class="text-sm font-medium tracking-wider uppercase transition-colors"
-          :class="[route.path !== '/' ? 'text-parchment-primary-dark font-bold' : 'text-parchment-neutral/60 hover:text-parchment-neutral']"
+          :class="[route.path !== '/' ? 'text-[#7E22CE] font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
         >
           Devotions
         </router-link>
         <router-link 
           to="/bible-study" 
           class="text-sm font-medium tracking-wider uppercase transition-colors"
-          :class="[route.path === '/bible-study' ? 'text-parchment-primary-dark font-bold' : 'text-parchment-neutral/60 hover:text-parchment-neutral']"
+          :class="[route.path === '/bible-study' ? 'text-[#7E22CE] font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
         >
           Bible Study
         </router-link>
         <router-link 
           to="/magisterium-chat" 
           class="text-sm font-medium tracking-wider uppercase transition-colors"
-          :class="[route.path === '/magisterium-chat' ? 'text-parchment-primary-dark font-bold' : 'text-parchment-neutral/60 hover:text-parchment-neutral']"
+          :class="[route.path === '/magisterium-chat' ? 'text-[#7E22CE] font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
         >
           Magisterium
         </router-link>
@@ -70,16 +70,16 @@
     <Transition name="slide">
       <div 
         v-if="isSidebarOpen"
-        class="fixed top-0 left-0 bottom-0 z-50 w-80 max-w-[85vw] bg-parchment-bg border-r border-parchment-border shadow-2xl flex flex-col"
+        class="fixed top-0 left-0 bottom-0 z-50 w-80 max-w-[85vw] bg-white/90 backdrop-blur-md border-r border-[#E9D5FF]/60 shadow-2xl flex flex-col"
       >
         <!-- Header -->
-        <div class="p-6 border-b border-parchment-border flex items-center justify-between">
-          <span class="font-serif text-parchment-primary-dark text-lg font-bold tracking-[0.1em]">
+        <div class="p-6 border-b border-[#E9D5FF]/60 flex items-center justify-between">
+          <span class="font-serif text-lg font-bold tracking-[0.1em]">
             Faith and Devotion
           </span>
           <button 
             @click="closeSidebar"
-            class="text-parchment-neutral hover:text-parchment-secondary transition-colors p-1.5 rounded-full hover:bg-parchment-neutral-light/50 border border-transparent outline-none"
+            class="hover:text-[#7E22CE] transition-colors p-1.5 rounded-full hover:bg-[#E9D5FF]/30 border border-transparent outline-none cursor-pointer"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" x2="6" y1="6" y2="18"></line>
@@ -95,13 +95,13 @@
             :key="item.path" 
             :to="item.path"
             @click="closeSidebar"
-            class="flex items-center space-x-4 p-3 rounded-xl transition-all duration-200 group border"
-            :class="[route.path === item.path ? 'bg-parchment-neutral-light border-parchment-border/60 text-parchment-primary-dark font-semibold shadow-sm' : 'text-parchment-neutral/80 hover:text-parchment-neutral border-transparent hover:bg-parchment-neutral-light/40']"
+            class="flex items-center space-x-4 p-3 rounded-2xl transition-all duration-200 group border"
+            :class="[route.path === item.path ? 'bg-[#E9D5FF]/40 border-[#E9D5FF] text-[#7E22CE] font-bold shadow-xs' : 'text-black/80 hover:text-[#7E22CE] border-transparent hover:bg-white/60']"
           >
             <!-- Icon Wrapper -->
             <div 
               class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300"
-              :class="[route.path === item.path ? 'bg-parchment-primary-dark text-white shadow-sm' : 'bg-parchment-neutral-light/80 text-parchment-neutral group-hover:text-parchment-primary-dark group-hover:bg-parchment-neutral-light']"
+              :class="[route.path === item.path ? 'bg-[#9333EA] text-white shadow-xs' : 'bg-[#E9D5FF]/30 text-[#9333EA] group-hover:bg-[#9333EA] group-hover:text-white']"
             >
               <!-- Inline SVGs depending on icon name -->
               <svg v-if="item.icon === 'home'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -116,14 +116,14 @@
             </div>
             <div class="text-left flex-1 min-w-0">
               <div class="text-sm font-semibold tracking-wide leading-none mb-1">{{ item.label }}</div>
-              <div class="text-[11px] text-parchment-neutral/50 truncate">{{ item.desc }}</div>
+              <div class="text-[11px] text-black/60 truncate">{{ item.desc }}</div>
             </div>
           </router-link>
         </nav>
 
         <!-- Footer / AMDG -->
-        <div class="p-6 border-t border-parchment-border text-center">
-          <span class="text-xs text-parchment-neutral/40 tracking-wider uppercase">
+        <div class="p-6 border-t border-[#E9D5FF]/60 text-center">
+          <span class="text-xs text-[#D97706] tracking-wider uppercase font-semibold">
             Ad Maiorem Dei Gloriam
           </span>
         </div>

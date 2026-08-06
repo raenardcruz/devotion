@@ -29,14 +29,14 @@ defineEmits<{
 const variantClass = computed(() => {
   switch (props.variant) {
     case 'primary':
-      return 'bg-parchment-primary-dark text-white border-transparent hover:bg-[#4a3c1d] hover:-translate-y-0.5';
+      return 'bg-[#9333EA] text-white border-transparent hover:bg-[#7E22CE] hover:-translate-y-0.5 shadow-sm shadow-[#9333EA]/30';
     case 'inverted':
-      return 'bg-parchment-neutral text-white border-transparent hover:bg-black hover:-translate-y-0.5';
+      return 'bg-black text-white border-transparent hover:bg-black/90 hover:-translate-y-0.5';
     case 'outlined':
-      return 'bg-transparent text-parchment-neutral border-parchment-border hover:border-parchment-primary hover:bg-parchment-neutral-light/50';
+      return 'bg-transparent text-[#7E22CE] border-[#E9D5FF]/80 hover:border-[#9333EA] hover:bg-white/50';
     case 'secondary':
     default:
-      return 'bg-parchment-neutral-light text-parchment-neutral border-parchment-border hover:bg-[#ECE4D8] hover:-translate-y-0.5';
+      return 'bg-white/60 text-black border-[#E9D5FF]/60 hover:bg-white/80 hover:text-[#7E22CE] hover:-translate-y-0.5 backdrop-blur-md';
   }
 });
 </script>

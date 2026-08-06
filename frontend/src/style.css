@@ -6,18 +6,27 @@
   font-weight: 400;
 
   color-scheme: light;
-  color: #2D2926;
-  background-color: #FDFBF7;
+  color: #000000;
+  background-color: #FFFFFF;
+
+  /* Color Palette Tokens based on design spec */
+  --color-text-primary: #7E22CE;
+  --color-text-secondary: #D97706;
+  --color-text-body: #000000;
+  --color-icon: #9333EA;
+
+  --card-bg: rgba(255, 255, 255, 0.6);
+  --card-stroke: rgba(233, 213, 255, 0.6);
 
   /* Custom variables matching Sacred Parchment style guide */
-  --parchment-primary: #C5A059;
-  --parchment-primary-dark: #5C4B25;
-  --parchment-secondary: #8B2635;
-  --parchment-tertiary: #8FA5D8;
-  --parchment-neutral: #2D2926;
-  --parchment-neutral-light: #F5EFE6;
-  --parchment-bg: #FDFBF7;
-  --parchment-border: #E8DFD3;
+  --parchment-primary: #9333EA;
+  --parchment-primary-dark: #7E22CE;
+  --parchment-secondary: #D97706;
+  --parchment-tertiary: #E9D5FF;
+  --parchment-neutral: #000000;
+  --parchment-neutral-light: rgba(255, 255, 255, 0.6);
+  --parchment-bg: transparent;
+  --parchment-border: rgba(233, 213, 255, 0.6);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -30,11 +39,108 @@
   font-family: 'Libre Caslon Text', 'Cinzel', serif;
 }
 
+/* Animated Ambient Gradient Background Setup */
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
   overflow-x: hidden;
+  color: var(--color-text-body);
+  background: linear-gradient(180deg, #F8F9FF 0%, #FFFFFF 100%);
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: -15vw;
+  left: -15vw;
+  width: 70vw;
+  height: 70vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(233, 213, 255, 0.45) 0%, rgba(216, 180, 254, 0.2) 50%, rgba(233, 213, 255, 0) 75%);
+  filter: blur(85px);
+  pointer-events: none;
+  z-index: 0;
+  animation: glowShuffleTopLeft 18s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  top: 25vh;
+  right: -15vw;
+  width: 70vw;
+  height: 70vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(219, 234, 254, 0.5) 0%, rgba(191, 219, 254, 0.22) 50%, rgba(219, 234, 254, 0) 75%);
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+  animation: glowShuffleMiddleRight 22s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+
+/* Additional ambient glow blur element for bottom middle */
+.ambient-glow-bottom {
+  position: fixed;
+  bottom: -15vh;
+  left: 10vw;
+  width: 80vw;
+  height: 60vh;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(254, 243, 199, 0.45) 0%, rgba(253, 230, 138, 0.2) 50%, rgba(254, 243, 199, 0) 75%);
+  filter: blur(95px);
+  pointer-events: none;
+  z-index: 0;
+  animation: glowShuffleBottomMiddle 20s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+
+@keyframes glowShuffleTopLeft {
+  0% {
+    transform: translate(0, 0) scale(0.95);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate(4vw, 3vh) scale(1.08);
+    opacity: 0.58;
+  }
+  100% {
+    transform: translate(8vw, 6vh) scale(1.01);
+    opacity: 0.38;
+  }
+}
+
+@keyframes glowShuffleMiddleRight {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.38;
+  }
+  50% {
+    transform: translate(-3vw, -5vh) scale(1.1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-7vw, -8vh) scale(0.94);
+    opacity: 0.35;
+  }
+}
+
+@keyframes glowShuffleBottomMiddle {
+  0% {
+    transform: translate(0, 0) scale(0.94);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate(3vw, -4vh) scale(1.08);
+    opacity: 0.58;
+  }
+  100% {
+    transform: translate(6vw, -7vh) scale(0.98);
+    opacity: 0.38;
+  }
 }
 
 h1,
@@ -191,5 +297,6 @@ button.btn-primary:hover {
 
 .v {
   font-size: 12px !important;
-  color: grey !important;
+  color: rgb(221, 40, 40) !important;
+  margin-right: 4px;
 }

@@ -379,9 +379,8 @@ const isFirstTextPara = (idx: number): boolean => {
   return idx === firstTextIdx;
 };
 </script>
-
 <template>
-  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-28 sm:pb-20 selection:bg-parchment-primary/20">
+  <div class="min-h-screen text-black flex flex-col pb-28 sm:pb-20 selection:bg-[#9333EA]/20 relative z-10">
     <!-- Global Header -->
     <TopNav />
 
@@ -389,8 +388,8 @@ const isFirstTextPara = (idx: number): boolean => {
     <div class="relative z-10 max-w-7xl mx-auto px-4 py-8 md:py-12 flex flex-col min-h-screen w-full">
       <!-- Header Area -->
       <header class="text-center mb-8 animate-fade-in-down">
-        <h1 class="text-3xl md:text-5xl font-serif text-parchment-primary-dark mb-1">Early Church Resources</h1>
-        <p class="text-parchment-neutral/50 text-xs uppercase tracking-[0.25em] font-bold">Timeless writings of faith and theology</p>
+        <h1 class="text-3xl md:text-5xl font-serif text-[#7E22CE] mb-1 font-bold">Early Church Resources</h1>
+        <p class="text-[#D97706] text-xs uppercase tracking-[0.25em] font-bold">Timeless writings of faith and theology</p>
       </header>
 
       <!-- Searchable Selector for Writings -->
@@ -401,23 +400,23 @@ const isFirstTextPara = (idx: number): boolean => {
         <!-- Trigger Button -->
         <button 
           @click="isSelectorOpen = !isSelectorOpen"
-          class="relative z-50 w-full bg-parchment-neutral-light border border-parchment-border hover:border-parchment-primary rounded-2xl py-3.5 px-5 shadow-sm hover:shadow-md flex items-center justify-between transition-all duration-300 group outline-none"
+          class="relative z-50 w-full bg-white/60 backdrop-blur-md border border-[#E9D5FF]/60 hover:border-[#9333EA] rounded-2xl py-3.5 px-5 shadow-xs hover:shadow-sm flex items-center justify-between transition-all duration-300 group outline-none cursor-pointer"
         >
           <div class="flex items-center gap-3">
-            <span class="text-parchment-primary">
+            <span class="text-[#9333EA]">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
                 <path d="M6 6h10M6 10h10M6 14h10"/>
               </svg>
             </span>
             <div class="text-left">
-              <span class="text-[10px] text-parchment-neutral/50 tracking-widest uppercase font-bold block">Selected Writing</span>
-              <span class="font-serif text-sm md:text-base text-parchment-primary-dark font-semibold group-hover:text-parchment-primary transition-colors">
+              <span class="text-[10px] text-black/50 tracking-widest uppercase font-bold block">Selected Writing</span>
+              <span class="font-serif text-sm md:text-base text-[#7E22CE] font-semibold group-hover:text-[#9333EA] transition-colors">
                 {{ selectedWritingTitle }}
               </span>
             </div>
           </div>
-          <span class="text-parchment-neutral/40 group-hover:text-parchment-primary transition-colors">
+          <span class="text-[#9333EA] group-hover:text-[#7E22CE] transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300" :class="{'rotate-180': isSelectorOpen}">
               <path d="m6 9 6 6 6-6"/>
             </svg>
@@ -427,7 +426,7 @@ const isFirstTextPara = (idx: number): boolean => {
         <!-- Dropdown Card -->
         <div 
           v-if="isSelectorOpen"
-          class="absolute left-0 right-0 mt-2 bg-parchment-bg border border-parchment-border rounded-2xl shadow-xl z-50 p-4 max-h-[350px] flex flex-col gap-3 animate-fade-in"
+          class="absolute left-0 right-0 mt-2 bg-white/90 backdrop-blur-md border border-[#E9D5FF] rounded-2xl shadow-xl z-50 p-4 max-h-[350px] flex flex-col gap-3 animate-fade-in"
         >
           <!-- Filter Search -->
           <div class="relative">
@@ -435,9 +434,9 @@ const isFirstTextPara = (idx: number): boolean => {
               v-model="writingSearchQuery"
               type="text"
               placeholder="Search writings / authors..."
-              class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-parchment-border bg-parchment-neutral-light text-parchment-neutral placeholder-parchment-neutral/40 focus:border-parchment-primary shadow-inner transition-all outline-none text-xs"
+              class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#E9D5FF]/60 bg-white/70 text-black placeholder-black/40 focus:border-[#9333EA] transition-all outline-none text-xs"
             >
-            <span class="absolute left-3 top-3 text-parchment-neutral/30">
+            <span class="absolute left-3 top-3 text-[#9333EA]">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
               </svg>
@@ -450,14 +449,14 @@ const isFirstTextPara = (idx: number): boolean => {
               v-for="writing in filteredWritings"
               :key="writing.id"
               @click="selectWriting(writing.id)"
-              class="w-full text-left text-xs py-2.5 px-3.5 rounded-xl transition-colors flex items-center justify-between border-none outline-none"
+              class="w-full text-left text-xs py-2.5 px-3.5 rounded-xl transition-colors flex items-center justify-between border-none outline-none cursor-pointer"
               :class="selectedDocId === writing.id 
-                ? 'bg-parchment-primary text-white font-semibold' 
-                : 'text-parchment-neutral/80 hover:bg-parchment-neutral-light hover:text-parchment-primary-dark'"
+                ? 'bg-[#9333EA] text-white font-semibold shadow-xs' 
+                : 'text-black/80 hover:bg-[#E9D5FF]/30 hover:text-[#7E22CE]'"
             >
               <span class="truncate pr-4">
                 {{ writing.title }}
-                <span v-if="writing.years" class="text-[10px] font-sans ml-1.5" :class="selectedDocId === writing.id ? 'text-white/80' : 'text-parchment-neutral/75'">
+                <span v-if="writing.years" class="text-[10px] font-sans ml-1.5" :class="selectedDocId === writing.id ? 'text-white/80' : 'text-black/60'">
                   ({{ writing.years }})
                 </span>
               </span>
@@ -467,7 +466,7 @@ const isFirstTextPara = (idx: number): boolean => {
                 </svg>
               </span>
             </button>
-            <div v-if="filteredWritings.length === 0" class="py-6 text-center text-xs text-parchment-neutral/40 italic">
+            <div v-if="filteredWritings.length === 0" class="py-6 text-center text-xs text-black/40 italic">
               No writings found matching "{{ writingSearchQuery }}"
             </div>
           </div>
@@ -476,8 +475,8 @@ const isFirstTextPara = (idx: number): boolean => {
 
       <!-- Loading / Error States -->
       <div v-if="isLoading" class="flex-grow flex flex-col items-center justify-center py-20 gap-4">
-        <div class="w-12 h-12 border-4 border-parchment-primary/30 border-t-parchment-primary rounded-full animate-spin"></div>
-        <p class="font-seriftext-parchment-neutral/60 text-sm">Loading church father writings...</p>
+        <div class="w-12 h-12 border-4 border-[#E9D5FF] border-t-[#9333EA] rounded-full animate-spin"></div>
+        <p class="font-serif text-[#7E22CE] text-sm">Loading church father writings...</p>
       </div>
 
       <div v-else-if="errorMsg" class="flex-grow flex flex-col items-center justify-center py-20 text-center max-w-md mx-auto gap-4">
@@ -486,28 +485,28 @@ const isFirstTextPara = (idx: number): boolean => {
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
         </span>
-        <h3 class="font-serif text-lg font-bold text-parchment-neutral">Failed to Load Content</h3>
-        <p class="text-xs text-parchment-neutral/60">{{ errorMsg }}</p>
+        <h3 class="font-serif text-lg font-bold text-[#7E22CE]">Failed to Load Content</h3>
+        <p class="text-xs text-black/60">{{ errorMsg }}</p>
         <AppButton variant="primary" @click="loadWriting(selectedDocId)">Retry Loading</AppButton>
       </div>
 
       <!-- Mobile Navigation Trigger Button -->
-      <div v-if="!isLoading && !errorMsg" class="lg:hidden mb-4 flex items-center justify-between bg-parchment-neutral-light border border-parchment-border rounded-2xl p-3 shadow-sm">
+      <div v-if="!isLoading && !errorMsg" class="lg:hidden mb-4 flex items-center justify-between bg-white/60 border border-[#E9D5FF]/60 rounded-2xl p-3 shadow-xs backdrop-blur-md">
         <div class="flex items-center gap-2 overflow-hidden pr-2">
-          <span class="text-parchment-primary">
+          <span class="text-[#9333EA]">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="3" y1="12" x2="21" y2="12"></line>
               <line x1="3" y1="6" x2="21" y2="6"></line>
               <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
           </span>
-          <span class="font-serif text-xs font-semibold text-parchment-primary-dark truncate">
+          <span class="font-serif text-xs font-semibold text-[#7E22CE] truncate">
             {{ activeChapter ? `Chapter ${activeChapter.numeral}: ${activeChapter.title}` : 'Chapters & Progress' }}
           </span>
         </div>
         <button 
           @click="isMobileMenuOpen = true" 
-          class="px-3 py-1.5 bg-parchment-primary text-white text-xs font-medium rounded-xl hover:bg-parchment-primary-dark transition-all shadow-xs shrink-0 flex items-center gap-1.5"
+          class="px-3 py-1.5 bg-[#9333EA] text-white text-xs font-medium rounded-xl hover:bg-[#7E22CE] transition-all shadow-xs shrink-0 flex items-center gap-1.5 cursor-pointer"
         >
           <span>Chapters</span>
         </button>
@@ -524,29 +523,29 @@ const isFirstTextPara = (idx: number): boolean => {
       >
         <div v-if="isMobileMenuOpen" class="fixed inset-0 z-50 flex justify-start lg:hidden" @click="isMobileMenuOpen = false">
           <!-- Backdrop -->
-          <div class="absolute inset-0 bg-parchment-neutral/40 backdrop-blur-xs"></div>
+          <div class="absolute inset-0 bg-black/30 backdrop-blur-xs"></div>
           
           <!-- Panel Content -->
-          <div class="relative w-4/5 max-w-xs bg-parchment-bg h-full shadow-2xl p-5 flex flex-col z-10 overflow-y-auto border-r border-parchment-border space-y-4" @click.stop>
-            <div class="flex items-center justify-between pb-3 border-b border-parchment-border">
-              <h3 class="font-serif text-base text-parchment-primary-dark font-bold">Chapters & Progress</h3>
-              <button @click="isMobileMenuOpen = false" class="p-1.5 text-parchment-neutral/50 hover:text-parchment-neutral rounded-lg">
+          <div class="relative w-4/5 max-w-xs bg-white/90 backdrop-blur-md h-full shadow-2xl p-5 flex flex-col z-10 overflow-y-auto border-r border-[#E9D5FF]/60 space-y-4" @click.stop>
+            <div class="flex items-center justify-between pb-3 border-b border-[#E9D5FF]/60">
+              <h3 class="font-serif text-base text-[#7E22CE] font-bold">Chapters & Progress</h3>
+              <button @click="isMobileMenuOpen = false" class="p-1.5 text-black/50 hover:text-[#7E22CE] rounded-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                  <line x1="6" x2="18" y1="6" y2="18"></line>
                 </svg>
               </button>
             </div>
 
             <!-- Progress Tracker -->
-            <div class="bg-parchment-neutral-light border border-parchment-border/60 rounded-2xl p-4 shadow-xs">
-              <h4 class="font-serif text-xs text-parchment-primary-dark/80 tracking-widest uppercase font-bold mb-2">Reading Progress</h4>
-              <div class="flex justify-between text-[11px] text-parchment-neutral/60 mb-1.5">
+            <div class="bg-white/60 border border-[#E9D5FF]/60 rounded-2xl p-4 shadow-xs">
+              <h4 class="font-serif text-xs text-[#7E22CE] tracking-widest uppercase font-bold mb-2">Reading Progress</h4>
+              <div class="flex justify-between text-[11px] text-black/60 mb-1.5">
                 <span>Completed</span>
                 <span>{{ readCountText }} ({{ docProgress }}%)</span>
               </div>
-              <div class="w-full bg-parchment-bg border border-parchment-border/60 rounded-full h-1.5 overflow-hidden">
-                <div class="bg-parchment-primary h-1.5 rounded-full transition-all duration-500" :style="{ width: `${docProgress}%` }"></div>
+              <div class="w-full bg-white/80 border border-[#E9D5FF]/60 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-[#9333EA] h-1.5 rounded-full transition-all duration-500" :style="{ width: `${docProgress}%` }"></div>
               </div>
             </div>
 
@@ -557,7 +556,7 @@ const isFirstTextPara = (idx: number): boolean => {
                   v-model="searchQuery" 
                   type="text" 
                   placeholder="Search chapters..." 
-                  class="w-full pl-3 pr-4 py-2 rounded-xl border border-parchment-border bg-parchment-neutral-light text-parchment-neutral placeholder-parchment-neutral/40 focus:border-parchment-primary shadow-inner outline-none text-xs"
+                  class="w-full pl-3 pr-4 py-2 rounded-xl border border-[#E9D5FF]/60 bg-white/70 text-black placeholder-black/40 focus:border-[#9333EA] outline-none text-xs"
                 >
               </div>
             </div>
@@ -565,7 +564,7 @@ const isFirstTextPara = (idx: number): boolean => {
             <!-- Table of Contents List -->
             <div class="flex-grow overflow-y-auto space-y-4 pr-1">
               <div v-for="section in filteredSections" :key="section.id" class="space-y-2">
-                <h4 v-if="section.id !== 'default'" class="text-[11px] font-bold text-parchment-neutral/70 mt-3 font-serifborder-l-2 border-parchment-primary/30 pl-2">
+                <h4 v-if="section.id !== 'default'" class="text-[11px] font-bold text-[#D97706] mt-3 font-serif border-l-2 border-[#9333EA] pl-2">
                   {{ section.title }}
                 </h4>
                 
@@ -574,21 +573,21 @@ const isFirstTextPara = (idx: number): boolean => {
                     v-for="chapter in section.chapters"
                     :key="chapter.id"
                     @click="selectChapter(chapter.id); isMobileMenuOpen = false"
-                    class="w-full text-left text-xs transition-colors py-2 px-3 rounded-lg flex items-center justify-between group hover:bg-parchment-neutral-light border-none shadow-none"
+                    class="w-full text-left text-xs transition-colors py-2 px-3 rounded-lg flex items-center justify-between group hover:bg-[#E9D5FF]/30 border-none shadow-none cursor-pointer"
                     :class="selectedChapterId === chapter.id 
-                      ? 'bg-parchment-primary/10 text-parchment-primary-dark font-semibold border-l-4 border-parchment-primary pl-2' 
-                      : readChapters[chapter.id] ? 'text-parchment-neutral/40 hover:text-parchment-neutral/60' : 'text-parchment-neutral/80 hover:text-parchment-neutral'"
+                      ? 'bg-[#E9D5FF]/40 text-[#7E22CE] font-bold border-l-4 border-[#9333EA] pl-2' 
+                      : readChapters[chapter.id] ? 'text-black/40 hover:text-black/60' : 'text-black/80 hover:text-[#7E22CE]'"
                   >
                     <span class="truncate flex-1">
-                      <span class="font-serif font-bold text-parchment-neutral/40 group-hover:text-parchment-primary-dark mr-1.5">{{ chapter.numeral }}</span>
+                      <span class="font-serif font-bold text-[#9333EA] mr-1.5">{{ chapter.numeral }}</span>
                       {{ chapter.title }}
                     </span>
                     <span 
                       @click.stop="toggleReadStatus(chapter.id)" 
                       class="ml-2 w-4 h-4 rounded border transition-colors flex items-center justify-center cursor-pointer"
                       :class="readChapters[chapter.id] 
-                        ? 'bg-parchment-primary/20 border-parchment-primary text-parchment-primary-dark' 
-                        : 'border-parchment-border hover:border-parchment-primary text-transparent'"
+                        ? 'bg-[#9333EA] border-[#9333EA] text-white' 
+                        : 'border-[#E9D5FF] hover:border-[#9333EA] text-transparent'"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
@@ -607,41 +606,41 @@ const isFirstTextPara = (idx: number): boolean => {
         <!-- Desktop Sidebar Navigation -->
         <aside class="hidden lg:flex lg:col-span-1 h-fit lg:sticky lg:top-24 flex-col gap-6 animate-fade-in-up delay-100">
           <!-- Search & Progress Card -->
-          <div class="bg-parchment-neutral-light border border-parchment-border rounded-3xl p-6 shadow-sm flex flex-col gap-4">
+          <div class="bg-white/60 border border-[#E9D5FF]/60 rounded-3xl p-6 shadow-xs backdrop-blur-md flex flex-col gap-4">
             <!-- Progress Tracker -->
-            <div class="border-b border-parchment-border/40 pb-4">
-              <h3 class="font-serif text-xs text-parchment-primary-dark/80 tracking-widest uppercase font-bold mb-2">Reading Progress</h3>
-              <div class="flex justify-between text-[11px] text-parchment-neutral/60 mb-1.5">
+            <div class="border-b border-[#E9D5FF]/60 pb-4">
+              <h3 class="font-serif text-xs text-[#7E22CE] tracking-widest uppercase font-bold mb-2">Reading Progress</h3>
+              <div class="flex justify-between text-[11px] text-black/60 mb-1.5">
                 <span>Completed</span>
                 <span>{{ readCountText }} ({{ docProgress }}%)</span>
               </div>
-              <div class="w-full bg-parchment-bg border border-parchment-border/60 rounded-full h-1.5 overflow-hidden">
-                <div class="bg-parchment-primary h-1.5 rounded-full transition-all duration-500" :style="{ width: `${docProgress}%` }"></div>
+              <div class="w-full bg-white/80 border border-[#E9D5FF]/60 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-[#9333EA] h-1.5 rounded-full transition-all duration-500" :style="{ width: `${docProgress}%` }"></div>
               </div>
             </div>
 
             <!-- Search -->
             <div>
-              <h3 class="font-serif text-xs text-parchment-neutral/50 tracking-widest uppercase font-bold mb-2">Search Chapters</h3>
+              <h3 class="font-serif text-xs text-black/50 tracking-widest uppercase font-bold mb-2">Search Chapters</h3>
               <div class="relative">
                 <input 
                   v-model="searchQuery" 
                   type="text" 
                   placeholder="Type title..." 
-                  class="w-full pl-3 pr-4 py-2.5 rounded-xl border border-parchment-border bg-parchment-bg text-parchment-neutral placeholder-parchment-neutral/30 focus:bg-parchment-neutral-light focus:border-parchment-primary shadow-inner transition-all outline-none text-xs"
+                  class="w-full pl-3 pr-4 py-2.5 rounded-xl border border-[#E9D5FF]/60 bg-white/70 text-black placeholder-black/30 focus:border-[#9333EA] transition-all outline-none text-xs"
                 >
               </div>
             </div>
           </div>
 
           <!-- Table of Contents List -->
-          <div class="bg-parchment-neutral-light border border-parchment-border rounded-3xl p-6 shadow-sm lg:max-h-[50vh] lg:overflow-y-auto scrollbar-hide">
-            <h3 class="font-serif text-xs mb-4 text-parchment-primary-dark/80 tracking-widest uppercase font-bold border-b border-parchment-border/40 pb-2.5">Chapters</h3>
+          <div class="bg-white/60 border border-[#E9D5FF]/60 rounded-3xl p-6 shadow-xs backdrop-blur-md lg:max-h-[50vh] lg:overflow-y-auto scrollbar-hide">
+            <h3 class="font-serif text-xs mb-4 text-[#7E22CE] tracking-widest uppercase font-bold border-b border-[#E9D5FF]/60 pb-2.5">Chapters</h3>
             
             <div class="space-y-4">
               <div v-for="section in filteredSections" :key="section.id" class="space-y-2">
                 <!-- Section Header (if not default) -->
-                <h4 v-if="section.id !== 'default'" class="text-[11px] font-bold text-parchment-neutral/70 mt-3 font-serifborder-l-2 border-parchment-primary/30 pl-2">
+                <h4 v-if="section.id !== 'default'" class="text-[11px] font-bold text-[#D97706] mt-3 font-serif border-l-2 border-[#9333EA] pl-2">
                   {{ section.title }}
                 </h4>
                 
@@ -650,13 +649,13 @@ const isFirstTextPara = (idx: number): boolean => {
                     v-for="chapter in section.chapters"
                     :key="chapter.id"
                     @click="selectChapter(chapter.id)"
-                    class="w-full text-left text-xs transition-colors py-2 px-3 rounded-lg flex items-center justify-between group hover:bg-parchment-bg border-none shadow-none"
+                    class="w-full text-left text-xs transition-colors py-2 px-3 rounded-lg flex items-center justify-between group hover:bg-[#E9D5FF]/30 border-none shadow-none cursor-pointer"
                     :class="selectedChapterId === chapter.id 
-                      ? 'bg-parchment-primary/10 text-parchment-primary-dark font-semibold border-l-4 border-parchment-primary pl-2' 
-                      : readChapters[chapter.id] ? 'text-parchment-neutral/40 hover:text-parchment-neutral/60' : 'text-parchment-neutral/80 hover:text-parchment-neutral'"
+                      ? 'bg-[#E9D5FF]/40 text-[#7E22CE] font-bold border-l-4 border-[#9333EA] pl-2' 
+                      : readChapters[chapter.id] ? 'text-black/40 hover:text-black/60' : 'text-black/80 hover:text-[#7E22CE]'"
                   >
                     <span class="truncate flex-1">
-                      <span class="font-serif font-bold text-parchment-neutral/40 group-hover:text-parchment-primary-dark mr-1.5">{{ chapter.numeral }}</span>
+                      <span class="font-serif font-bold text-[#9333EA] mr-1.5">{{ chapter.numeral }}</span>
                       {{ chapter.title }}
                     </span>
                     <!-- Read Checkbox -->
@@ -664,8 +663,8 @@ const isFirstTextPara = (idx: number): boolean => {
                       @click.stop="toggleReadStatus(chapter.id)" 
                       class="ml-2 w-4 h-4 rounded border transition-colors flex items-center justify-center cursor-pointer"
                       :class="readChapters[chapter.id] 
-                        ? 'bg-parchment-primary/20 border-parchment-primary text-parchment-primary-dark' 
-                        : 'border-parchment-border hover:border-parchment-primary text-transparent'"
+                        ? 'bg-[#9333EA] border-[#9333EA] text-white' 
+                        : 'border-[#E9D5FF] hover:border-[#9333EA] text-transparent'"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
@@ -680,18 +679,18 @@ const isFirstTextPara = (idx: number): boolean => {
 
         <!-- Content Area -->
         <div class="lg:col-span-3 flex flex-col gap-6 animate-fade-in-up delay-150">
-          <div class="bg-parchment-neutral-light border border-parchment-border rounded-3xl p-6 md:p-8 flex-grow flex flex-col min-h-[60vh] relative shadow-sm">
+          <div class="bg-white/60 border border-[#E9D5FF]/60 rounded-3xl p-6 md:p-8 flex-grow flex flex-col min-h-[60vh] relative shadow-xs backdrop-blur-md">
             <!-- Reader Area -->
             <div v-if="activeChapter" id="reader-content" class="flex-grow overflow-y-auto lg:overflow-y-auto space-y-8 pr-2 select-text max-h-[65vh] lg:max-h-none">
               <!-- Book-style Header -->
               <div class="text-center mb-12 mt-6">
-                <div class="text-[11px] text-parchment-primary font-serif tracking-[0.25em] uppercase mb-3">
+                <div class="text-[11px] text-[#D97706] font-serif tracking-[0.25em] uppercase mb-3 font-bold">
                   Chapter {{ activeChapter.numeral }}
                 </div>
-                <h2 class="text-2xl md:text-3.5xl font-serif text-parchment-primary-dark font-semibold tracking-wide uppercase max-w-2xl mx-auto leading-snug">
+                <h2 class="text-2xl md:text-3.5xl font-serif text-[#7E22CE] font-bold tracking-wide uppercase max-w-2xl mx-auto leading-snug">
                   {{ activeChapter.title }}
                 </h2>
-                <div class="w-16 h-[1px] bg-parchment-primary/30 mx-auto mt-6"></div>
+                <div class="w-16 h-[1px] bg-[#9333EA]/30 mx-auto mt-6"></div>
               </div>
 
               <!-- Main text paragraphs (Book Layout Style) -->
@@ -701,8 +700,8 @@ const isFirstTextPara = (idx: number): boolean => {
                   :key="idx" 
                   :class="[
                     isBlockquote(para) 
-                      ? 'text-centermy-8 px-10 md:px-16 text-parchment-primary-dark/85 text-sm md:text-base leading-relaxed font-serif max-w-xl mx-auto font-medium' 
-                      : 'text-justify leading-relaxed text-parchment-neutral/90 font-serif text-[16.5px] md:text-[18px] tracking-wide mb-4'
+                      ? 'text-center my-8 px-10 md:px-16 text-[#7E22CE] text-sm md:text-base leading-relaxed font-serif max-w-xl mx-auto font-medium' 
+                      : 'text-justify leading-relaxed text-black/90 font-serif text-[16.5px] md:text-[18px] tracking-wide mb-4'
                   ]"
                   :style="(!isBlockquote(para) && !isFirstTextPara(idx)) ? { textIndent: '1.75rem' } : {}"
                 >
@@ -711,7 +710,7 @@ const isFirstTextPara = (idx: number): boolean => {
               </div>
 
               <!-- Checkbox Mark as Read -->
-              <div class="pt-8 border-t border-parchment-border/30 mt-8 flex justify-center">
+              <div class="pt-8 border-t border-[#E9D5FF]/60 mt-8 flex justify-center">
                 <AppButton
                   :variant="readChapters[activeChapter.id] ? 'primary' : 'outlined'"
                   @click="toggleReadStatus(activeChapter.id)"
@@ -725,12 +724,12 @@ const isFirstTextPara = (idx: number): boolean => {
               </div>
             </div>
 
-            <div v-else class="flex-grow flex items-center justify-center text-parchment-neutral/40 font-seriftext-base">
+            <div v-else class="flex-grow flex items-center justify-center text-black/40 font-serif text-base">
               Select a chapter to begin reading
             </div>
 
             <!-- Navigation Buttons -->
-            <div class="mt-8 pt-6 border-t border-parchment-border/40 flex justify-between items-center text-xs">
+            <div class="mt-8 pt-6 border-t border-[#E9D5FF]/60 flex justify-between items-center text-xs">
               <AppButton 
                 variant="outlined"
                 @click="prevChapter" 
