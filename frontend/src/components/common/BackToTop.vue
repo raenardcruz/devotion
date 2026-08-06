@@ -3,7 +3,7 @@
     <button
       v-show="isVisible"
       @click="scrollToTop"
-      class="fixed bottom-20 left-1/2 z-40 px-5 py-2.5 rounded-full bg-parchment-primary hover:bg-parchment-primary-dark text-white font-bold uppercase tracking-wider text-[10px] shadow-lg active:scale-95 transition-all duration-300 flex items-center gap-1.5 cursor-pointer border border-transparent outline-none focus:ring-2 focus:ring-parchment-primary/30"
+      class="fixed bottom-20 left-1/2 z-40 px-5 py-2.5 rounded-full bg-[#9333EA] hover:bg-[#7E22CE] text-white font-bold uppercase tracking-wider text-[10px] shadow-lg shadow-[#9333EA]/30 active:scale-95 transition-all duration-300 flex items-center gap-1.5 cursor-pointer border border-transparent outline-none focus:ring-2 focus:ring-[#9333EA]/40"
       aria-label="Back to top"
       id="back-to-top-btn"
     >

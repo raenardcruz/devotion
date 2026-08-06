@@ -1,6 +1,7 @@
 <template>
-   <router-view />
-   <BackToTop />
+  <div class="ambient-glow-bottom"></div>
+  <router-view />
+  <BackToTop />
 </template>
 
 <script setup lang="ts">

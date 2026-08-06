@@ -15,9 +15,9 @@
 
         <!-- Progress Indicator -->
         <div class="flex flex-col items-center">
-            <span class="text-parchment-neutral/40 text-[9px] font-bold uppercase tracking-[0.2em]">Meditation Progress</span>
-            <div class="text-parchment-neutral text-xs md:text-sm font-bold tabular-nums tracking-widest mt-0.5">
-                {{ currentStepIndex + 1 }} <span class="text-parchment-neutral/30 mx-1">/</span> {{ totalSteps }}
+            <span class="text-[#D97706] text-[9px] font-bold uppercase tracking-[0.2em]">Meditation Progress</span>
+            <div class="text-[#7E22CE] text-xs md:text-sm font-bold tabular-nums tracking-widest mt-0.5">
+                {{ currentStepIndex + 1 }} <span class="text-black/30 mx-1">/</span> {{ totalSteps }}
             </div>
         </div>
 

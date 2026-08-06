@@ -15,17 +15,17 @@
 
         <!-- Progress/Decade Status -->
         <div v-if="currentStep.type === 'decade'" class="flex flex-col items-center">
-            <span class="text-parchment-secondary font-bold tracking-[0.2em] text-[9px] uppercase">Decade</span>
-            <span class="text-parchment-neutral text-xs md:text-sm font-bold tabular-nums tracking-widest mt-0.5">
-                {{ decadeIndex }} <span class="text-parchment-neutral/30 mx-1">/</span> {{ isShort ? '1' : '5' }}
+            <span class="text-[#D97706] font-bold tracking-[0.2em] text-[9px] uppercase">Decade</span>
+            <span class="text-[#7E22CE] text-xs md:text-sm font-bold tabular-nums tracking-widest mt-0.5">
+                {{ decadeIndex }} <span class="text-black/30 mx-1">/</span> {{ isShort ? '1' : '5' }}
             </span>
         </div>
         <div v-else class="flex flex-col items-center opacity-40">
-            <span class="text-parchment-neutral/40 font-bold tracking-[0.2em] text-[9px] uppercase">Preparation</span>
+            <span class="text-black/40 font-bold tracking-[0.2em] text-[9px] uppercase">Preparation</span>
             <div class="flex gap-1 h-3 items-center mt-1">
-                <div class="w-1 h-1 rounded-full bg-parchment-neutral/50"></div>
-                <div class="w-1.5 h-1.5 rounded-full bg-parchment-neutral/80"></div>
-                <div class="w-1 h-1 rounded-full bg-parchment-neutral/50"></div>
+                <div class="w-1 h-1 rounded-full bg-black/50"></div>
+                <div class="w-1.5 h-1.5 rounded-full bg-black/80"></div>
+                <div class="w-1 h-1 rounded-full bg-black/50"></div>
             </div>
         </div>
 
@@ -33,7 +33,7 @@
         <AppButton 
             variant="primary" 
             @click="$emit('next')"
-            custom-class="!px-5 !py-2 !bg-parchment-primary-dark hover:!bg-[#4a3c1d]"
+            custom-class="!px-5 !py-2"
         >
             <span class="font-bold uppercase tracking-wider text-[10px]">
                 {{ currentStepIndex === totalSteps - 1 ? 'Finish' : 'Next' }}
