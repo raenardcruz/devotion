@@ -5,6 +5,16 @@ import (
 	"testing"
 )
 
+func TestGetMassReadingsRejectsInvalidDate(t *testing.T) {
+	_, err := get_mass_readings("08/02/2026")
+	if err == nil {
+		t.Fatal("expected an invalid date to return an error")
+	}
+	if !strings.Contains(err.Error(), "use YYYY-MM-DD") {
+		t.Errorf("expected date format guidance, got %v", err)
+	}
+}
+
 func TestGetMassReadings(t *testing.T) {
 	resp, err := get_mass_readings("2026-08-02")
 	if err != nil {
@@ -56,4 +66,3 @@ func TestCategorizeReadings(t *testing.T) {
 		t.Errorf("Expected Gospel 'Matthew 14:13-21', got %v", devotion.Gospel)
 	}
 }
-
