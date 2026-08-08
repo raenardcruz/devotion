@@ -1,31 +1,31 @@
 <template>
-  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-28 sm:pb-20 selection:bg-parchment-primary/20">
+  <div class="min-h-screen text-black flex flex-col pb-28 sm:pb-20 selection:bg-[#9333EA]/20 relative z-10">
     <!-- Global Header -->
     <TopNav />
 
     <!-- Main Content -->
-    <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-6 md:py-8 flex flex-col">
+    <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-6 md:py-8 flex flex-col relative z-10">
       
       <!-- Sub-header & Controls Row -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-parchment-border pb-4 mb-4 gap-3.5 animate-fade-in-down">
-          <h1 class="font-serif text-2xl md:text-3xl text-parchment-neutral font-medium">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#E9D5FF]/60 pb-4 mb-4 gap-3.5 animate-fade-in-down">
+          <h1 class="font-serif text-2xl md:text-3xl text-[#7E22CE] font-bold">
               {{ displaySetName }}
           </h1>
           
           <!-- Audio Controls & Language Toggle -->
           <div class="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 sm:gap-3.5">
               <!-- Auto Play Toggle Switch -->
-              <label class="flex items-center space-x-1.5 text-[10px] font-bold uppercase tracking-wider text-parchment-neutral/60 cursor-pointer select-none">
+              <label class="flex items-center space-x-1.5 text-[10px] font-bold uppercase tracking-wider text-black/60 cursor-pointer select-none">
                   <span>Auto-Play</span>
                   <input type="checkbox" v-model="autoPlay" class="sr-only peer" />
-                  <div class="relative w-8 h-4.5 bg-parchment-neutral-light border border-parchment-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-parchment-neutral/40 peer-checked:after:bg-parchment-primary after:border-parchment-border after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-parchment-primary/10"></div>
+                  <div class="relative w-8 h-4.5 bg-white/60 border border-[#E9D5FF]/80 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-black/40 peer-checked:after:bg-[#9333EA] after:border-[#E9D5FF] after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#9333EA]/20"></div>
               </label>
 
               <!-- Manual Play/Pause Button -->
               <button 
                 v-if="currentStep.prayerId && getPrayerAudioUrl(currentStep.prayerId)"
                 @click="toggleAudio"
-                class="flex items-center gap-1.5 px-3 py-1.5 bg-parchment-primary/10 border border-parchment-primary/30 text-parchment-primary-dark rounded-full hover:bg-parchment-primary/20 active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none shadow-none"
+                class="flex items-center gap-1.5 px-3 py-1.5 bg-[#9333EA] border border-[#9333EA] text-white rounded-full hover:bg-[#7E22CE] active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none shadow-xs cursor-pointer"
               >
                 <svg v-if="!isPlaying" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
                   <polygon points="6 3 20 12 6 21 6 3"></polygon>
@@ -40,7 +40,7 @@
               <!-- Custom Prayers Configuration Button -->
               <button 
                 @click="showSettingsModal = true"
-                class="flex items-center gap-1.5 px-3 py-1.5 bg-parchment-neutral-light border border-parchment-border text-parchment-neutral rounded-full hover:bg-parchment-primary/10 active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none shadow-none"
+                class="flex items-center gap-1.5 px-3.5 py-1.5 bg-white/60 border border-[#E9D5FF]/60 text-[#7E22CE] rounded-full hover:bg-white/80 active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
@@ -49,19 +49,40 @@
                 <span>Prayers</span>
               </button>
 
+              <!-- Fullscreen Presentation Toggle Button -->
+              <button 
+                @click="toggleFullscreen(cardContainerRef)"
+                class="flex items-center gap-1.5 px-3 py-1.5 bg-white/60 border border-[#E9D5FF]/60 text-[#7E22CE] rounded-full hover:bg-white/80 active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
+                :title="isFullscreen ? 'Exit Fullscreen Card (ESC)' : 'Fullscreen Card Presentation (F)'"
+              >
+                <svg v-if="!isFullscreen" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <polyline points="9 21 3 21 3 15"></polyline>
+                  <line x1="21" y1="3" x2="14" y2="10"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="4 14 10 14 10 20"></polyline>
+                  <polyline points="20 10 14 10 14 4"></polyline>
+                  <line x1="14" y1="10" x2="21" y2="3"></line>
+                  <line x1="10" y1="14" x2="3" y2="21"></line>
+                </svg>
+                <span>{{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Card' }}</span>
+              </button>
+
               <!-- Latin/English Language Toggle -->
-              <div class="flex items-center bg-parchment-neutral-light border border-parchment-border p-0.5 rounded-full">
+              <div class="flex items-center bg-white/60 border border-[#E9D5FF]/60 p-0.5 rounded-full backdrop-blur-md">
                   <button 
                     @click="showLatin = false"
-                    :class="[!showLatin ? 'bg-parchment-primary text-white font-bold' : 'text-parchment-neutral/50 hover:text-parchment-neutral']"
-                    class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0"
+                    :class="[!showLatin ? 'bg-[#9333EA] text-white font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
+                    class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer"
                   >
                     EN
                   </button>
                   <button 
                     @click="showLatin = true"
-                    :class="[showLatin ? 'bg-parchment-primary text-white font-bold' : 'text-parchment-neutral/50 hover:text-parchment-neutral']"
-                    class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0"
+                    :class="[showLatin ? 'bg-[#9333EA] text-white font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
+                    class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer"
                   >
                     LA
                   </button>
@@ -76,7 +97,13 @@
       <div ref="swipeContainer" class="grid grid-cols-1 lg:grid-cols-5 gap-8 mt-6 items-start touch-pan-y animate-fade-in-up delay-150">
         
         <!-- Left Column: Active Card & Controls (3/5 width on desktop) -->
-        <div class="lg:col-span-3 flex flex-col gap-6">
+        <div 
+            ref="cardContainerRef" 
+            :class="[
+                'lg:col-span-3 flex flex-col gap-6 rounded-[2.5rem] transition-all duration-300',
+                isFullscreen ? 'card-fullscreen-mode !bg-[#FAF8F5] p-6 md:p-12 overflow-y-auto justify-between border-0 shadow-none' : ''
+            ]"
+        >
             <transition name="fade-slide" mode="out-in">
                 <div :key="currentSetName + currentStepIndex + (showLatin ? '-la' : '-en')" class="flex flex-col gap-6 w-full">
                     
@@ -85,8 +112,10 @@
                         :currentStep="currentStep" 
                         :showLatin="showLatin"
                         :mysteryTitle="currentStep.mysteryTitle || getCurrentMystery(currentStep).title"
+                        :isFullscreen="isFullscreen"
                         @restart="currentStepIndex = 0"
                         @video-active="stopAudio"
+                        @toggle-fullscreen="toggleFullscreen(cardContainerRef)"
                     />
 
                     <!-- Interactive Bead Tracker -->
@@ -106,6 +135,11 @@
                 @next="nextStep" 
                 @prev="prevStep" 
             />
+
+            <!-- Fullscreen Keyboard Helper Hint -->
+            <div v-if="isFullscreen" class="text-center text-xs text-black/50 font-sans tracking-wide mt-2">
+                Press <kbd class="px-1.5 py-0.5 bg-black/10 rounded font-mono text-[10px]">←</kbd> <kbd class="px-1.5 py-0.5 bg-black/10 rounded font-mono text-[10px]">→</kbd> to Navigate &bull; <kbd class="px-1.5 py-0.5 bg-black/10 rounded font-mono text-[10px]">Space</kbd> Play/Pause &bull; <kbd class="px-1.5 py-0.5 bg-black/10 rounded font-mono text-[10px]">ESC</kbd> Exit Fullscreen
+            </div>
         </div>
 
         <!-- Right Column: Classical Illustration & Meditative Quote (2/5 width on desktop) -->
@@ -140,16 +174,16 @@
 
     <!-- Custom Prayers Selection Modal -->
     <transition name="fade">
-      <div v-if="showSettingsModal" class="fixed inset-0 bg-parchment-neutral/65 backdrop-blur-sm z-[100] flex items-center justify-center p-4" @click.self="showSettingsModal = false">
-        <div class="bg-[#FDFBF7] border border-parchment-border w-full max-w-md rounded-[2rem] shadow-2xl flex flex-col max-h-[80vh] overflow-hidden transition-all duration-300 transform scale-100">
+      <div v-if="showSettingsModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4" @click.self="showSettingsModal = false">
+        <div class="bg-white/95 backdrop-blur-md border border-[#E9D5FF] w-full max-w-md rounded-[2rem] shadow-2xl flex flex-col max-h-[80vh] overflow-hidden transition-all duration-300 transform scale-100">
           
           <!-- Modal Header -->
-          <div class="p-5 border-b border-parchment-border/40 flex items-center justify-between bg-parchment-neutral-light/20">
+          <div class="p-5 border-b border-[#E9D5FF]/60 flex items-center justify-between bg-white/60">
             <div>
-              <h3 class="font-serif text-base md:text-lg text-parchment-primary-dark font-medium">Custom Prayers</h3>
-              <p class="text-[9px] text-parchment-neutral/50 font-bold uppercase tracking-wider mt-0.5">Customize your Rosary sequence</p>
+              <h3 class="font-serif text-base md:text-lg text-[#7E22CE] font-bold">Custom Prayers</h3>
+              <p class="text-[9px] text-[#D97706] font-bold uppercase tracking-wider mt-0.5">Customize your Rosary sequence</p>
             </div>
-            <button @click="showSettingsModal = false" class="w-7 h-7 rounded-full border border-parchment-border flex items-center justify-center text-parchment-neutral hover:bg-parchment-neutral-light hover:text-parchment-primary active:scale-95 transition-all p-0">
+            <button @click="showSettingsModal = false" class="w-7 h-7 rounded-full border border-[#E9D5FF] flex items-center justify-center text-black/60 hover:bg-[#E9D5FF]/30 hover:text-[#7E22CE] active:scale-95 transition-all p-0 cursor-pointer">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -158,15 +192,15 @@
           </div>
 
           <!-- Search Bar -->
-          <div class="px-5 py-3 border-b border-parchment-border/20 bg-parchment-neutral-light/5">
+          <div class="px-5 py-3 border-b border-[#E9D5FF]/40 bg-white/40">
             <div class="relative">
               <input 
                 type="text" 
                 v-model="searchQuery" 
                 placeholder="Search prayers by name..." 
-                class="w-full px-4 py-2 pl-9 pr-8 bg-parchment-neutral-light/50 border border-parchment-border rounded-full text-xs text-parchment-neutral placeholder-parchment-neutral/40 focus:outline-none focus:ring-1 focus:ring-parchment-primary/50 focus:border-parchment-primary transition-all font-sans"
+                class="w-full px-4 py-2 pl-9 pr-8 bg-white/80 border border-[#E9D5FF] rounded-full text-xs text-black placeholder-black/40 focus:outline-none focus:ring-1 focus:ring-[#9333EA]/30 focus:border-[#9333EA] transition-all font-sans"
               />
-              <div class="absolute left-3 top-1/2 -translate-y-1/2 text-parchment-neutral/40 pointer-events-none">
+              <div class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9333EA] pointer-events-none">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="11" cy="11" r="8"></circle>
                   <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
@@ -175,7 +209,7 @@
               <div 
                 v-if="searchQuery" 
                 @click="searchQuery = ''" 
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-parchment-neutral/40 hover:text-parchment-neutral cursor-pointer transition-all flex items-center justify-center p-0.5 rounded-full hover:bg-parchment-neutral/5"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-black/40 hover:text-[#7E22CE] cursor-pointer transition-all flex items-center justify-center p-0.5 rounded-full hover:bg-black/5"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="18" x2="6" y1="6" y2="18"></line>
@@ -189,14 +223,14 @@
           <div class="p-5 overflow-y-auto space-y-5 flex-grow">
             
             <div v-if="filteredSelectablePrayers.length === 0" class="text-center py-8 flex flex-col items-center justify-center space-y-2 animate-fade-in-up">
-              <div class="w-10 h-10 rounded-full bg-parchment-primary/10 flex items-center justify-center text-parchment-primary">
+              <div class="w-10 h-10 rounded-full bg-[#E9D5FF]/40 flex items-center justify-center text-[#9333EA]">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="11" cy="11" r="8"></circle>
                   <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
                 </svg>
               </div>
-              <div class="text-xs font-serif text-parchment-primary-dark font-medium">No prayers found</div>
-              <p class="text-[10px] text-parchment-neutral/50 max-w-[200px] text-center leading-normal">
+              <div class="text-xs font-serif text-[#7E22CE] font-bold">No prayers found</div>
+              <p class="text-[10px] text-black/50 max-w-[200px] text-center leading-normal">
                 No results match "{{ searchQuery }}". Try searching for another keyword.
               </p>
             </div>
@@ -204,27 +238,27 @@
             <template v-else>
               <!-- Prepend Section -->
               <div>
-                <h4 class="font-serif text-xs font-semibold text-parchment-secondary border-b border-parchment-border/30 pb-1.5 mb-2">
+                <h4 class="font-serif text-xs font-bold text-[#D97706] border-b border-[#E9D5FF]/60 pb-1.5 mb-2">
                   Before the Rosary (Prepend)
                 </h4>
-                <p class="text-[11px] text-parchment-neutral/60 mb-2 leading-relaxed">
+                <p class="text-[11px] text-black/60 mb-2 leading-relaxed">
                   Recited immediately after the opening Sign of the Cross.
                 </p>
-                <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1 border border-parchment-border/20 rounded-xl p-2 bg-parchment-neutral-light/10">
+                <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1 border border-[#E9D5FF]/60 rounded-xl p-2 bg-white/50">
                   <label 
                     v-for="prayer in filteredSelectablePrayers" 
                     :key="'before-' + prayer.id" 
-                    class="flex items-start space-x-2.5 p-1.5 rounded-lg hover:bg-parchment-neutral-light/50 transition-colors cursor-pointer select-none"
+                    class="flex items-start space-x-2.5 p-1.5 rounded-lg hover:bg-[#E9D5FF]/20 transition-colors cursor-pointer select-none"
                   >
                     <input 
                       type="checkbox" 
                       :value="prayer.id" 
                       v-model="tempBeforePrayers" 
-                      class="mt-0.5 rounded border-parchment-border text-parchment-primary focus:ring-parchment-primary/30 h-3.5 w-3.5 custom-checkbox" 
+                      class="mt-0.5 rounded border-[#E9D5FF] text-[#9333EA] focus:ring-[#9333EA]/30 h-3.5 w-3.5 custom-checkbox cursor-pointer" 
                     />
                     <div class="flex-grow min-w-0">
-                      <div class="text-xs font-bold text-parchment-neutral truncate">{{ prayer.name }}</div>
-                      <div v-if="prayer.latinName" class="text-[9px] text-parchment-neutral/40truncate">{{ prayer.latinName }}</div>
+                      <div class="text-xs font-bold text-black truncate">{{ prayer.name }}</div>
+                      <div v-if="prayer.latinName" class="text-[9px] text-black/50 truncate">{{ prayer.latinName }}</div>
                     </div>
                   </label>
                 </div>
@@ -232,27 +266,27 @@
 
               <!-- Append Section -->
               <div>
-                <h4 class="font-serif text-xs font-semibold text-parchment-secondary border-b border-parchment-border/30 pb-1.5 mb-2">
+                <h4 class="font-serif text-xs font-bold text-[#D97706] border-b border-[#E9D5FF]/60 pb-1.5 mb-2">
                   After the Rosary (Append)
                 </h4>
-                <p class="text-[11px] text-parchment-neutral/60 mb-2 leading-relaxed">
+                <p class="text-[11px] text-black/60 mb-2 leading-relaxed">
                   Recited after traditional closing prayers, before the final Sign of the Cross.
                 </p>
-                <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1 border border-parchment-border/20 rounded-xl p-2 bg-parchment-neutral-light/10">
+                <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1 border border-[#E9D5FF]/60 rounded-xl p-2 bg-white/50">
                   <label 
                     v-for="prayer in filteredSelectablePrayers" 
                     :key="'after-' + prayer.id" 
-                    class="flex items-start space-x-2.5 p-1.5 rounded-lg hover:bg-parchment-neutral-light/50 transition-colors cursor-pointer select-none"
+                    class="flex items-start space-x-2.5 p-1.5 rounded-lg hover:bg-[#E9D5FF]/20 transition-colors cursor-pointer select-none"
                   >
                     <input 
                       type="checkbox" 
                       :value="prayer.id" 
                       v-model="tempAfterPrayers" 
-                      class="mt-0.5 rounded border-parchment-border text-parchment-primary focus:ring-parchment-primary/30 h-3.5 w-3.5 custom-checkbox" 
+                      class="mt-0.5 rounded border-[#E9D5FF] text-[#9333EA] focus:ring-[#9333EA]/30 h-3.5 w-3.5 custom-checkbox cursor-pointer" 
                     />
                     <div class="flex-grow min-w-0">
-                      <div class="text-xs font-bold text-parchment-neutral truncate">{{ prayer.name }}</div>
-                      <div v-if="prayer.latinName" class="text-[9px] text-parchment-neutral/40truncate">{{ prayer.latinName }}</div>
+                      <div class="text-xs font-bold text-black truncate">{{ prayer.name }}</div>
+                      <div v-if="prayer.latinName" class="text-[9px] text-black/50 truncate">{{ prayer.latinName }}</div>
                     </div>
                   </label>
                 </div>
@@ -260,13 +294,13 @@
             </template>
 
             <!-- Notice about restarting -->
-            <div class="bg-parchment-primary/5 border border-parchment-primary/20 rounded-xl p-2.5 flex items-start space-x-2">
-              <svg class="text-parchment-primary-dark mt-0.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <div class="bg-[#FEF3C7] border border-[#FDE68A] rounded-xl p-2.5 flex items-start space-x-2">
+              <svg class="text-[#D97706] mt-0.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="16" x2="12" y2="12"></line>
                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
               </svg>
-              <p class="text-[9px] text-parchment-neutral/70 leading-normal">
+              <p class="text-[9px] text-[#D97706] font-medium leading-normal">
                 Applying custom prayers will update the Rosary sequence and restart your current meditation from the beginning.
               </p>
             </div>
@@ -274,18 +308,18 @@
           </div>
 
           <!-- Modal Footer -->
-          <div class="p-4 bg-parchment-neutral-light/30 border-t border-parchment-border/40 flex items-center justify-end space-x-2">
+          <div class="p-4 bg-white/80 border-t border-[#E9D5FF]/60 flex items-center justify-end space-x-2">
             <button 
               @click="showSettingsModal = false" 
-              class="px-4 py-1.5 border border-parchment-border hover:bg-parchment-neutral-light text-parchment-neutral rounded-full text-[10px] font-bold uppercase tracking-wider outline-none shadow-none cursor-pointer"
+              class="px-4 py-1.5 border border-[#E9D5FF] hover:bg-white text-black/70 hover:text-[#7E22CE] rounded-full text-[10px] font-bold uppercase tracking-wider outline-none shadow-none cursor-pointer"
             >
               Cancel
             </button>
             <button 
               @click="applySettings" 
-              class="px-4 py-1.5 bg-parchment-primary hover:bg-parchment-primary-dark text-white rounded-full text-[10px] font-bold uppercase tracking-wider border border-transparent shadow-sm hover:scale-[1.02] cursor-pointer"
+              class="px-5 py-1.5 bg-[#9333EA] hover:bg-[#7E22CE] text-white rounded-full text-[10px] font-bold uppercase tracking-wider outline-none shadow-xs transition-all cursor-pointer"
             >
-              Apply &amp; Restart
+              Apply Prayers
             </button>
           </div>
         </div>
@@ -298,6 +332,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useSwipe } from '../composables/useSwipe';
 import { useDate } from '../composables/useDate';
+import { useFullscreen } from '../composables/useFullscreen';
 import { ROSARY_DATA, generateRosarySteps, type Mystery, type RosaryStep } from '../components/rosary/rosaryData';
 import { getMysteryVisual } from '../utils/mysteryVisuals';
 import { getPrayerAudioUrl } from '../utils/audioHelper';
@@ -316,6 +351,9 @@ const showLatin = ref(false);
 const todayMystery = ref('');
 const sets = Object.keys(ROSARY_DATA);
 const swipeContainer = ref<HTMLElement | null>(null);
+const cardContainerRef = ref<HTMLElement | null>(null);
+
+const { isFullscreen, toggleFullscreen } = useFullscreen(cardContainerRef);
 
 // Custom prayers configuration state
 const beforePrayers = ref<string[]>([]);
@@ -365,7 +403,27 @@ const getMysteryForDay = (): string => {
     }
 };
 
+const handleKeyDown = (e: KeyboardEvent) => {
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
+        return;
+    }
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        nextStep();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        prevStep();
+    } else if (e.key === ' ') {
+        e.preventDefault();
+        toggleAudio();
+    } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen(cardContainerRef.value);
+    }
+};
+
 onMounted(() => {
+    window.addEventListener('keydown', handleKeyDown);
     const daily = getMysteryForDay();
     todayMystery.value = daily;
     currentSetName.value = daily;
@@ -611,6 +669,7 @@ watch(autoPlay, (newVal) => {
 });
 
 onBeforeUnmount(() => {
+    window.removeEventListener('keydown', handleKeyDown);
     stopAudio();
 });
 </script>
@@ -650,5 +709,28 @@ onBeforeUnmount(() => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+:fullscreen, :-webkit-full-screen {
+  background-color: #FAF8F5 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  padding: 3rem 2rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  overflow-y: auto !important;
+}
+
+:fullscreen :deep(.max-w-4xl),
+:-webkit-full-screen :deep(.max-w-4xl) {
+  max-width: 56rem !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 </style>

@@ -56,17 +56,17 @@ const citationMarkdownOptions = {
 </script>
 
 <template>
-  <div v-if="parsedCitations.length > 0" class="mt-4 border-t border-parchment-border/40 pt-3">
+  <div v-if="parsedCitations.length > 0" class="mt-4 border-t border-[#E9D5FF]/60 pt-3">
     <button 
       @click="isOpen = !isOpen"
       type="button"
-      class="w-full flex items-center justify-between py-2.5 px-3.5 bg-amber-50/70 hover:bg-amber-100/70 border border-amber-200/80 rounded-xl transition-all text-left group cursor-pointer shadow-2xs"
+      class="w-full flex items-center justify-between py-2.5 px-3.5 bg-[#FEF3C7] hover:bg-[#FDE68A] border border-[#FDE68A] rounded-xl transition-all text-left group cursor-pointer shadow-xs"
     >
       <div class="flex items-center space-x-2">
         <span class="text-base">📜</span>
-        <span class="text-xs font-semibold text-amber-950 font-serif">
+        <span class="text-xs font-semibold text-[#D97706] font-serif">
           Fact-Checked Magisterium Citations 
-          <span class="ml-1.5 text-[10px] px-2 py-0.5 rounded-full bg-amber-200/80 text-amber-950 font-sans font-bold border border-amber-300/60">
+          <span class="ml-1.5 text-[10px] px-2 py-0.5 rounded-full bg-white/80 text-[#D97706] font-sans font-bold border border-[#FDE68A]">
             {{ parsedCitations.length }}
           </span>
         </span>
@@ -81,7 +81,7 @@ const citationMarkdownOptions = {
         stroke-width="2" 
         stroke-linecap="round" 
         stroke-linejoin="round"
-        class="text-amber-800/70 group-hover:text-amber-950 transition-transform duration-200"
+        class="text-[#D97706] group-hover:text-[#7E22CE] transition-transform duration-200"
         :class="{ 'rotate-180': isOpen }"
       >
         <polyline points="6 9 12 15 18 9"></polyline>
@@ -93,23 +93,23 @@ const citationMarkdownOptions = {
         <div 
           v-for="(item, idx) in parsedCitations" 
           :key="idx"
-          class="bg-white/70 border border-amber-200/70 rounded-xl p-3.5 shadow-2xs space-y-1.5"
+          class="bg-white/70 border border-[#E9D5FF]/60 rounded-xl p-3.5 shadow-2xs space-y-1.5"
         >
           <div class="flex items-start justify-between gap-2">
-            <h5 class="text-xs font-bold font-serif text-amber-950 flex items-center gap-1.5 leading-snug">
-              <span class="text-amber-700/80 font-mono text-[11px]">{{ idx + 1 }}.</span>
+            <h5 class="text-xs font-bold font-serif text-[#7E22CE] flex items-center gap-1.5 leading-snug">
+              <span class="text-[#9333EA] font-mono text-[11px]">{{ idx + 1 }}.</span>
               <span>{{ item.document_title || item.title || 'Magisterial Document' }}</span>
             </h5>
-            <span v-if="item.ref" class="text-[10px] font-mono px-1.5 py-0.5 bg-amber-100/90 text-amber-900 rounded border border-amber-200/90 shrink-0 font-semibold">
+            <span v-if="item.ref" class="text-[10px] font-mono px-1.5 py-0.5 bg-[#FEF3C7] text-[#D97706] rounded border border-[#FDE68A] shrink-0 font-semibold">
               {{ item.ref }}
             </span>
           </div>
 
-          <div v-if="item.author" class="text-[11px] text-amber-900/70 font-serif">
+          <div v-if="item.author" class="text-[11px] text-[#D97706] font-serif">
             — {{ item.author }}
           </div>
 
-          <div v-if="item.text" class="mt-2 text-xs border-l-2 border-amber-400/80 pl-3 py-1 bg-amber-50/40 rounded-r-lg">
+          <div v-if="item.text" class="mt-2 text-xs border-l-2 border-[#9333EA] pl-3 py-1 bg-white/50 rounded-r-lg">
             <div class="prose max-w-none text-xs leading-relaxed" v-html="renderMarkdown(item.text, citationMarkdownOptions)"></div>
           </div>
 

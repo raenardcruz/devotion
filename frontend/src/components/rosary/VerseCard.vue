@@ -1,7 +1,7 @@
 <template>
-    <div class="relative max-w-2xl mx-auto w-full">
+    <div :class="[isFullscreen ? 'w-full max-w-4xl mx-auto my-auto flex-grow flex flex-col justify-center items-center px-4' : 'relative max-w-2xl mx-auto w-full']">
         <!-- Parchment Card Wrapper -->
-        <div class="bg-parchment-neutral-light border border-parchment-border p-6 md:p-8 rounded-[2rem] shadow-sm flex flex-col justify-between min-h-[300px] transition-all duration-300">
+        <div :class="[isFullscreen ? 'bg-parchment-neutral-light border border-parchment-border p-8 md:p-12 rounded-[2.5rem] shadow-xl flex flex-col justify-between w-full my-auto' : 'bg-parchment-neutral-light border border-parchment-border p-6 md:p-8 rounded-[2rem] shadow-sm flex flex-col justify-between min-h-[300px]']" class="transition-all duration-300">
             
             <transition name="fade-scale" mode="out-in">
                 <div :key="(currentStep.title || currentStep.content) + (showLatin ? '-la' : '-en')" class="space-y-5 w-full">
@@ -18,10 +18,10 @@
                         </div>
 
                         <div class="space-y-2">
-                            <h3 class="font-serif text-2xl md:text-3xl text-parchment-primary-dark font-medium">
+                            <h3 class="font-serif text-3xl md:text-4xl text-parchment-primary-dark font-medium">
                                 {{ showLatin ? 'Rosarium Finitum Est' : 'Rosary Completed' }}
                             </h3>
-                            <p class="text-sm md:text-base font-seriftext-parchment-neutral/70 leading-relaxed max-w-md mx-auto">
+                            <p class="text-base md:text-lg font-serif text-parchment-neutral/70 leading-relaxed max-w-xl mx-auto">
                                 "{{ showLatin ? currentStep.latin : currentStep.content }}"
                             </p>
                         </div>
@@ -30,13 +30,13 @@
                         <div class="flex flex-col sm:flex-row gap-3 pt-4 w-full justify-center">
                             <button 
                                 @click="$emit('restart')"
-                                class="px-5 py-2.5 bg-parchment-primary hover:bg-parchment-primary-dark text-white rounded-full transition-all duration-300 font-bold uppercase tracking-wider text-xs border border-transparent shadow-sm hover:scale-[1.02] cursor-pointer"
+                                class="px-6 py-2.5 bg-parchment-primary hover:bg-parchment-primary-dark text-white rounded-full transition-all duration-300 font-bold uppercase tracking-wider text-xs border border-transparent shadow-sm hover:scale-[1.02] cursor-pointer"
                             >
                                 Pray Again
                             </button>
                             <router-link 
                                 to="/"
-                                class="px-5 py-2.5 bg-white border border-parchment-border hover:bg-parchment-neutral-light text-parchment-neutral rounded-full transition-all duration-300 font-bold uppercase tracking-wider text-xs shadow-sm hover:scale-[1.02] cursor-pointer text-center text-decoration-none"
+                                class="px-6 py-2.5 bg-white border border-parchment-border hover:bg-parchment-neutral-light text-parchment-neutral rounded-full transition-all duration-300 font-bold uppercase tracking-wider text-xs shadow-sm hover:scale-[1.02] cursor-pointer text-center text-decoration-none"
                             >
                                 Return Home
                             </router-link>
@@ -44,29 +44,48 @@
                     </div>
 
                     <template v-else>
-                        <!-- Card Header (Type & Ref) -->
+                        <!-- Card Header (Type & Ref & Fullscreen Toggle) -->
                         <div class="flex items-center justify-between border-b border-parchment-border/40 pb-3">
-                            <span class="text-parchment-secondary font-bold tracking-[0.15em] text-[11px] uppercase">
+                            <span :class="[isFullscreen ? 'text-xs md:text-sm tracking-[0.2em]' : 'text-[11px] tracking-[0.15em]']" class="text-parchment-secondary font-bold uppercase">
                                 {{ stepHeading }}
                             </span>
+                            <button 
+                                @click="$emit('toggle-fullscreen')"
+                                class="text-parchment-neutral/50 hover:text-parchment-primary transition-colors p-1.5 rounded-full hover:bg-parchment-primary/10 cursor-pointer"
+                                :title="isFullscreen ? 'Exit Fullscreen Card (ESC)' : 'Fullscreen Card Presentation (F)'"
+                            >
+                                <svg v-if="!isFullscreen" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="15 3 21 3 21 9"></polyline>
+                                    <polyline points="9 21 3 21 3 15"></polyline>
+                                    <line x1="21" y1="3" x2="14" y2="10"></line>
+                                    <line x1="3" y1="21" x2="10" y2="14"></line>
+                                </svg>
+                                <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="4 14 10 14 10 20"></polyline>
+                                    <polyline points="20 10 14 10 14 4"></polyline>
+                                    <line x1="14" y1="10" x2="21" y2="3"></line>
+                                    <line x1="10" y1="14" x2="3" y2="21"></line>
+                                </svg>
+                            </button>
                         </div>
                         
                         <!-- Mystery Title -->
-                        <h3 v-if="currentStep.mysteryTitle || currentStep.title" class="text-xl md:text-2xl font-serif text-parchment-neutral font-medium">
+                        <h3 v-if="currentStep.mysteryTitle || currentStep.title" :class="[isFullscreen ? 'text-2xl md:text-3xl lg:text-4xl font-bold my-3' : 'text-xl md:text-2xl font-medium']" class="font-serif text-parchment-neutral">
                             {{ displayMysteryTitle }}
                         </h3>
 
                         <!-- Mystery Description & Virtues -->
                         <div v-if="currentStep.type === 'mystery-header'" class="space-y-4 my-4 animate-fade-in-up">
-                            <p class="text-base md:text-lg font-seriftext-parchment-neutral/80 leading-relaxed">
+                            <p :class="[isFullscreen ? 'text-lg md:text-2xl leading-relaxed' : 'text-base md:text-lg leading-relaxed']" class="font-serif text-parchment-neutral/80">
                                 {{ currentStep.description }}
                             </p>
                             <div v-if="currentStep.virtues && currentStep.virtues.length" class="flex flex-wrap items-center gap-2 pt-2 border-t border-parchment-border/10">
-                                <span class="text-[10px] font-bold uppercase tracking-wider text-parchment-neutral/50">Virtues:</span>
+                                <span class="text-[10px] md:text-xs font-bold uppercase tracking-wider text-parchment-neutral/50">Virtues:</span>
                                 <span 
                                     v-for="virtue in currentStep.virtues" 
                                     :key="virtue"
-                                    class="px-3 py-1 bg-parchment-primary/10 border border-parchment-primary/20 text-parchment-primary-dark rounded-full text-xs font-semibold"
+                                    :class="[isFullscreen ? 'px-3.5 py-1 text-xs md:text-sm' : 'px-3 py-1 text-xs']"
+                                    class="bg-parchment-primary/10 border border-parchment-primary/20 text-parchment-primary-dark rounded-full font-semibold"
                                 >
                                     {{ virtue }}
                                 </span>
@@ -74,17 +93,18 @@
                         </div>
 
                         <!-- Scripture Verse (Mockup blockquote style, always English) -->
-                        <div v-if="currentStep.verse" class="border-l-4 border-parchment-primary pl-4 py-1.5 my-4">
-                            <p class="text-base md:text-lg font-seriftext-parchment-neutral/80 leading-relaxed mb-2.5">
+                        <div v-if="currentStep.verse" :class="[isFullscreen ? 'border-l-4 border-parchment-primary pl-5 py-3 my-4' : 'border-l-4 border-parchment-primary pl-4 py-1.5 my-4']">
+                            <p :class="[isFullscreen ? 'text-lg md:text-2xl mb-3 leading-relaxed' : 'text-base md:text-lg mb-2.5 leading-relaxed']" class="font-serif text-parchment-neutral/80">
                                 "{{ currentStep.verse.text }}"
                             </p>
                             <!-- Relocated & Linked Bible Citation -->
                             <div class="flex items-center">
                                 <router-link
                                     :to="{ path: '/bible-study', query: { query: currentStep.verse.ref } }"
-                                    class="inline-flex items-center space-x-1.5 text-parchment-primary-dark hover:text-parchment-primary transition-colors text-xs font-semibold hover:underline cursor-pointer"
+                                    :class="[isFullscreen ? 'text-xs md:text-sm' : 'text-xs']"
+                                    class="inline-flex items-center space-x-1.5 text-parchment-primary-dark hover:text-parchment-primary transition-colors font-semibold hover:underline cursor-pointer"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
                                         <path d="M6 6h10"></path>
                                         <path d="M6 10h10"></path>
@@ -137,16 +157,22 @@
 
                                 <p 
                                     v-else-if="currentStep.content"
-                                    class="text-base md:text-lg font-sans leading-relaxed text-parchment-neutral/90 whitespace-pre-line"
-                                    :class="{ 'font-seriftext-parchment-primary-dark': showLatin && currentStep.latin }"
+                                    :class="[
+                                        isFullscreen 
+                                            ? 'text-xl md:text-3xl lg:text-4xl leading-relaxed font-serif py-3 text-center' 
+                                            : 'text-base md:text-lg font-sans leading-relaxed text-parchment-neutral/90',
+                                        (showLatin && currentStep.latin) ? 'font-serif text-parchment-primary-dark' : ''
+                                    ]"
+                                    class="whitespace-pre-line"
                                 >
                                     {{ (showLatin && currentStep.latin) ? currentStep.latin : currentStep.content }}
                                 </p>
-             
+              
                                 <!-- Latin Translation Reference (Hidden if interlinear is active) -->
                                 <p 
                                     v-if="showLatin && currentStep.latin && !interlinearWords"
-                                    class="mt-3 text-xs font-sans text-parchment-neutral/50 italic"
+                                    :class="[isFullscreen ? 'mt-4 text-sm md:text-lg text-center' : 'mt-3 text-xs']"
+                                    class="font-sans text-parchment-neutral/50 italic"
                                 >
                                     {{ currentStep.content }}
                                 </p>
@@ -171,11 +197,13 @@ const props = defineProps<{
     currentStep: RosaryStep;
     showLatin?: boolean;
     mysteryTitle?: string;
+    isFullscreen?: boolean;
 }>();
 
 const emit = defineEmits<{
     (e: 'restart'): void;
     (e: 'video-active'): void;
+    (e: 'toggle-fullscreen'): void;
 }>();
 
 const selectedPlayMode = ref<'audio' | 'video'>('audio');

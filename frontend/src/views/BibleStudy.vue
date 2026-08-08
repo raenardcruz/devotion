@@ -268,7 +268,7 @@ const getSnippet = (text: string) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-28 sm:pb-20 selection:bg-parchment-primary/20">
+  <div class="min-h-screen text-black flex flex-col pb-28 sm:pb-20 selection:bg-[#9333EA]/20 relative z-10">
     <!-- Global Header -->
     <TopNav />
 
@@ -276,33 +276,33 @@ const getSnippet = (text: string) => {
     <div class="relative z-10 max-w-7xl mx-auto px-4 py-8 md:py-12 flex flex-col min-h-screen w-full">
       <!-- Title Header -->
       <header class="text-center mb-8 animate-fade-in-down">
-        <span class="text-parchment-primary font-bold tracking-[0.25em] text-xs uppercase block mb-1">
+        <span class="text-[#D97706] font-bold tracking-[0.25em] text-xs uppercase block mb-1">
           Scripture Study
         </span>
-        <h1 class="text-3xl md:text-5xl font-serif text-parchment-primary-dark font-medium my-2">
+        <h1 class="text-3xl md:text-5xl font-serif text-[#7E22CE] font-bold my-2">
           Context Explorer
         </h1>
-        <p class="text-parchment-neutral/70text-sm max-w-md mx-auto leading-relaxed">
+        <p class="text-black/70 text-sm max-w-md mx-auto leading-relaxed">
           Unveil the historical context, theological layers, and original scriptures of any biblical passage.
         </p>
       </header>
 
       <!-- Mobile Navigation Trigger Button -->
-      <div class="lg:hidden mb-4 flex items-center justify-between bg-parchment-neutral-light border border-parchment-border rounded-2xl p-3 shadow-sm">
+      <div class="lg:hidden mb-4 flex items-center justify-between bg-white/60 border border-[#E9D5FF]/60 rounded-2xl p-3 shadow-sm backdrop-blur-md">
         <div class="flex items-center gap-2 overflow-hidden pr-2">
-          <span class="text-parchment-primary">
+          <span class="text-[#9333EA]">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
               <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
             </svg>
           </span>
-          <span class="font-serif text-xs font-semibold text-parchment-primary-dark truncate">
+          <span class="font-serif text-xs font-semibold text-[#7E22CE] truncate">
             {{ selectedBook }} {{ chapterInput ? chapterInput : '' }}{{ verseStart ? ':' + verseStart : '' }}
           </span>
         </div>
         <button 
           @click="isMobileSelectorOpen = true" 
-          class="px-3 py-1.5 bg-parchment-primary text-white text-xs font-medium rounded-xl hover:bg-parchment-primary-dark transition-all shadow-xs shrink-0 flex items-center gap-1.5"
+          class="px-3.5 py-1.5 bg-[#9333EA] text-white text-xs font-medium rounded-xl hover:bg-[#7E22CE] transition-all shadow-xs shrink-0 flex items-center gap-1.5 cursor-pointer"
         >
           <span>Select Passage</span>
         </button>

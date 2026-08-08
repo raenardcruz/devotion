@@ -1,29 +1,30 @@
 <template>
-  <div class="min-h-screen bg-parchment-bg text-parchment-neutral flex flex-col pb-28 sm:pb-20 selection:bg-parchment-secondary/20">
+  <div class="min-h-screen text-black flex flex-col pb-28 sm:pb-20 selection:bg-[#9333EA]/20 relative z-10">
     <!-- Global Header -->
     <TopNav />
 
     <!-- Main Chaplet Container -->
-    <main class="flex-grow max-w-4xl mx-auto px-4 py-8 flex flex-col w-full">
+    <main class="flex-grow max-w-4xl mx-auto px-4 py-8 flex flex-col w-full relative z-10">
+
         <!-- Sub-header & Toggles -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between border-b border-parchment-border pb-4 mb-6 gap-4 animate-fade-in-down">
-            <h1 class="font-serif text-2xl md:text-3xl text-parchment-neutral font-medium">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between border-b border-[#E9D5FF]/60 pb-4 mb-6 gap-4 animate-fade-in-down">
+            <h1 class="font-serif text-2xl md:text-3xl text-[#7E22CE] font-bold">
                 The Divine Mercy Chaplet
             </h1>
             
             <div class="flex flex-wrap items-center gap-3">
                 <!-- Auto Play Toggle Switch -->
-                <label class="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-wider text-parchment-neutral/50 cursor-pointer select-none">
+                <label class="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-wider text-black/60 cursor-pointer select-none">
                     <span>Auto-Play</span>
                     <input type="checkbox" v-model="autoPlay" class="sr-only peer" />
-                    <div class="relative w-8 h-4.5 bg-parchment-neutral-light border border-parchment-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-parchment-neutral/40 peer-checked:after:bg-parchment-secondary after:border-parchment-border after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-parchment-secondary/10"></div>
+                    <div class="relative w-8 h-4.5 bg-white/60 border border-[#E9D5FF]/80 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-black/40 peer-checked:after:bg-[#9333EA] after:border-[#E9D5FF] after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#9333EA]/20"></div>
                 </label>
 
                 <!-- Manual Play/Pause Button -->
                 <button 
                   v-if="currentStep.id && getPrayerAudioUrl(currentStep.id)"
                   @click="toggleAudio"
-                  class="flex items-center gap-1.5 px-3 py-1.5 bg-parchment-primary/10 border border-parchment-primary/30 text-parchment-primary-dark rounded-full hover:bg-parchment-primary/20 active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none shadow-none"
+                  class="flex items-center gap-1.5 px-3 py-1.5 bg-[#9333EA] border border-[#9333EA] text-white rounded-full hover:bg-[#7E22CE] active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none shadow-xs cursor-pointer"
                 >
                   <svg v-if="!isPlaying" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
                     <polygon points="6 3 20 12 6 21 6 3"></polygon>
@@ -36,36 +37,57 @@
                 </button>
 
                 <!-- Short/Full Version Toggle -->
-                <div class="flex items-center bg-parchment-neutral-light border border-parchment-border p-0.5 rounded-full w-fit">
+                <div class="flex items-center bg-white/60 border border-[#E9D5FF]/60 p-0.5 rounded-full w-fit backdrop-blur-md">
                     <button 
                       @click="isShortVersion = false"
-                      :class="[!isShortVersion ? 'bg-parchment-secondary text-white font-bold' : 'text-parchment-neutral/50 hover:text-parchment-neutral']"
-                      class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0"
+                      :class="[!isShortVersion ? 'bg-[#9333EA] text-white font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
+                      class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer"
                     >
                       Full
                     </button>
                     <button 
                       @click="isShortVersion = true"
-                      :class="[isShortVersion ? 'bg-parchment-secondary text-white font-bold' : 'text-parchment-neutral/50 hover:text-parchment-neutral']"
-                      class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0"
+                      :class="[isShortVersion ? 'bg-[#9333EA] text-white font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
+                      class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer"
                     >
                       Short
                     </button>
                 </div>
 
+                <!-- Fullscreen Presentation Toggle Button -->
+                <button 
+                  @click="toggleFullscreen(cardContainerRef)"
+                  class="flex items-center gap-1.5 px-3 py-1.5 bg-white/60 border border-[#E9D5FF]/60 text-[#7E22CE] rounded-full hover:bg-white/80 active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
+                  :title="isFullscreen ? 'Exit Fullscreen Card (ESC)' : 'Fullscreen Card Presentation (F)'"
+                >
+                  <svg v-if="!isFullscreen" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <polyline points="9 21 3 21 3 15"></polyline>
+                    <line x1="21" y1="3" x2="14" y2="10"></line>
+                    <line x1="3" y1="21" x2="10" y2="14"></line>
+                  </svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="4 14 10 14 10 20"></polyline>
+                    <polyline points="20 10 14 10 14 4"></polyline>
+                    <line x1="14" y1="10" x2="21" y2="3"></line>
+                    <line x1="10" y1="14" x2="3" y2="21"></line>
+                  </svg>
+                  <span>{{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Card' }}</span>
+                </button>
+
                 <!-- Latin/English Toggle -->
-                <div class="flex items-center bg-parchment-neutral-light border border-parchment-border p-0.5 rounded-full w-fit">
+                <div class="flex items-center bg-white/60 border border-[#E9D5FF]/60 p-0.5 rounded-full w-fit backdrop-blur-md">
                     <button 
                       @click="showLatin = false"
-                      :class="[!showLatin ? 'bg-parchment-secondary text-white font-bold' : 'text-parchment-neutral/50 hover:text-parchment-neutral']"
-                      class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0"
+                      :class="[!showLatin ? 'bg-[#9333EA] text-white font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
+                      class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer"
                     >
                       EN
                     </button>
                     <button 
                       @click="showLatin = true"
-                      :class="[showLatin ? 'bg-parchment-secondary text-white font-bold' : 'text-parchment-neutral/50 hover:text-parchment-neutral']"
-                      class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0"
+                      :class="[showLatin ? 'bg-[#9333EA] text-white font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
+                      class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer"
                     >
                       LA
                     </button>
@@ -74,7 +96,13 @@
         </div>
 
         <!-- Main Prayer Card Area -->
-        <main ref="swipeContainer" class="flex-grow flex flex-col justify-center gap-6 py-6 touch-pan-y animate-fade-in-up delay-150">
+        <section 
+            ref="cardContainerRef" 
+            :class="[
+                'flex-grow flex flex-col justify-between gap-6 py-6 touch-pan-y animate-fade-in-up delay-150 transition-all duration-300',
+                isFullscreen ? 'card-fullscreen-mode !bg-[#FAF8F5] p-6 md:p-12 overflow-y-auto' : ''
+            ]"
+        >
             <transition name="fade-slide" mode="out-in">
                 <div :key="currentStepIndex + (showLatin ? '-la' : '-en') + (isShortVersion ? '-short' : '-full')" class="w-full flex flex-col gap-6">
 
@@ -90,7 +118,12 @@
                     </div>
 
                     <!-- Prayer Card -->
-                    <PrayerCard :currentStep="currentStep" :showLatin="showLatin" />
+                    <PrayerCard 
+                        :currentStep="currentStep" 
+                        :showLatin="showLatin" 
+                        :isFullscreen="isFullscreen"
+                        @toggle-fullscreen="toggleFullscreen(cardContainerRef)"
+                    />
                 </div>
             </transition>
 
@@ -104,10 +137,18 @@
                 @next="next" 
                 @prev="prev" 
             />
-        </main>
+
+            <!-- Fullscreen Keyboard Helper Hint -->
+            <div v-if="isFullscreen" class="text-center text-xs text-black/50 font-sans tracking-wide mt-2">
+                Press <kbd class="px-1.5 py-0.5 bg-black/10 rounded font-mono text-[10px]">←</kbd> <kbd class="px-1.5 py-0.5 bg-black/10 rounded font-mono text-[10px]">→</kbd> to Navigate &bull; <kbd class="px-1.5 py-0.5 bg-black/10 rounded font-mono text-[10px]">Space</kbd> Play/Pause &bull; <kbd class="px-1.5 py-0.5 bg-black/10 rounded font-mono text-[10px]">ESC</kbd> Exit Fullscreen
+            </div>
+        </section>
 
         <footer class="mt-8 text-center text-parchment-secondary/40 text-xs font-bold py-4 uppercase tracking-[0.25em] select-none">
             <p>Jesus, I Trust In You</p>
+            <div v-if="isFullscreen" class="mt-3 text-center text-xs text-black/50 font-sans normal-case tracking-wide">
+                Press <kbd class="px-1.5 py-0.5 bg-black/10 rounded font-mono text-[10px]">←</kbd> <kbd class="px-1.5 py-0.5 bg-black/10 rounded font-mono text-[10px]">→</kbd> to Navigate &bull; <kbd class="px-1.5 py-0.5 bg-black/10 rounded font-mono text-[10px]">Space</kbd> Play/Pause &bull; <kbd class="px-1.5 py-0.5 bg-black/10 rounded font-mono text-[10px]">F</kbd> Fullscreen &bull; <kbd class="px-1.5 py-0.5 bg-black/10 rounded font-mono text-[10px]">ESC</kbd> Exit
+            </div>
         </footer>
     </main>
 
@@ -119,6 +160,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useSwipe } from '../composables/useSwipe';
+import { useFullscreen } from '../composables/useFullscreen';
 import { DIVINE_MERCY_STEPS as steps, type Step } from '../components/divinemercy/divineMercyData';
 import { getPrayerAudioUrl } from '../utils/audioHelper';
 
@@ -136,6 +178,9 @@ const isShortVersion = ref(false);
 
 const beadInDecade = ref(0); // 0 is Eternal Father, 1-10 are Passion beads
 const swipeContainer = ref<HTMLElement | null>(null);
+const cardContainerRef = ref<HTMLElement | null>(null);
+
+const { isFullscreen, toggleFullscreen } = useFullscreen(cardContainerRef);
 
 // Audio State
 const currentAudio = ref<HTMLAudioElement | null>(null);
@@ -285,7 +330,27 @@ const toggleAudio = () => {
     }
 };
 
+const handleKeyDown = (e: KeyboardEvent) => {
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
+        return;
+    }
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        next();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        prev();
+    } else if (e.key === ' ') {
+        e.preventDefault();
+        toggleAudio();
+    } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen(cardContainerRef.value);
+    }
+};
+
 onMounted(() => {
+    window.addEventListener('keydown', handleKeyDown);
     const savedAutoPlay = localStorage.getItem('dm-autoplay');
     if (savedAutoPlay !== null) {
         autoPlay.value = savedAutoPlay === 'true';
@@ -313,6 +378,7 @@ watch(autoPlay, (newVal) => {
 });
 
 onBeforeUnmount(() => {
+    window.removeEventListener('keydown', handleKeyDown);
     stopAudio();
 });
 </script>
@@ -349,5 +415,28 @@ onBeforeUnmount(() => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+:fullscreen, :-webkit-full-screen {
+  background-color: #FAF8F5 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  padding: 3rem 2rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  overflow-y: auto !important;
+}
+
+:fullscreen :deep(.max-w-4xl),
+:-webkit-full-screen :deep(.max-w-4xl) {
+  max-width: 56rem !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 </style>
