@@ -37,6 +37,7 @@ const activeTab = ref('first_reading');
 
 const { getLocalISOString } = useDate();
 const { getDevotion, loading, error } = useDevotionApi();
+const selectedDate = ref(getLocalISOString());
 
 const contextMarkdownOptions = {
   paragraphClass: 'mb-2 last:mb-0',
@@ -54,7 +55,7 @@ loading.value = true;
 
 const fetchReadings = async () => {
   try {
-    const data = await getDevotion<MassReadings>(getLocalISOString());
+    const data = await getDevotion<MassReadings>(selectedDate.value);
     readings.value = data;
     
     // Set default active tab based on what's available
@@ -68,13 +69,15 @@ const fetchReadings = async () => {
   }
 };
 
+const selectedDateValue = computed(() => new Date(`${selectedDate.value}T12:00:00`));
+
 onMounted(() => {
   fetchReadings();
 });
 
 // Dynamic date strings for header
 const formattedDate = computed(() => {
-  return new Date().toLocaleDateString('en-US', { 
+  return selectedDateValue.value.toLocaleDateString('en-US', {
     weekday: 'long', 
     month: 'long', 
     day: 'numeric' 
@@ -83,7 +86,7 @@ const formattedDate = computed(() => {
 
 const formattedWeek = computed(() => {
   // Format details like: "Wednesday of the Liturgical Week"
-  const weekday = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  const weekday = selectedDateValue.value.toLocaleDateString('en-US', { weekday: 'long' });
   return `${weekday} of the Liturgical Year — Daily Reflection`;
 });
 
@@ -130,12 +133,25 @@ const availableTabs = computed(() => {
           <p class="text-parchment-neutral/70text-sm">
             {{ formattedWeek }}
           </p>
+          <div class="mt-5 flex items-center justify-center gap-3">
+            <label for="reading-date" class="text-xs font-bold uppercase tracking-wider text-parchment-neutral/60">
+              Choose a date
+            </label>
+            <input
+              id="reading-date"
+              v-model="selectedDate"
+              type="date"
+              :max="getLocalISOString()"
+              class="rounded-lg border border-parchment-border bg-white/70 px-3 py-2 text-sm text-parchment-neutral shadow-sm focus:border-parchment-primary focus:outline-none focus:ring-2 focus:ring-parchment-primary/20"
+              @change="fetchReadings"
+            >
+          </div>
       </header>
 
       <!-- Content Area -->
       <div v-if="loading" class="flex-grow flex flex-col items-center justify-center py-20 space-y-4">
          <div class="w-12 h-12 border-4 border-parchment-border border-t-parchment-primary rounded-full animate-spin"></div>
-         <p class="text-parchment-neutral/50 animate-pulse font-medium text-sm">Loading today's liturgy...</p>
+         <p class="text-parchment-neutral/50 animate-pulse font-medium text-sm">Loading the liturgy...</p>
       </div>
 
       <div v-else-if="error" class="bg-red-50/50 border border-red-200 rounded-2xl p-8 text-center text-red-800 animate-fade-in-up">

@@ -25,11 +25,9 @@ func get_mass_readings(dateStr string) (GetMassReadingsResponse, error) {
 	if dateStr != "" {
 		t, err := time.Parse("2006-01-02", dateStr)
 		if err != nil {
-			log.Printf("[get_mass_readings] Error parsing date %s, falling back to today: %v", dateStr, err)
-			targetDate = time.Now().Format("010206")
-		} else {
-			targetDate = t.Format("010206")
+			return GetMassReadingsResponse{}, fmt.Errorf("invalid reading date %q: use YYYY-MM-DD", dateStr)
 		}
+		targetDate = t.Format("010206")
 	} else {
 		targetDate = time.Now().Format("010206")
 	}
