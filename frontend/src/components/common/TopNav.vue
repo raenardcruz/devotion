@@ -1,9 +1,9 @@
 <template>
-  <header class="sticky top-0 z-40 w-full bg-white/60 backdrop-blur-md border-b border-[#E9D5FF]/60 py-4 px-6 md:px-12 flex items-center justify-between">
+  <header class="sticky top-0 z-40 w-full bg-gradient-to-r from-[#EFE9E1]/90 via-white/95 to-[#EFE9E1]/90 backdrop-blur-md border-b border-[#D1C7BD]/60 py-4 px-6 md:px-12 flex items-center justify-between shadow-xs">
     <!-- Left Menu Icon -->
     <button 
       @click="toggleSidebar"
-      class="text-[#9333EA] hover:text-[#7E22CE] transition-colors p-1.5 rounded-full hover:bg-[#E9D5FF]/30 outline-none border border-transparent shadow-none"
+      class="text-[#72383D] hover:text-[#322D29] transition-colors p-1.5 rounded-full hover:bg-[#D1C7BD]/30 outline-none border border-transparent shadow-none"
       id="top-nav-menu-btn"
     >
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -15,7 +15,7 @@
 
     <!-- Center Title -->
     <router-link to="/" class="absolute left-1/2 -translate-x-1/2 flex items-center">
-      <span class="font-serif text-lg md:text-xl font-semibold tracking-[0.1em] hover:opacity-80 transition-opacity">
+      <span class="font-serif text-lg md:text-xl font-bold tracking-[0.1em] bg-gradient-to-r from-[#72383D] via-[#AC9C8D] to-[#322D29] bg-clip-text text-transparent hover:opacity-80 transition-opacity">
         Faith and Devotion
       </span>
     </router-link>
@@ -26,28 +26,28 @@
         <router-link 
           to="/" 
           class="text-sm font-medium tracking-wider uppercase transition-colors"
-          :class="[route.path === '/' ? 'text-[#7E22CE] font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
+          :class="[isHomeActive ? 'text-[#72383D] font-bold border-b-2 border-[#72383D]' : 'text-[#322D29]/70 hover:text-[#72383D]']"
         >
           Home
         </router-link>
         <router-link 
           to="/daily-readings" 
           class="text-sm font-medium tracking-wider uppercase transition-colors"
-          :class="[route.path !== '/' ? 'text-[#7E22CE] font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
+          :class="[isDevotionsActive ? 'text-[#72383D] font-bold border-b-2 border-[#72383D]' : 'text-[#322D29]/70 hover:text-[#72383D]']"
         >
           Devotions
         </router-link>
         <router-link 
           to="/bible-study" 
           class="text-sm font-medium tracking-wider uppercase transition-colors"
-          :class="[route.path === '/bible-study' ? 'text-[#7E22CE] font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
+          :class="[isBibleStudyActive ? 'text-[#72383D] font-bold border-b-2 border-[#72383D]' : 'text-[#322D29]/70 hover:text-[#72383D]']"
         >
           Bible Study
         </router-link>
         <router-link 
           to="/magisterium-chat" 
           class="text-sm font-medium tracking-wider uppercase transition-colors"
-          :class="[route.path === '/magisterium-chat' ? 'text-[#7E22CE] font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
+          :class="[isMagisteriumActive ? 'text-[#72383D] font-bold border-b-2 border-[#72383D]' : 'text-[#322D29]/70 hover:text-[#72383D]']"
         >
           Magisterium
         </router-link>
@@ -62,7 +62,7 @@
       <div 
         v-if="isSidebarOpen"
         @click="closeSidebar"
-        class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm cursor-pointer"
+        class="fixed inset-0 z-50 bg-[#322D29]/40 backdrop-blur-sm cursor-pointer"
       ></div>
     </Transition>
 
@@ -70,16 +70,16 @@
     <Transition name="slide">
       <div 
         v-if="isSidebarOpen"
-        class="fixed top-0 left-0 bottom-0 z-50 w-80 max-w-[85vw] bg-white/90 backdrop-blur-md border-r border-[#E9D5FF]/60 shadow-2xl flex flex-col"
+        class="fixed top-0 left-0 bottom-0 z-50 w-80 max-w-[85vw] bg-gradient-to-b from-[#EFE9E1]/95 via-white/95 to-[#EFE9E1]/95 backdrop-blur-md border-r border-[#D1C7BD]/60 shadow-2xl flex flex-col"
       >
         <!-- Header -->
-        <div class="p-6 border-b border-[#E9D5FF]/60 flex items-center justify-between">
-          <span class="font-serif text-lg font-bold tracking-[0.1em]">
+        <div class="p-6 border-b border-[#D1C7BD]/60 flex items-center justify-between">
+          <span class="font-serif text-lg font-bold tracking-[0.1em] bg-gradient-to-r from-[#72383D] via-[#AC9C8D] to-[#322D29] bg-clip-text text-transparent">
             Faith and Devotion
           </span>
           <button 
             @click="closeSidebar"
-            class="hover:text-[#7E22CE] transition-colors p-1.5 rounded-full hover:bg-[#E9D5FF]/30 border border-transparent outline-none cursor-pointer"
+            class="hover:text-[#72383D] transition-colors p-1.5 rounded-full hover:bg-[#D1C7BD]/30 border border-transparent outline-none cursor-pointer text-[#322D29]"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" x2="6" y1="6" y2="18"></line>
@@ -96,12 +96,12 @@
             :to="item.path"
             @click="closeSidebar"
             class="flex items-center space-x-4 p-3 rounded-2xl transition-all duration-200 group border"
-            :class="[route.path === item.path ? 'bg-[#E9D5FF]/40 border-[#E9D5FF] text-[#7E22CE] font-bold shadow-xs' : 'text-black/80 hover:text-[#7E22CE] border-transparent hover:bg-white/60']"
+            :class="[isNavItemActive(item.path) ? 'bg-gradient-to-r from-[#72383D]/15 to-[#AC9C8D]/20 border-[#D1C7BD] text-[#72383D] font-bold shadow-xs' : 'text-[#322D29]/80 hover:text-[#72383D] border-transparent hover:bg-white/60']"
           >
             <!-- Icon Wrapper -->
             <div 
-              class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300"
-              :class="[route.path === item.path ? 'bg-[#9333EA] text-white shadow-xs' : 'bg-[#E9D5FF]/30 text-[#9333EA] group-hover:bg-[#9333EA] group-hover:text-white']"
+              class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 shadow-xs"
+              :class="[isNavItemActive(item.path) ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white' : 'bg-[#D1C7BD]/40 text-[#72383D] group-hover:bg-gradient-to-r group-hover:from-[#72383D] group-hover:to-[#322D29] group-hover:text-white']"
             >
               <!-- Inline SVGs depending on icon name -->
               <svg v-if="item.icon === 'home'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -116,14 +116,14 @@
             </div>
             <div class="text-left flex-1 min-w-0">
               <div class="text-sm font-semibold tracking-wide leading-none mb-1">{{ item.label }}</div>
-              <div class="text-[11px] text-black/60 truncate">{{ item.desc }}</div>
+              <div class="text-[11px] text-[#322D29]/70 truncate">{{ item.desc }}</div>
             </div>
           </router-link>
         </nav>
 
         <!-- Footer / AMDG -->
-        <div class="p-6 border-t border-[#E9D5FF]/60 text-center">
-          <span class="text-xs text-[#D97706] tracking-wider uppercase font-semibold">
+        <div class="p-6 border-t border-[#D1C7BD]/60 text-center">
+          <span class="text-xs text-[#72383D] tracking-wider uppercase font-semibold">
             Ad Maiorem Dei Gloriam
           </span>
         </div>
@@ -133,7 +133,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 
 const route = useRoute();
@@ -145,6 +145,26 @@ const toggleSidebar = () => {
 
 const closeSidebar = () => {
   isSidebarOpen.value = false;
+};
+
+const devotionsRoutes = [
+  '/daily-readings',
+  '/rosary',
+  '/st-michael-rosary',
+  '/divine-mercy',
+  '/prayers',
+  '/catechism',
+  '/resources'
+];
+
+const isHomeActive = computed(() => route.path === '/');
+const isDevotionsActive = computed(() => devotionsRoutes.some(path => route.path.startsWith(path)));
+const isBibleStudyActive = computed(() => route.path.startsWith('/bible-study'));
+const isMagisteriumActive = computed(() => route.path.startsWith('/magisterium-chat'));
+
+const isNavItemActive = (itemPath: string) => {
+  if (itemPath === '/') return route.path === '/';
+  return route.path.startsWith(itemPath);
 };
 
 const navItems = [

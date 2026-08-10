@@ -15,9 +15,9 @@
 
         <!-- Progress/Decade Status -->
         <div v-if="currentStep.type === 'decade'" class="flex flex-col items-center">
-            <span class="text-[#D97706] font-bold tracking-[0.2em] text-[9px] uppercase">Decade</span>
-            <span class="text-[#7E22CE] text-xs md:text-sm font-bold tabular-nums tracking-widest mt-0.5">
-                {{ decadeIndex }} <span class="text-black/30 mx-1">/</span> {{ isShort ? '1' : '5' }}
+            <span class="text-[#72383D] font-bold tracking-[0.2em] text-[9px] uppercase">Decade</span>
+            <span class="text-[#322D29] text-xs md:text-sm font-bold tabular-nums tracking-widest mt-0.5">
+                {{ decadeIndex }} <span class="text-[#AC9C8D] mx-1">/</span> {{ isShort ? '1' : '5' }}
             </span>
         </div>
         <div v-else class="flex flex-col items-center opacity-40">

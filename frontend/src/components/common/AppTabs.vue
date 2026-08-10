@@ -7,8 +7,8 @@
       :class="[
         'px-4 sm:px-5 py-2 rounded-full text-xs md:text-sm font-bold uppercase tracking-wider transition-all duration-300 border shadow-none hover:shadow-none shrink-0 whitespace-nowrap',
         isActive(tab)
-          ? 'bg-[#9333EA] text-white border-transparent shadow-sm'
-          : 'bg-white/60 text-black/70 border-[#E9D5FF]/60 hover:bg-white/80 hover:text-[#7E22CE]'
+          ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white border-transparent shadow-sm shadow-[#72383D]/20'
+          : 'bg-white/70 text-[#322D29]/70 border-[#D1C7BD]/80 hover:bg-white hover:text-[#72383D]'
       ]"
     >
       {{ typeof tab === 'string' ? tab : tab.label }}
