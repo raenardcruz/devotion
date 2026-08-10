@@ -1,14 +1,14 @@
 <template>
-  <div class="min-h-screen text-black flex flex-col pb-28 sm:pb-20 selection:bg-[#9333EA]/20 relative z-10">
+  <div class="min-h-screen text-[#322D29] flex flex-col pb-28 sm:pb-20 selection:bg-[#72383D]/20 relative z-10">
     <TopNav />
 
     <main class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-4 flex-grow w-full flex flex-col relative z-10">
       <!-- Page Header -->
       <div class="text-center mb-3">
-        <h1 class="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-black tracking-tight mb-1">
+        <h1 class="text-2xl sm:text-3xl md:text-4xl font-serif font-bold bg-gradient-to-r from-[#72383D] via-[#AC9C8D] to-[#322D29] bg-clip-text text-transparent tracking-tight mb-1">
           Magisterium AI Sanctuary
         </h1>
-        <p class="text-black/70 text-xs sm:text-sm max-w-2xl mx-auto font-serif">
+        <p class="text-[#322D29]/70 text-xs sm:text-sm max-w-2xl mx-auto font-serif">
           Grounded in Sacred Tradition, Church Doctrine, and Catholic Scriptures
         </p>
 
@@ -22,20 +22,20 @@
       </div>
 
       <!-- Mobile Navigation Trigger Button -->
-      <div class="lg:hidden mb-4 flex items-center justify-between bg-white/60 border border-[#E9D5FF]/60 rounded-2xl p-3 shadow-xs backdrop-blur-md">
+      <div class="lg:hidden mb-4 flex items-center justify-between bg-white/60 border border-[#D1C7BD]/60 rounded-2xl p-3 shadow-xs backdrop-blur-md">
         <div class="flex items-center gap-2 overflow-hidden pr-2">
-          <span class="text-[#9333EA]">
+          <span class="text-[#72383D]">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
           </span>
-          <span class="font-serif text-xs font-semibold text-[#7E22CE] truncate">
+          <span class="font-serif text-xs font-semibold text-[#72383D] truncate">
             {{ activeSession ? activeSession.title : 'Chat Conversations' }}
           </span>
         </div>
         <button 
           @click="isMobileMenuOpen = true" 
-          class="px-3 py-1.5 bg-[#9333EA] text-white text-xs font-medium rounded-xl hover:bg-[#7E22CE] transition-all shadow-xs shrink-0 flex items-center gap-1.5 cursor-pointer"
+          class="px-3 py-1.5 bg-gradient-to-r from-[#72383D] to-[#322D29] text-white text-xs font-medium rounded-xl hover:from-[#8B464C] hover:to-[#453E38] transition-all shadow-xs shrink-0 flex items-center gap-1.5 cursor-pointer"
         >
           <span>My Chats</span>
         </button>
@@ -52,13 +52,13 @@
       >
         <div v-if="isMobileMenuOpen" class="fixed inset-0 z-50 flex justify-start lg:hidden" @click="isMobileMenuOpen = false">
           <!-- Backdrop -->
-          <div class="absolute inset-0 bg-black/30 backdrop-blur-xs"></div>
+          <div class="absolute inset-0 bg-[#322D29]/40 backdrop-blur-xs"></div>
           
           <!-- Panel Content -->
-          <div class="relative w-4/5 max-w-xs bg-white/90 backdrop-blur-md h-full shadow-2xl p-4 flex flex-col z-10 overflow-y-auto border-r border-[#E9D5FF]/60" @click.stop>
-            <div class="flex items-center justify-between pb-3 border-b border-[#E9D5FF]/60 mb-3">
-              <h3 class="font-serif text-base text-[#7E22CE] font-bold">Magisterium Sanctuary</h3>
-              <button @click="isMobileMenuOpen = false" class="p-1.5 text-black/50 hover:text-[#7E22CE] rounded-lg">
+          <div class="relative w-4/5 max-w-xs bg-white/90 backdrop-blur-md h-full shadow-2xl p-4 flex flex-col z-10 overflow-y-auto border-r border-[#D1C7BD]/60" @click.stop>
+            <div class="flex items-center justify-between pb-3 border-b border-[#D1C7BD]/60 mb-3">
+              <h3 class="font-serif text-base text-[#72383D] font-bold">Magisterium Sanctuary</h3>
+              <button @click="isMobileMenuOpen = false" class="p-1.5 text-[#322D29]/50 hover:text-[#72383D] rounded-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" x2="18" y1="6" y2="18"></line>
@@ -67,40 +67,40 @@
             </div>
 
             <!-- Sidebar Tabs inside Mobile Drawer -->
-            <div class="grid grid-cols-2 gap-1 p-1 bg-white/80 border border-[#E9D5FF]/60 rounded-2xl mb-3 text-center text-xs font-serif font-bold">
+            <div class="grid grid-cols-2 gap-1 p-1 bg-white/80 border border-[#D1C7BD]/60 rounded-2xl mb-3 text-center text-xs font-serif font-bold">
               <button 
                 @click="sidebarTab = 'local'"
                 class="py-1.5 rounded-xl transition-all cursor-pointer"
-                :class="[sidebarTab === 'local' ? 'bg-[#9333EA] text-white shadow-2xs' : 'text-black/70 hover:text-[#7E22CE]']"
+                :class="[sidebarTab === 'local' ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white shadow-2xs' : 'text-[#322D29]/70 hover:text-[#72383D]']"
               >
                 My Chats
               </button>
               <button 
                 @click="sidebarTab = 'public'"
                 class="py-1.5 rounded-xl transition-all cursor-pointer"
-                :class="[sidebarTab === 'public' ? 'bg-[#9333EA] text-white shadow-2xs' : 'text-black/70 hover:text-[#7E22CE]']"
+                :class="[sidebarTab === 'public' ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white shadow-2xs' : 'text-[#322D29]/70 hover:text-[#72383D]']"
               >
                 Public Sanctuary
               </button>
             </div>
 
             <!-- Sidebar Header for Local -->
-            <div v-if="sidebarTab === 'local'" class="flex items-center justify-between pb-3 mb-3 border-b border-[#E9D5FF]/60">
-              <span class="font-serif font-bold text-[11px] uppercase tracking-wider text-[#7E22CE]">Saved Conversations</span>
+            <div v-if="sidebarTab === 'local'" class="flex items-center justify-between pb-3 mb-3 border-b border-[#D1C7BD]/60">
+              <span class="font-serif font-bold text-[11px] uppercase tracking-wider text-[#72383D]">Saved Conversations</span>
               <button 
                 @click="createNewSession(); isMobileMenuOpen = false" 
-                class="text-xs bg-[#9333EA] text-white px-3 py-1.5 rounded-xl font-semibold hover:bg-[#7E22CE] transition-all shadow-xs flex items-center space-x-1 cursor-pointer"
+                class="text-xs bg-gradient-to-r from-[#72383D] to-[#322D29] text-white px-3 py-1.5 rounded-xl font-semibold hover:from-[#8B464C] hover:to-[#453E38] transition-all shadow-xs flex items-center space-x-1 cursor-pointer"
               >
                 <span>+ New Chat</span>
               </button>
             </div>
 
             <!-- Sidebar Header for Public -->
-            <div v-else class="flex items-center justify-between pb-3 mb-3 border-b border-[#E9D5FF]/60">
-              <span class="font-serif font-bold text-[11px] uppercase tracking-wider text-black">Community Discussions</span>
+            <div v-else class="flex items-center justify-between pb-3 mb-3 border-b border-[#D1C7BD]/60">
+              <span class="font-serif font-bold text-[11px] uppercase tracking-wider text-[#322D29]">Community Discussions</span>
               <button 
                 @click="fetchPublicConversations" 
-                class="text-[11px] text-[#D97706] hover:text-[#7E22CE] underline font-semibold flex items-center space-x-1 cursor-pointer"
+                class="text-[11px] text-[#72383D] hover:text-[#322D29] underline font-semibold flex items-center space-x-1 cursor-pointer"
               >
                 <span>Refresh</span>
               </button>
@@ -113,7 +113,7 @@
                 :key="session.id"
                 @click="selectSession(session.id); isMobileMenuOpen = false"
                 class="p-3 rounded-2xl border text-left cursor-pointer transition-all flex items-center justify-between group relative overflow-hidden"
-                :class="[activeSessionId === session.id ? 'bg-[#E9D5FF]/50 border-[#9333EA]/60 shadow-xs' : 'bg-white/60 border-[#E9D5FF]/40 hover:bg-white/80 hover:border-[#E9D5FF]']"
+                :class="[activeSessionId === session.id ? 'bg-[#EFE9E1]/80 border-[#D1C7BD] shadow-xs' : 'bg-white/60 border-[#D1C7BD]/40 hover:bg-white/80 hover:border-[#D1C7BD]']"
               >
                 <div class="min-w-0 flex-1 pr-2">
                   <div class="text-xs font-bold truncate font-serif">
@@ -150,22 +150,22 @@
                 v-for="pub in publicConversations" 
                 :key="pub.id"
                 @click="loadPublicSession(pub); isMobileMenuOpen = false"
-                class="p-3 rounded-2xl border text-left cursor-pointer transition-all flex items-center justify-between group relative overflow-hidden bg-white/60 border-[#E9D5FF]/60 hover:bg-white/80"
-                :class="[activeSessionId === pub.id ? 'ring-2 ring-[#9333EA] bg-[#E9D5FF]/40' : '']"
+                class="p-3 rounded-2xl border text-left cursor-pointer transition-all flex items-center justify-between group relative overflow-hidden bg-white/60 border-[#D1C7BD]/60 hover:bg-white/80"
+                :class="[activeSessionId === pub.id ? 'ring-2 ring-[#72383D] bg-[#EFE9E1]' : '']"
               >
                 <div class="min-w-0 flex-1 pr-2">
-                  <div class="text-xs font-bold text-[#7E22CE] truncate font-serif">
+                  <div class="text-xs font-bold text-[#322D29] truncate font-serif">
                     {{ pub.title || 'Public Discussion' }}
                   </div>
-                  <div class="text-[10px] text-[#D97706] mt-1 flex items-center space-x-1.5 font-serif">
-                    <span class="font-semibold text-[#D97706]">By {{ pub.author_name }}</span>
-                    <span class="w-1 h-1 rounded-full bg-[#D97706]/40"></span>
+                  <div class="text-[10px] text-[#72383D] mt-1 flex items-center space-x-1.5 font-serif">
+                    <span class="font-semibold text-[#72383D]">By {{ pub.author_name }}</span>
+                    <span class="w-1 h-1 rounded-full bg-[#72383D]/40"></span>
                     <span>{{ formatIsoDate(pub.created_at) }}</span>
                   </div>
                 </div>
                 <button 
                   @click.stop="copyPublicShareLink(pub.id)"
-                  class="text-[10px] bg-[#FEF3C7] hover:bg-[#FDE68A] text-[#D97706] font-bold px-2 py-1 rounded-lg border border-[#FDE68A] flex items-center space-x-1 transition-colors cursor-pointer"
+                  class="text-[10px] bg-[#EFE9E1] hover:bg-[#D1C7BD] text-[#72383D] font-bold px-2 py-1 rounded-lg border border-[#D1C7BD] flex items-center space-x-1 transition-colors cursor-pointer"
                   title="Copy Public Share Link"
                 >
                   <span>🔗 Share</span>
@@ -185,42 +185,42 @@
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow items-start">
         
         <!-- Desktop Sidebar Navigation: Local & Public Chat Sessions -->
-        <aside class="hidden lg:flex lg:col-span-4 xl:col-span-3 bg-white/60 border border-[#E9D5FF]/60 rounded-3xl p-4 flex-col shadow-sm h-full max-h-[720px] lg:max-h-[820px] backdrop-blur-md">
+        <aside class="hidden lg:flex lg:col-span-4 xl:col-span-3 bg-white/60 border border-[#D1C7BD]/60 rounded-3xl p-4 flex-col shadow-sm h-full max-h-[720px] lg:max-h-[820px] backdrop-blur-md">
           <!-- Sidebar Tabs -->
-          <div class="grid grid-cols-2 gap-1 p-1 bg-white/80 border border-[#E9D5FF]/60 rounded-2xl mb-3 text-center text-xs font-serif font-bold">
+          <div class="grid grid-cols-2 gap-1 p-1 bg-white/80 border border-[#D1C7BD]/60 rounded-2xl mb-3 text-center text-xs font-serif font-bold">
             <button 
               @click="sidebarTab = 'local'"
-              class="py-1.5 rounded-xl transition-all"
-              :class="[sidebarTab === 'local' ? 'bg-[#9333EA] text-white shadow-xs' : 'text-black/70 hover:text-[#7E22CE]']"
+              class="py-1.5 rounded-xl transition-all cursor-pointer"
+              :class="[sidebarTab === 'local' ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white shadow-xs' : 'text-[#322D29]/70 hover:text-[#72383D]']"
             >
               My Chats
             </button>
             <button 
               @click="sidebarTab = 'public'"
-              class="py-1.5 rounded-xl transition-all"
-              :class="[sidebarTab === 'public' ? 'bg-[#9333EA] text-white shadow-xs' : 'text-black/70 hover:text-[#7E22CE]']"
+              class="py-1.5 rounded-xl transition-all cursor-pointer"
+              :class="[sidebarTab === 'public' ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white shadow-xs' : 'text-[#322D29]/70 hover:text-[#72383D]']"
             >
               Public Sanctuary
             </button>
           </div>
 
           <!-- Sidebar Header for Local -->
-          <div v-if="sidebarTab === 'local'" class="flex items-center justify-between pb-3 mb-3 border-b border-[#E9D5FF]/60">
-            <span class="font-serif font-bold text-[11px] uppercase tracking-wider text-[#7E22CE]">Saved Conversations</span>
+          <div v-if="sidebarTab === 'local'" class="flex items-center justify-between pb-3 mb-3 border-b border-[#D1C7BD]/60">
+            <span class="font-serif font-bold text-[11px] uppercase tracking-wider text-[#72383D]">Saved Conversations</span>
             <button 
               @click="createNewSession" 
-              class="text-xs bg-[#9333EA] text-white px-3 py-1.5 rounded-xl font-semibold hover:bg-[#7E22CE] transition-all shadow-xs flex items-center space-x-1 cursor-pointer"
+              class="text-xs bg-gradient-to-r from-[#72383D] to-[#322D29] text-white px-3 py-1.5 rounded-xl font-semibold hover:from-[#8B464C] hover:to-[#453E38] transition-all shadow-xs flex items-center space-x-1 cursor-pointer"
             >
               <span>+ New Chat</span>
             </button>
           </div>
 
           <!-- Sidebar Header for Public -->
-          <div v-else class="flex items-center justify-between pb-3 mb-3 border-b border-[#E9D5FF]/60">
-            <span class="font-serif font-bold text-[11px] uppercase tracking-wider text-black">Community Discussions</span>
+          <div v-else class="flex items-center justify-between pb-3 mb-3 border-b border-[#D1C7BD]/60">
+            <span class="font-serif font-bold text-[11px] uppercase tracking-wider text-[#322D29]">Community Discussions</span>
             <button 
               @click="fetchPublicConversations" 
-              class="text-[11px] text-[#D97706] hover:text-[#7E22CE] underline font-semibold flex items-center space-x-1 cursor-pointer"
+              class="text-[11px] text-[#72383D] hover:text-[#322D29] underline font-semibold flex items-center space-x-1 cursor-pointer"
             >
               <span>Refresh</span>
             </button>
@@ -233,15 +233,15 @@
               :key="session.id"
               @click="selectSession(session.id)"
               class="p-3 rounded-2xl border text-left cursor-pointer transition-all flex items-center justify-between group relative overflow-hidden"
-              :class="[activeSessionId === session.id ? 'bg-[#E9D5FF]/50 border-[#9333EA]/60 shadow-xs' : 'bg-white/50 border-[#E9D5FF]/40 hover:bg-white/80 hover:border-[#E9D5FF]']"
+              :class="[activeSessionId === session.id ? 'bg-[#EFE9E1]/80 border-[#D1C7BD] shadow-xs' : 'bg-white/50 border-[#D1C7BD]/40 hover:bg-white/80 hover:border-[#D1C7BD]']"
             >
               <div class="min-w-0 flex-1 pr-2">
-                <div class="text-xs font-bold truncate font-serif">
+                <div class="text-xs font-bold truncate font-serif text-[#322D29]">
                   {{ session.title || 'New Conversation' }}
                 </div>
-                <div class="text-[10px] text-black/60 mt-1 flex items-center space-x-2">
+                <div class="text-[10px] text-[#322D29]/60 mt-1 flex items-center space-x-2">
                   <span>{{ formatDate(session.updatedAt) }}</span>
-                  <span class="w-1 h-1 rounded-full bg-black/30"></span>
+                  <span class="w-1 h-1 rounded-full bg-[#322D29]/30"></span>
                   <span>{{ session.messages.length }} msgs</span>
                 </div>
               </div>
@@ -259,7 +259,7 @@
               </button>
             </div>
 
-            <div v-if="chatSessions.length === 0" class="text-center py-8 px-4 text-xs text-parchment-neutral/50space-y-2">
+            <div v-if="chatSessions.length === 0" class="text-center py-8 px-4 text-xs text-[#322D29]/50 space-y-2">
               <div class="text-2xl opacity-40">✍️</div>
               <p>No saved conversations yet. Click "+ New Chat" to begin a discussion.</p>
             </div>
@@ -271,29 +271,29 @@
               v-for="pub in publicConversations" 
               :key="pub.id"
               @click="loadPublicSession(pub)"
-              class="p-3 rounded-2xl border text-left cursor-pointer transition-all flex items-center justify-between group relative overflow-hidden border-[#E9D5FF] hover:bg-amber-100/70"
-              :class="[activeSessionId === pub.id ? 'ring-2 ring-amber-500 bg-amber-100/90' : '']"
+              class="p-3 rounded-2xl border text-left cursor-pointer transition-all flex items-center justify-between group relative overflow-hidden border-[#D1C7BD] hover:bg-[#EFE9E1]/70"
+              :class="[activeSessionId === pub.id ? 'ring-2 ring-[#72383D] bg-[#EFE9E1]' : '']"
             >
               <div class="min-w-0 flex-1 pr-2">
-                <div class="text-xs font-bold text-black truncate font-serif">
+                <div class="text-xs font-bold text-[#322D29] truncate font-serif">
                   {{ pub.title || 'Public Discussion' }}
                 </div>
-                <div class="text-[10px] text-amber-900/80 mt-1 flex items-center space-x-1.5 font-serif">
-                  <span class="font-semibold text-amber-950">By {{ pub.author_name }}</span>
-                  <span class="w-1 h-1 rounded-full bg-amber-400"></span>
+                <div class="text-[10px] text-[#72383D] mt-1 flex items-center space-x-1.5 font-serif">
+                  <span class="font-semibold text-[#72383D]">By {{ pub.author_name }}</span>
+                  <span class="w-1 h-1 rounded-full bg-[#72383D]"></span>
                   <span>{{ formatIsoDate(pub.created_at) }}</span>
                 </div>
               </div>
               <button 
                 @click.stop="copyPublicShareLink(pub.id)"
-                class="text-[10px] hover:bg-amber-300 text-amber-950 font-bold px-2 py-1 rounded-lg border border-amber-300 flex items-center space-x-1 transition-colors"
+                class="text-[10px] hover:bg-[#D1C7BD] text-[#72383D] font-bold px-2 py-1 rounded-lg border border-[#D1C7BD] flex items-center space-x-1 transition-colors"
                 title="Copy Public Share Link"
               >
                 <span>🔗 Share</span>
               </button>
             </div>
 
-            <div v-if="publicConversations.length === 0" class="text-center py-8 px-4 text-xs text-amber-900/60space-y-2 font-serif">
+            <div v-if="publicConversations.length === 0" class="text-center py-8 px-4 text-xs text-[#322D29]/60 space-y-2 font-serif">
               <div class="text-2xl opacity-40">🌐</div>
               <p>No public community chats published yet. Be the first to share your Q&A!</p>
             </div>
@@ -301,49 +301,49 @@
         </aside>
 
         <!-- Main Chat Box Panel -->
-        <div class="lg:col-span-8 xl:col-span-9 flex flex-col bg-white/60 border border-[#E9D5FF]/60 backdrop-blur-md rounded-3xl shadow-sm overflow-hidden h-[calc(100dvh-11rem)] min-h-[500px] sm:h-[720px] lg:h-[820px]">
+        <div class="lg:col-span-8 xl:col-span-9 flex flex-col bg-white/60 border border-[#D1C7BD]/60 backdrop-blur-md rounded-3xl shadow-sm overflow-hidden h-[calc(100dvh-11rem)] min-h-[500px] sm:h-[720px] lg:h-[820px]">
           
           <!-- Scrollable Chat Window -->
           <div ref="chatContainer" class="flex-1 p-5 md:p-8 overflow-y-auto space-y-6 scrollbar-thin">
             
             <!-- Welcome Card (Shows when session is empty) -->
             <div v-if="activeMessages.length === 0" class="max-w-2xl mx-auto my-6 space-y-6 text-center animate-fade-in">
-              <div class="w-16 h-16 rounded-3xl bg-[#7E22CE] text-white flex items-center justify-center font-serif text-2xl font-bold mx-auto shadow-md">
+              <div class="w-16 h-16 rounded-3xl bg-gradient-to-r from-[#72383D] to-[#322D29] text-white flex items-center justify-center font-serif text-2xl font-bold mx-auto shadow-md">
                 M
               </div>
-              <div class="bg-white/80 border border-[#E9D5FF]/80 backdrop-blur-md rounded-3xl p-6 shadow-xs space-y-3">
-                <h3 class="font-serif text-lg font-bold text-[#7E22CE]">Pax Vobiscum! Welcome to Magisterium AI</h3>
-                <p class="text-sm text-black/80 font-serif leading-relaxed">
+              <div class="bg-white/80 border border-[#D1C7BD]/80 backdrop-blur-md rounded-3xl p-6 shadow-xs space-y-3">
+                <h3 class="font-serif text-lg font-bold text-[#72383D]">Pax Vobiscum! Welcome to Magisterium AI</h3>
+                <p class="text-sm text-[#322D29]/80 font-serif leading-relaxed">
                   Search through the Catechism of the Catholic Church, Ecumenical Council texts, Papal Encyclicals, and Sacred Scripture with AI answers grounded in Church Magisterium.
                 </p>
                 
-                <div class="pt-3 border-t border-[#E9D5FF]/60 text-left space-y-2">
-                  <span class="text-xs font-bold uppercase tracking-wider text-black block mb-2">Suggested Reflection Questions:</span>
+                <div class="pt-3 border-t border-[#D1C7BD]/60 text-left space-y-2">
+                  <span class="text-xs font-bold uppercase tracking-wider text-[#322D29] block mb-2">Suggested Reflection Questions:</span>
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <button 
                       @click="askSuggested('What does the Catechism teach about prayer?')" 
-                      class="text-xs text-left p-3 rounded-2xl bg-white/80 hover:bg-[#E9D5FF]/40 text-black border border-[#E9D5FF]/70 transition-all font-serif flex items-center justify-between group shadow-xs cursor-pointer"
+                      class="text-xs text-left p-3 rounded-2xl bg-white/80 hover:bg-[#EFE9E1]/80 text-[#322D29] border border-[#D1C7BD]/70 transition-all font-serif flex items-center justify-between group shadow-xs cursor-pointer"
                     >
                       <span>"What does the Catechism teach about prayer?"</span>
                       <span class="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
                     </button>
                     <button 
                       @click="askSuggested('Explain the relationship between Faith and Reason (Fides et Ratio).')" 
-                      class="text-xs text-left p-3 rounded-2xl bg-white/80 hover:bg-[#E9D5FF]/40 text-black border border-[#E9D5FF]/70 transition-all font-serif flex items-center justify-between group shadow-xs cursor-pointer"
+                      class="text-xs text-left p-3 rounded-2xl bg-white/80 hover:bg-[#EFE9E1]/80 text-[#322D29] border border-[#D1C7BD]/70 transition-all font-serif flex items-center justify-between group shadow-xs cursor-pointer"
                     >
                       <span>"Explain Faith and Reason (Fides et Ratio)."</span>
                       <span class="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
                     </button>
                     <button 
                       @click="askSuggested('What are the corporal and spiritual works of mercy?')" 
-                      class="text-xs text-left p-3 rounded-2xl bg-white/80 hover:bg-[#E9D5FF]/40 text-black border border-[#E9D5FF]/70 transition-all font-serif flex items-center justify-between group shadow-xs cursor-pointer"
+                      class="text-xs text-left p-3 rounded-2xl bg-white/80 hover:bg-[#EFE9E1]/80 text-[#322D29] border border-[#D1C7BD]/70 transition-all font-serif flex items-center justify-between group shadow-xs cursor-pointer"
                     >
                       <span>"What are the works of mercy?"</span>
                       <span class="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
                     </button>
                     <button 
                       @click="askSuggested('How does Saint Thomas Aquinas explain Grace and Free Will?')" 
-                      class="text-xs text-left p-3 rounded-2xl bg-white/80 hover:bg-[#E9D5FF]/40 text-black border border-[#E9D5FF]/70 transition-all font-serif flex items-center justify-between group shadow-xs cursor-pointer"
+                      class="text-xs text-left p-3 rounded-2xl bg-white/80 hover:bg-[#EFE9E1]/80 text-[#322D29] border border-[#D1C7BD]/70 transition-all font-serif flex items-center justify-between group shadow-xs cursor-pointer"
                     >
                       <span>"How does St. Thomas explain Grace?"</span>
                       <span class="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
@@ -362,37 +362,37 @@
             >
               <!-- User Query Bubble -->
               <div v-if="msg.role === 'user'" class="flex items-start justify-end space-x-3 max-w-3xl ml-auto">
-                <div class="bg-[#9333EA] text-white rounded-3xl rounded-tr-none px-5 py-3.5 text-sm leading-relaxed shadow-sm font-sans">
+                <div class="bg-gradient-to-r from-[#72383D] to-[#322D29] text-white rounded-3xl rounded-tr-none px-5 py-3.5 text-sm leading-relaxed shadow-sm font-sans">
                   {{ msg.content }}
                 </div>
-                <div class="w-9 h-9 rounded-2xl bg-[#7E22CE] text-white flex items-center justify-center font-serif text-xs font-bold flex-shrink-0 shadow-xs border border-white/20">
+                <div class="w-9 h-9 rounded-2xl bg-gradient-to-r from-[#72383D] to-[#322D29] text-white flex items-center justify-center font-serif text-xs font-bold flex-shrink-0 shadow-xs border border-white/20">
                   You
                 </div>
               </div>
 
               <!-- Magisterium Assistant Bubble -->
               <div v-else class="flex items-start space-x-3.5 max-w-5xl">
-                <div class="w-9 h-9 rounded-2xl bg-[#7E22CE] text-white flex items-center justify-center font-serif text-sm font-bold flex-shrink-0 shadow-sm border border-[#E9D5FF]/40">
+                <div class="w-9 h-9 rounded-2xl bg-gradient-to-r from-[#72383D] to-[#322D29] text-white flex items-center justify-center font-serif text-sm font-bold flex-shrink-0 shadow-sm border border-[#D1C7BD]/40">
                   M
                 </div>
-                <div class="bg-white/60 border border-[#E9D5FF]/60 rounded-3xl rounded-tl-none p-5 md:p-6 text-sm text-black shadow-sm space-y-4 w-full backdrop-blur-md">
+                <div class="bg-white/60 border border-[#D1C7BD]/60 rounded-3xl rounded-tl-none p-5 md:p-6 text-sm text-[#322D29] shadow-sm space-y-4 w-full backdrop-blur-md">
                   
                   <!-- Assistant Answer Content -->
-                  <div class="whitespace-pre-wrap font-serif text-[15px] leading-relaxed text-black/90 space-y-2" v-html="formatResponse(msg.content)"></div>
+                  <div class="whitespace-pre-wrap font-serif text-[15px] leading-relaxed text-[#322D29]/90 space-y-2" v-html="formatResponse(msg.content)"></div>
 
                   <!-- Structured Search Results & Citations (Formatted Schema) -->
-                  <div v-if="msg.citations && msg.citations.length > 0" class="mt-5 pt-4 border-t border-[#E9D5FF]/60 bg-[#E9D5FF]/20 rounded-2xl p-4 space-y-3">
+                  <div v-if="msg.citations && msg.citations.length > 0" class="mt-5 pt-4 border-t border-[#D1C7BD]/60 bg-[#EFE9E1]/60 rounded-2xl p-4 space-y-3">
                     <div 
                       @click="toggleCitations(index)"
-                      class="flex items-center justify-between cursor-pointer select-none border-b border-[#E9D5FF]/40 pb-2.5 group"
+                      class="flex items-center justify-between cursor-pointer select-none border-b border-[#D1C7BD]/40 pb-2.5 group"
                     >
-                      <span class="text-xs font-bold text-[#7E22CE] uppercase tracking-wider flex items-center space-x-1.5">
+                      <span class="text-xs font-bold text-[#72383D] uppercase tracking-wider flex items-center space-x-1.5">
                         <span>📚 Magisterium Citations</span>
-                        <span class="bg-[#E9D5FF]/80 text-[#7E22CE] text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">{{ msg.citations.length }}</span>
+                        <span class="bg-[#EFE9E1] text-[#72383D] text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">{{ msg.citations.length }}</span>
                       </span>
                       <button 
                         type="button" 
-                        class="text-[11px] text-[#7E22CE] hover:text-[#9333EA] font-semibold uppercase tracking-wider flex items-center space-x-1 border-none shadow-none py-0 px-1 bg-transparent hover:bg-[#E9D5FF]/40 rounded-lg transition-colors cursor-pointer"
+                        class="text-[11px] text-[#72383D] hover:text-[#322D29] font-semibold uppercase tracking-wider flex items-center space-x-1 border-none shadow-none py-0 px-1 bg-transparent hover:bg-[#D1C7BD]/40 rounded-lg transition-colors cursor-pointer"
                       >
                         <span>{{ expandedCitations.has(index) ? 'Hide Citations' : 'Show Citations' }}</span>
                         <svg 
@@ -417,28 +417,28 @@
                       <div 
                         v-for="(cite, idx) in msg.citations" 
                         :key="idx" 
-                        class="p-3.5 bg-white/70 border border-[#E9D5FF]/60 rounded-2xl shadow-2xs space-y-2 transition-all hover:border-[#9333EA]/60"
+                        class="p-3.5 bg-white/70 border border-[#D1C7BD]/60 rounded-2xl shadow-2xs space-y-2 transition-all hover:border-[#72383D]/60"
                       >
                         <!-- Header Title & Metadata -->
                         <div class="flex items-start justify-between gap-2">
                           <div class="space-y-0.5 min-w-0 flex-1">
-                            <h4 class="text-xs font-bold text-[#7E22CE] font-serif leading-snug">
+                            <h4 class="text-xs font-bold text-[#72383D] font-serif leading-snug">
                               {{ cite.document_title || cite.title || 'Magisterial Citation' }}
                             </h4>
-                            <div class="flex flex-wrap items-center gap-x-2.5 text-[11px] text-black/70 font-serif">
-                              <span v-if="cite.author" class="font-semibold text-[#D97706]">Author: {{ cite.author }}</span>
-                              <span v-if="cite.ref" class="bg-[#FEF3C7] text-[#D97706] px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold">Ref: {{ cite.ref }}</span>
+                            <div class="flex flex-wrap items-center gap-x-2.5 text-[11px] text-[#322D29]/70 font-serif">
+                              <span v-if="cite.author" class="font-semibold text-[#72383D]">Author: {{ cite.author }}</span>
+                              <span v-if="cite.ref" class="bg-[#EFE9E1] text-[#72383D] px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold">Ref: {{ cite.ref }}</span>
                             </div>
                           </div>
 
                           <!-- Match Score Badge -->
-                          <span v-if="cite.score" class="text-[10px] font-mono font-bold bg-[#E9D5FF]/60 text-[#7E22CE] px-2 py-1 rounded-full border border-[#E9D5FF] flex-shrink-0">
+                          <span v-if="cite.score" class="text-[10px] font-mono font-bold bg-[#EFE9E1] text-[#72383D] px-2 py-1 rounded-full border border-[#D1C7BD] flex-shrink-0">
                             {{ (cite.score * 100).toFixed(1) }}% Match
                           </span>
                         </div>
 
                         <!-- Snippet Quote -->
-                        <p v-if="cite.text" class="text-xs text-black/80 font-serif leading-relaxed border-l-2 border-[#9333EA] pl-3 py-1 bg-white/50 rounded-r-xl italic">
+                        <p v-if="cite.text" class="text-xs text-[#322D29]/80 font-serif leading-relaxed border-l-2 border-[#72383D] pl-3 py-1 bg-white/50 rounded-r-xl italic">
                           "{{ cite.text }}"
                         </p>
 
@@ -448,7 +448,7 @@
                             :href="cite.url" 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            class="inline-flex items-center space-x-1 text-[11px] font-semibold text-amber-900 hover:text-amber-700 underline transition-colors"
+                            class="inline-flex items-center space-x-1 text-[11px] font-semibold text-[#72383D] hover:text-[#322D29] underline transition-colors"
                           >
                             <span>Read Original Document</span>
                             <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
@@ -463,15 +463,15 @@
 
             <!-- Loading Thinking State -->
             <div v-if="isLoading" class="flex items-start space-x-3.5 max-w-3xl">
-              <div class="w-9 h-9 rounded-2xl bg-parchment-primary-dark text-white flex items-center justify-center font-serif text-sm font-bold flex-shrink-0 animate-pulse border border-amber-300/30">
+              <div class="w-9 h-9 rounded-2xl bg-[#72383D] text-white flex items-center justify-center font-serif text-sm font-bold flex-shrink-0 animate-pulse border border-[#D1C7BD]/30">
                 M
               </div>
-              <div class="bg-white/90 border border-parchment-border rounded-3xl rounded-tl-none p-4 text-sm text-parchment-neutral flex items-center space-x-3 shadow-2xs">
-                <span class="text-xs font-serif text-stone-600 italic">Searching Magisterium AI database...</span>
+              <div class="bg-white/90 border border-[#D1C7BD] rounded-3xl rounded-tl-none p-4 text-sm text-[#322D29] flex items-center space-x-3 shadow-2xs">
+                <span class="text-xs font-serif text-[#322D29]/70 italic">Searching Magisterium AI database...</span>
                 <span class="flex space-x-1">
-                  <span class="w-2 h-2 bg-parchment-primary rounded-full animate-bounce"></span>
-                  <span class="w-2 h-2 bg-parchment-primary rounded-full animate-bounce [animation-delay:0.2s]"></span>
-                  <span class="w-2 h-2 bg-parchment-primary rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                  <span class="w-2 h-2 bg-[#72383D] rounded-full animate-bounce"></span>
+                  <span class="w-2 h-2 bg-[#72383D] rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                  <span class="w-2 h-2 bg-[#72383D] rounded-full animate-bounce [animation-delay:0.4s]"></span>
                 </span>
               </div>
             </div>
@@ -484,7 +484,7 @@
               <div class="flex-1">
                 <span class="font-bold">Error Processing Request:</span> {{ chatError }}
                 <div v-if="chatError.includes('API Key')" class="mt-1.5">
-                  <router-link to="/admin" class="text-[#7E22CE] underline font-semibold hover:text-[#9333EA]">
+                  <router-link to="/admin" class="text-[#72383D] underline font-semibold hover:text-[#322D29]">
                     Configure Magisterium API Key in Admin Settings →
                   </router-link>
                 </div>
@@ -493,7 +493,7 @@
           </div>
 
           <!-- Bottom Chat Input Bar -->
-          <div class="p-3 sm:p-3.5 bg-white/60 border-t border-[#E9D5FF]/60 backdrop-blur-md space-y-2">
+          <div class="p-3 sm:p-3.5 bg-white/60 border-t border-[#D1C7BD]/60 backdrop-blur-md space-y-2">
             <form @submit.prevent="sendMessage" class="flex items-end space-x-2 sm:space-x-3">
               <textarea
                 ref="textareaRef"
@@ -503,7 +503,7 @@
                 :disabled="isLoading"
                 @keydown.enter.exact.prevent="sendMessage"
                 @input="adjustTextareaHeight"
-                class="flex-1 px-4 py-2.5 sm:py-3 bg-white/80 border border-[#E9D5FF]/60 rounded-2xl text-xs sm:text-sm text-black placeholder-black/40 focus:outline-none focus:ring-2 focus:ring-[#9333EA] focus:border-transparent transition-all shadow-xs disabled:opacity-60 font-serif resize-none min-h-[44px] max-h-36 overflow-y-auto leading-relaxed scrollbar-thin"
+                class="flex-1 px-4 py-2.5 sm:py-3 bg-white/80 border border-[#D1C7BD]/60 rounded-2xl text-xs sm:text-sm text-[#322D29] placeholder-[#322D29]/40 focus:outline-none focus:ring-2 focus:ring-[#72383D] focus:border-transparent transition-all shadow-xs disabled:opacity-60 font-serif resize-none min-h-[44px] max-h-36 overflow-y-auto leading-relaxed scrollbar-thin"
               ></textarea>
 
               <!-- Publish to Public Sanctuary Toggle Icon Button -->
@@ -511,10 +511,10 @@
                 type="button" 
                 @click="openPublishModal"
                 :disabled="activeMessages.length === 0"
-                class="p-3 bg-[#FEF3C7] hover:bg-[#FDE68A] text-[#D97706] border border-[#FDE68A] rounded-2xl transition-all shadow-xs flex items-center justify-center shrink-0 disabled:opacity-40 disabled:cursor-not-allowed group h-[44px] w-[44px] cursor-pointer"
+                class="p-3 bg-[#EFE9E1] hover:bg-[#D1C7BD] text-[#72383D] border border-[#D1C7BD] rounded-2xl transition-all shadow-xs flex items-center justify-center shrink-0 disabled:opacity-40 disabled:cursor-not-allowed group h-[44px] w-[44px] cursor-pointer"
                 title="Publish Conversation to Public Sanctuary"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#D97706] group-hover:scale-110 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#72383D] group-hover:scale-110 transition-transform">
                   <circle cx="12" cy="12" r="10"></circle>
                   <line x1="2" y1="12" x2="22" y2="12"></line>
                   <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
@@ -525,7 +525,7 @@
               <button
                 type="submit"
                 :disabled="!inputQuery.trim() || isLoading"
-                class="p-3 bg-[#9333EA] text-white rounded-2xl hover:bg-[#7E22CE] transition-all shadow-xs flex items-center justify-center shrink-0 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 h-[44px] px-4 sm:px-6 rounded-2xl flex items-center space-x-2 font-semibold cursor-pointer"
+                class="p-3 bg-gradient-to-r from-[#72383D] to-[#322D29] text-white rounded-2xl hover:from-[#8B464C] hover:to-[#453E38] transition-all shadow-xs flex items-center justify-center shrink-0 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 h-[44px] px-4 sm:px-6 rounded-2xl flex items-center space-x-2 font-semibold cursor-pointer"
               >
                 <span class="hidden sm:inline">Send</span>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

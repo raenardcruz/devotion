@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen text-black flex flex-col pb-28 sm:pb-20 selection:bg-[#9333EA]/20 relative z-10">
+  <div class="min-h-screen text-[#322D29] flex flex-col pb-28 sm:pb-20 selection:bg-[#72383D]/20 relative z-10">
     <!-- Global Header -->
     <TopNav />
 
@@ -7,25 +7,25 @@
     <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-6 md:py-8 flex flex-col relative z-10">
       
       <!-- Sub-header & Controls Row -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#E9D5FF]/60 pb-4 mb-4 gap-3.5 animate-fade-in-down">
-          <h1 class="font-serif text-2xl md:text-3xl text-[#7E22CE] font-bold">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#D1C7BD]/60 pb-4 mb-4 gap-3.5 animate-fade-in-down">
+          <h1 class="font-serif text-2xl md:text-3xl bg-gradient-to-r from-[#72383D] via-[#AC9C8D] to-[#322D29] bg-clip-text text-transparent font-bold">
               {{ displaySetName }}
           </h1>
           
           <!-- Audio Controls & Language Toggle -->
           <div class="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 sm:gap-3.5">
               <!-- Auto Play Toggle Switch -->
-              <label class="flex items-center space-x-1.5 text-[10px] font-bold uppercase tracking-wider text-black/60 cursor-pointer select-none">
+              <label class="flex items-center space-x-1.5 text-[10px] font-bold uppercase tracking-wider text-[#322D29]/70 cursor-pointer select-none">
                   <span>Auto-Play</span>
                   <input type="checkbox" v-model="autoPlay" class="sr-only peer" />
-                  <div class="relative w-8 h-4.5 bg-white/60 border border-[#E9D5FF]/80 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-black/40 peer-checked:after:bg-[#9333EA] after:border-[#E9D5FF] after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#9333EA]/20"></div>
+                  <div class="relative w-8 h-4.5 bg-white/60 border border-[#D1C7BD]/80 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-[#322D29]/40 peer-checked:after:bg-[#72383D] after:border-[#D1C7BD] after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#72383D]/20"></div>
               </label>
 
               <!-- Manual Play/Pause Button -->
               <button 
                 v-if="currentStep.prayerId && getPrayerAudioUrl(currentStep.prayerId)"
                 @click="toggleAudio"
-                class="flex items-center gap-1.5 px-3 py-1.5 bg-[#9333EA] border border-[#9333EA] text-white rounded-full hover:bg-[#7E22CE] active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none shadow-xs cursor-pointer"
+                class="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#72383D] to-[#322D29] border border-transparent text-white rounded-full hover:from-[#8B464C] hover:to-[#453E38] active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none shadow-xs cursor-pointer"
               >
                 <svg v-if="!isPlaying" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
                   <polygon points="6 3 20 12 6 21 6 3"></polygon>
@@ -40,7 +40,7 @@
               <!-- Custom Prayers Configuration Button -->
               <button 
                 @click="showSettingsModal = true"
-                class="flex items-center gap-1.5 px-3.5 py-1.5 bg-white/60 border border-[#E9D5FF]/60 text-[#7E22CE] rounded-full hover:bg-white/80 active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
+                class="flex items-center gap-1.5 px-3.5 py-1.5 bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
@@ -52,7 +52,7 @@
               <!-- Fullscreen Presentation Toggle Button -->
               <button 
                 @click="toggleFullscreen(cardContainerRef)"
-                class="flex items-center gap-1.5 px-3 py-1.5 bg-white/60 border border-[#E9D5FF]/60 text-[#7E22CE] rounded-full hover:bg-white/80 active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
+                class="flex items-center gap-1.5 px-3 py-1.5 bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
                 :title="isFullscreen ? 'Exit Fullscreen Card (ESC)' : 'Fullscreen Card Presentation (F)'"
               >
                 <svg v-if="!isFullscreen" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -71,17 +71,17 @@
               </button>
 
               <!-- Latin/English Language Toggle -->
-              <div class="flex items-center bg-white/60 border border-[#E9D5FF]/60 p-0.5 rounded-full backdrop-blur-md">
+              <div class="flex items-center bg-white/70 border border-[#D1C7BD]/80 p-0.5 rounded-full backdrop-blur-md">
                   <button 
                     @click="showLatin = false"
-                    :class="[!showLatin ? 'bg-[#9333EA] text-white font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
+                    :class="[!showLatin ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-bold' : 'text-[#322D29]/70 hover:text-[#72383D]']"
                     class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer"
                   >
                     EN
                   </button>
                   <button 
                     @click="showLatin = true"
-                    :class="[showLatin ? 'bg-[#9333EA] text-white font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
+                    :class="[showLatin ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-bold' : 'text-[#322D29]/70 hover:text-[#72383D]']"
                     class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer"
                   >
                     LA
@@ -101,7 +101,7 @@
             ref="cardContainerRef" 
             :class="[
                 'lg:col-span-3 flex flex-col gap-6 rounded-[2.5rem] transition-all duration-300',
-                isFullscreen ? 'card-fullscreen-mode !bg-[#FAF8F5] p-6 md:p-12 overflow-y-auto justify-between border-0 shadow-none' : ''
+                isFullscreen ? 'card-fullscreen-mode !bg-[#EFE9E1] p-6 md:p-12 overflow-y-auto justify-between border-0 shadow-none' : ''
             ]"
         >
             <transition name="fade-slide" mode="out-in">
@@ -137,15 +137,15 @@
             />
 
             <!-- Fullscreen Keyboard Helper Hint -->
-            <div v-if="isFullscreen" class="text-center text-xs text-black/50 font-sans tracking-wide mt-2">
-                Press <kbd class="px-1.5 py-0.5 bg-black/10 rounded font-mono text-[10px]">←</kbd> <kbd class="px-1.5 py-0.5 bg-black/10 rounded font-mono text-[10px]">→</kbd> to Navigate &bull; <kbd class="px-1.5 py-0.5 bg-black/10 rounded font-mono text-[10px]">Space</kbd> Play/Pause &bull; <kbd class="px-1.5 py-0.5 bg-black/10 rounded font-mono text-[10px]">ESC</kbd> Exit Fullscreen
+            <div v-if="isFullscreen" class="text-center text-xs text-[#322D29]/60 font-sans tracking-wide mt-2">
+                Press <kbd class="px-1.5 py-0.5 bg-[#322D29]/10 rounded font-mono text-[10px]">←</kbd> <kbd class="px-1.5 py-0.5 bg-[#322D29]/10 rounded font-mono text-[10px]">→</kbd> to Navigate &bull; <kbd class="px-1.5 py-0.5 bg-[#322D29]/10 rounded font-mono text-[10px]">Space</kbd> Play/Pause &bull; <kbd class="px-1.5 py-0.5 bg-[#322D29]/10 rounded font-mono text-[10px]">ESC</kbd> Exit Fullscreen
             </div>
         </div>
 
         <!-- Right Column: Classical Illustration & Meditative Quote (2/5 width on desktop) -->
         <div class="lg:col-span-2 flex flex-col gap-6">
             <!-- Art Image Container -->
-            <div class="w-full h-72 md:h-80 rounded-[2rem] overflow-hidden border border-parchment-border shadow-sm bg-parchment-neutral-light flex items-center justify-center relative group">
+            <div class="w-full h-72 md:h-80 rounded-[2rem] overflow-hidden border border-[#D1C7BD] shadow-sm bg-[#EFE9E1] flex items-center justify-center relative group">
                 <transition name="fade-slide" mode="out-in">
                   <img 
                       :key="currentVisual.image"
@@ -157,9 +157,9 @@
             </div>
 
             <!-- Meditation Quote Card -->
-            <div class="bg-parchment-neutral-light/50 border border-parchment-border border-l-4 border-l-parchment-primary rounded-3xl p-6 shadow-sm">
+            <div class="bg-[#EFE9E1]/60 border border-[#D1C7BD] border-l-4 border-l-[#72383D] rounded-3xl p-6 shadow-sm">
                 <transition name="fade-slide" mode="out-in">
-                  <p :key="currentVisual.meditation" class="font-seriftext-sm md:text-base text-parchment-neutral/80 leading-relaxed">
+                  <p :key="currentVisual.meditation" class="font-serif text-sm md:text-base text-[#322D29]/80 leading-relaxed">
                       {{ currentVisual.meditation }}
                   </p>
                 </transition>
@@ -174,16 +174,16 @@
 
     <!-- Custom Prayers Selection Modal -->
     <transition name="fade">
-      <div v-if="showSettingsModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4" @click.self="showSettingsModal = false">
-        <div class="bg-white/95 backdrop-blur-md border border-[#E9D5FF] w-full max-w-md rounded-[2rem] shadow-2xl flex flex-col max-h-[80vh] overflow-hidden transition-all duration-300 transform scale-100">
+      <div v-if="showSettingsModal" class="fixed inset-0 bg-[#322D29]/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4" @click.self="showSettingsModal = false">
+        <div class="bg-gradient-to-b from-white via-[#EFE9E1] to-[#EFE9E1] backdrop-blur-md border border-[#D1C7BD] w-full max-w-md rounded-[2rem] shadow-2xl flex flex-col max-h-[80vh] overflow-hidden transition-all duration-300 transform scale-100">
           
           <!-- Modal Header -->
-          <div class="p-5 border-b border-[#E9D5FF]/60 flex items-center justify-between bg-white/60">
+          <div class="p-5 border-b border-[#D1C7BD]/60 flex items-center justify-between bg-white/60">
             <div>
-              <h3 class="font-serif text-base md:text-lg text-[#7E22CE] font-bold">Custom Prayers</h3>
-              <p class="text-[9px] text-[#D97706] font-bold uppercase tracking-wider mt-0.5">Customize your Rosary sequence</p>
+              <h3 class="font-serif text-base md:text-lg text-[#72383D] font-bold">Custom Prayers</h3>
+              <p class="text-[9px] text-[#AC9C8D] font-bold uppercase tracking-wider mt-0.5">Customize your Rosary sequence</p>
             </div>
-            <button @click="showSettingsModal = false" class="w-7 h-7 rounded-full border border-[#E9D5FF] flex items-center justify-center text-black/60 hover:bg-[#E9D5FF]/30 hover:text-[#7E22CE] active:scale-95 transition-all p-0 cursor-pointer">
+            <button @click="showSettingsModal = false" class="w-7 h-7 rounded-full border border-[#D1C7BD] flex items-center justify-center text-[#322D29]/60 hover:bg-[#D1C7BD]/30 hover:text-[#72383D] active:scale-95 transition-all p-0 cursor-pointer">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -192,15 +192,15 @@
           </div>
 
           <!-- Search Bar -->
-          <div class="px-5 py-3 border-b border-[#E9D5FF]/40 bg-white/40">
+          <div class="px-5 py-3 border-b border-[#D1C7BD]/40 bg-white/40">
             <div class="relative">
               <input 
                 type="text" 
                 v-model="searchQuery" 
                 placeholder="Search prayers by name..." 
-                class="w-full px-4 py-2 pl-9 pr-8 bg-white/80 border border-[#E9D5FF] rounded-full text-xs text-black placeholder-black/40 focus:outline-none focus:ring-1 focus:ring-[#9333EA]/30 focus:border-[#9333EA] transition-all font-sans"
+                class="w-full px-4 py-2 pl-9 pr-8 bg-white/80 border border-[#D1C7BD] rounded-full text-xs text-[#322D29] placeholder-[#322D29]/40 focus:outline-none focus:ring-1 focus:ring-[#72383D]/30 focus:border-[#72383D] transition-all font-sans"
               />
-              <div class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9333EA] pointer-events-none">
+              <div class="absolute left-3 top-1/2 -translate-y-1/2 text-[#72383D] pointer-events-none">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="11" cy="11" r="8"></circle>
                   <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
@@ -209,7 +209,7 @@
               <div 
                 v-if="searchQuery" 
                 @click="searchQuery = ''" 
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-black/40 hover:text-[#7E22CE] cursor-pointer transition-all flex items-center justify-center p-0.5 rounded-full hover:bg-black/5"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-[#322D29]/40 hover:text-[#72383D] cursor-pointer transition-all flex items-center justify-center p-0.5 rounded-full hover:bg-black/5"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="18" x2="6" y1="6" y2="18"></line>
@@ -223,14 +223,14 @@
           <div class="p-5 overflow-y-auto space-y-5 flex-grow">
             
             <div v-if="filteredSelectablePrayers.length === 0" class="text-center py-8 flex flex-col items-center justify-center space-y-2 animate-fade-in-up">
-              <div class="w-10 h-10 rounded-full bg-[#E9D5FF]/40 flex items-center justify-center text-[#9333EA]">
+              <div class="w-10 h-10 rounded-full bg-[#EFE9E1] flex items-center justify-center text-[#72383D]">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="11" cy="11" r="8"></circle>
                   <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
                 </svg>
               </div>
-              <div class="text-xs font-serif text-[#7E22CE] font-bold">No prayers found</div>
-              <p class="text-[10px] text-black/50 max-w-[200px] text-center leading-normal">
+              <div class="text-xs font-serif text-[#72383D] font-bold">No prayers found</div>
+              <p class="text-[10px] text-[#322D29]/50 max-w-[200px] text-center leading-normal">
                 No results match "{{ searchQuery }}". Try searching for another keyword.
               </p>
             </div>
@@ -238,27 +238,27 @@
             <template v-else>
               <!-- Prepend Section -->
               <div>
-                <h4 class="font-serif text-xs font-bold text-[#D97706] border-b border-[#E9D5FF]/60 pb-1.5 mb-2">
+                <h4 class="font-serif text-xs font-bold text-[#72383D] border-b border-[#D1C7BD]/60 pb-1.5 mb-2">
                   Before the Rosary (Prepend)
                 </h4>
-                <p class="text-[11px] text-black/60 mb-2 leading-relaxed">
+                <p class="text-[11px] text-[#322D29]/60 mb-2 leading-relaxed">
                   Recited immediately after the opening Sign of the Cross.
                 </p>
-                <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1 border border-[#E9D5FF]/60 rounded-xl p-2 bg-white/50">
+                <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1 border border-[#D1C7BD]/60 rounded-xl p-2 bg-white/50">
                   <label 
                     v-for="prayer in filteredSelectablePrayers" 
                     :key="'before-' + prayer.id" 
-                    class="flex items-start space-x-2.5 p-1.5 rounded-lg hover:bg-[#E9D5FF]/20 transition-colors cursor-pointer select-none"
+                    class="flex items-start space-x-2.5 p-1.5 rounded-lg hover:bg-[#D1C7BD]/20 transition-colors cursor-pointer select-none"
                   >
                     <input 
                       type="checkbox" 
                       :value="prayer.id" 
                       v-model="tempBeforePrayers" 
-                      class="mt-0.5 rounded border-[#E9D5FF] text-[#9333EA] focus:ring-[#9333EA]/30 h-3.5 w-3.5 custom-checkbox cursor-pointer" 
+                      class="mt-0.5 rounded border-[#D1C7BD] text-[#72383D] focus:ring-[#72383D]/30 h-3.5 w-3.5 custom-checkbox cursor-pointer" 
                     />
                     <div class="flex-grow min-w-0">
-                      <div class="text-xs font-bold text-black truncate">{{ prayer.name }}</div>
-                      <div v-if="prayer.latinName" class="text-[9px] text-black/50 truncate">{{ prayer.latinName }}</div>
+                      <div class="text-xs font-bold text-[#322D29] truncate">{{ prayer.name }}</div>
+                      <div v-if="prayer.latinName" class="text-[9px] text-[#322D29]/50 truncate">{{ prayer.latinName }}</div>
                     </div>
                   </label>
                 </div>
@@ -266,27 +266,27 @@
 
               <!-- Append Section -->
               <div>
-                <h4 class="font-serif text-xs font-bold text-[#D97706] border-b border-[#E9D5FF]/60 pb-1.5 mb-2">
+                <h4 class="font-serif text-xs font-bold text-[#72383D] border-b border-[#D1C7BD]/60 pb-1.5 mb-2">
                   After the Rosary (Append)
                 </h4>
-                <p class="text-[11px] text-black/60 mb-2 leading-relaxed">
+                <p class="text-[11px] text-[#322D29]/60 mb-2 leading-relaxed">
                   Recited after traditional closing prayers, before the final Sign of the Cross.
                 </p>
-                <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1 border border-[#E9D5FF]/60 rounded-xl p-2 bg-white/50">
+                <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1 border border-[#D1C7BD]/60 rounded-xl p-2 bg-white/50">
                   <label 
                     v-for="prayer in filteredSelectablePrayers" 
                     :key="'after-' + prayer.id" 
-                    class="flex items-start space-x-2.5 p-1.5 rounded-lg hover:bg-[#E9D5FF]/20 transition-colors cursor-pointer select-none"
+                    class="flex items-start space-x-2.5 p-1.5 rounded-lg hover:bg-[#D1C7BD]/20 transition-colors cursor-pointer select-none"
                   >
                     <input 
                       type="checkbox" 
                       :value="prayer.id" 
                       v-model="tempAfterPrayers" 
-                      class="mt-0.5 rounded border-[#E9D5FF] text-[#9333EA] focus:ring-[#9333EA]/30 h-3.5 w-3.5 custom-checkbox cursor-pointer" 
+                      class="mt-0.5 rounded border-[#D1C7BD] text-[#72383D] focus:ring-[#72383D]/30 h-3.5 w-3.5 custom-checkbox cursor-pointer" 
                     />
                     <div class="flex-grow min-w-0">
-                      <div class="text-xs font-bold text-black truncate">{{ prayer.name }}</div>
-                      <div v-if="prayer.latinName" class="text-[9px] text-black/50 truncate">{{ prayer.latinName }}</div>
+                      <div class="text-xs font-bold text-[#322D29] truncate">{{ prayer.name }}</div>
+                      <div v-if="prayer.latinName" class="text-[9px] text-[#322D29]/50 truncate">{{ prayer.latinName }}</div>
                     </div>
                   </label>
                 </div>
@@ -294,13 +294,13 @@
             </template>
 
             <!-- Notice about restarting -->
-            <div class="bg-[#FEF3C7] border border-[#FDE68A] rounded-xl p-2.5 flex items-start space-x-2">
-              <svg class="text-[#D97706] mt-0.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <div class="bg-[#EFE9E1] border border-[#D1C7BD] rounded-xl p-2.5 flex items-start space-x-2">
+              <svg class="text-[#72383D] mt-0.5 shrink-0" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="16" x2="12" y2="12"></line>
                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
               </svg>
-              <p class="text-[9px] text-[#D97706] font-medium leading-normal">
+              <p class="text-[9px] text-[#72383D] font-medium leading-normal">
                 Applying custom prayers will update the Rosary sequence and restart your current meditation from the beginning.
               </p>
             </div>
@@ -308,16 +308,16 @@
           </div>
 
           <!-- Modal Footer -->
-          <div class="p-4 bg-white/80 border-t border-[#E9D5FF]/60 flex items-center justify-end space-x-2">
+          <div class="p-4 bg-white/80 border-t border-[#D1C7BD]/60 flex items-center justify-end space-x-2">
             <button 
               @click="showSettingsModal = false" 
-              class="px-4 py-1.5 border border-[#E9D5FF] hover:bg-white text-black/70 hover:text-[#7E22CE] rounded-full text-[10px] font-bold uppercase tracking-wider outline-none shadow-none cursor-pointer"
+              class="px-4 py-1.5 border border-[#D1C7BD] hover:bg-white text-[#322D29]/70 hover:text-[#72383D] rounded-full text-[10px] font-bold uppercase tracking-wider outline-none shadow-none cursor-pointer"
             >
               Cancel
             </button>
             <button 
               @click="applySettings" 
-              class="px-5 py-1.5 bg-[#9333EA] hover:bg-[#7E22CE] text-white rounded-full text-[10px] font-bold uppercase tracking-wider outline-none shadow-xs transition-all cursor-pointer"
+              class="px-5 py-1.5 bg-gradient-to-r from-[#72383D] to-[#322D29] hover:from-[#8B464C] hover:to-[#453E38] text-white rounded-full text-[10px] font-bold uppercase tracking-wider outline-none shadow-xs transition-all cursor-pointer"
             >
               Apply Prayers
             </button>

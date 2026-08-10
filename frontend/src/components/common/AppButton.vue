@@ -29,14 +29,14 @@ defineEmits<{
 const variantClass = computed(() => {
   switch (props.variant) {
     case 'primary':
-      return 'bg-[#9333EA] text-white border-transparent hover:bg-[#7E22CE] hover:-translate-y-0.5 shadow-sm shadow-[#9333EA]/30';
+      return 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white border-transparent hover:from-[#8B464C] hover:to-[#453E38] hover:-translate-y-0.5 shadow-sm shadow-[#72383D]/30';
     case 'inverted':
-      return 'bg-black text-white border-transparent hover:bg-black/90 hover:-translate-y-0.5';
+      return 'bg-[#322D29] text-white border-transparent hover:bg-[#322D29]/90 hover:-translate-y-0.5';
     case 'outlined':
-      return 'bg-transparent text-[#7E22CE] border-[#E9D5FF]/80 hover:border-[#9333EA] hover:bg-white/50';
+      return 'bg-transparent text-[#72383D] border-[#D1C7BD] hover:border-[#72383D] hover:bg-[#EFE9E1]/60';
     case 'secondary':
     default:
-      return 'bg-white/60 text-black border-[#E9D5FF]/60 hover:bg-white/80 hover:text-[#7E22CE] hover:-translate-y-0.5 backdrop-blur-md';
+      return 'bg-white/70 text-[#322D29] border-[#D1C7BD]/80 hover:bg-white hover:text-[#72383D] hover:border-[#72383D]/60 hover:-translate-y-0.5 backdrop-blur-md';
   }
 });
 </script>

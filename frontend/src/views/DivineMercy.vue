@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen text-black flex flex-col pb-28 sm:pb-20 selection:bg-[#9333EA]/20 relative z-10">
+  <div class="min-h-screen text-[#322D29] flex flex-col pb-28 sm:pb-20 selection:bg-[#72383D]/20 relative z-10">
     <!-- Global Header -->
     <TopNav />
 
@@ -7,24 +7,24 @@
     <main class="flex-grow max-w-4xl mx-auto px-4 py-8 flex flex-col w-full relative z-10">
 
         <!-- Sub-header & Toggles -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between border-b border-[#E9D5FF]/60 pb-4 mb-6 gap-4 animate-fade-in-down">
-            <h1 class="font-serif text-2xl md:text-3xl text-[#7E22CE] font-bold">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between border-b border-[#D1C7BD]/60 pb-4 mb-6 gap-4 animate-fade-in-down">
+            <h1 class="font-serif text-2xl md:text-3xl bg-gradient-to-r from-[#72383D] via-[#AC9C8D] to-[#322D29] bg-clip-text text-transparent font-bold">
                 The Divine Mercy Chaplet
             </h1>
             
             <div class="flex flex-wrap items-center gap-3">
                 <!-- Auto Play Toggle Switch -->
-                <label class="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-wider text-black/60 cursor-pointer select-none">
+                <label class="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-wider text-[#322D29]/70 cursor-pointer select-none">
                     <span>Auto-Play</span>
                     <input type="checkbox" v-model="autoPlay" class="sr-only peer" />
-                    <div class="relative w-8 h-4.5 bg-white/60 border border-[#E9D5FF]/80 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-black/40 peer-checked:after:bg-[#9333EA] after:border-[#E9D5FF] after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#9333EA]/20"></div>
+                    <div class="relative w-8 h-4.5 bg-white/60 border border-[#D1C7BD]/80 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-[#322D29]/40 peer-checked:after:bg-[#72383D] after:border-[#D1C7BD] after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#72383D]/20"></div>
                 </label>
 
                 <!-- Manual Play/Pause Button -->
                 <button 
                   v-if="currentStep.id && getPrayerAudioUrl(currentStep.id)"
                   @click="toggleAudio"
-                  class="flex items-center gap-1.5 px-3 py-1.5 bg-[#9333EA] border border-[#9333EA] text-white rounded-full hover:bg-[#7E22CE] active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none shadow-xs cursor-pointer"
+                  class="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#72383D] to-[#322D29] border border-transparent text-white rounded-full hover:from-[#8B464C] hover:to-[#453E38] active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none shadow-xs cursor-pointer"
                 >
                   <svg v-if="!isPlaying" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
                     <polygon points="6 3 20 12 6 21 6 3"></polygon>
@@ -37,17 +37,17 @@
                 </button>
 
                 <!-- Short/Full Version Toggle -->
-                <div class="flex items-center bg-white/60 border border-[#E9D5FF]/60 p-0.5 rounded-full w-fit backdrop-blur-md">
+                <div class="flex items-center bg-white/70 border border-[#D1C7BD]/80 p-0.5 rounded-full w-fit backdrop-blur-md">
                     <button 
                       @click="isShortVersion = false"
-                      :class="[!isShortVersion ? 'bg-[#9333EA] text-white font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
+                      :class="[!isShortVersion ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-bold' : 'text-[#322D29]/70 hover:text-[#72383D]']"
                       class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer"
                     >
                       Full
                     </button>
                     <button 
                       @click="isShortVersion = true"
-                      :class="[isShortVersion ? 'bg-[#9333EA] text-white font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
+                      :class="[isShortVersion ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-bold' : 'text-[#322D29]/70 hover:text-[#72383D]']"
                       class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer"
                     >
                       Short
@@ -57,7 +57,7 @@
                 <!-- Fullscreen Presentation Toggle Button -->
                 <button 
                   @click="toggleFullscreen(cardContainerRef)"
-                  class="flex items-center gap-1.5 px-3 py-1.5 bg-white/60 border border-[#E9D5FF]/60 text-[#7E22CE] rounded-full hover:bg-white/80 active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
+                  class="flex items-center gap-1.5 px-3 py-1.5 bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
                   :title="isFullscreen ? 'Exit Fullscreen Card (ESC)' : 'Fullscreen Card Presentation (F)'"
                 >
                   <svg v-if="!isFullscreen" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -76,17 +76,17 @@
                 </button>
 
                 <!-- Latin/English Toggle -->
-                <div class="flex items-center bg-white/60 border border-[#E9D5FF]/60 p-0.5 rounded-full w-fit backdrop-blur-md">
+                <div class="flex items-center bg-white/70 border border-[#D1C7BD]/80 p-0.5 rounded-full w-fit backdrop-blur-md">
                     <button 
                       @click="showLatin = false"
-                      :class="[!showLatin ? 'bg-[#9333EA] text-white font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
+                      :class="[!showLatin ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-bold' : 'text-[#322D29]/70 hover:text-[#72383D]']"
                       class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer"
                     >
                       EN
                     </button>
                     <button 
                       @click="showLatin = true"
-                      :class="[showLatin ? 'bg-[#9333EA] text-white font-bold' : 'text-black/60 hover:text-[#7E22CE]']"
+                      :class="[showLatin ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-bold' : 'text-[#322D29]/70 hover:text-[#72383D]']"
                       class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer"
                     >
                       LA
@@ -100,7 +100,7 @@
             ref="cardContainerRef" 
             :class="[
                 'flex-grow flex flex-col justify-between gap-6 py-6 touch-pan-y animate-fade-in-up delay-150 transition-all duration-300',
-                isFullscreen ? 'card-fullscreen-mode !bg-[#FAF8F5] p-6 md:p-12 overflow-y-auto' : ''
+                isFullscreen ? 'card-fullscreen-mode !bg-[#EFE9E1] p-6 md:p-12 overflow-y-auto' : ''
             ]"
         >
             <transition name="fade-slide" mode="out-in">
