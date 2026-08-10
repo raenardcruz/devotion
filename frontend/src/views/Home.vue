@@ -71,6 +71,30 @@
           </ParchmentCard>
         </router-link>
 
+        <!-- St. Michael Chaplet & Rosary -->
+        <router-link to="/st-michael-rosary" class="block">
+          <ParchmentCard hover-effect class="!p-5 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 rounded-xl bg-[#E9D5FF]/30 flex items-center justify-center text-[#9333EA] shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9333EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+              </div>
+              <div class="text-left">
+                <h3 class="font-serif text-base md:text-lg font-bold text-[#7E22CE]">St. Michael Chaplet</h3>
+                <p class="text-xs md:text-sm text-black mt-0.5 leading-snug max-w-md">
+                  Invoke St. Michael and the 9 Celestial Choirs of Angels with salutations, intentions, and promises.
+                </p>
+              </div>
+            </div>
+            <div class="text-[#9333EA]/50 group-hover:text-[#9333EA] transition-colors pl-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9333EA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m9 18 6-6-6-6"></path>
+              </svg>
+            </div>
+          </ParchmentCard>
+        </router-link>
+
         <!-- Divine Mercy -->
         <router-link to="/divine-mercy" class="block">
           <ParchmentCard hover-effect class="!p-5 flex items-center justify-between">

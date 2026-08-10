@@ -179,24 +179,98 @@
     "id": "litany-of-saints",
     "name": "Litany of the Saints",
     "latinName": "Litaniae Sanctorum",
-    "default": "",
-    "latin": "",
-    "youtube": "https://youtu.be/QPcNNlaSf4I?si=B0eEPXUzLou06ZkZ"
+    "default": "",    "youtube": "https://youtu.be/LKNj1IuPZYo?si=DqdInYLPC_jFA6qO"
   },
   {
-    "id": "magnificat",
-    "name": "Magnificat",
-    "latinName": "Magnificat",
-    "default": "",
-    "latin": "",
-    "youtube": "https://youtu.be/SLUZM3nJ4sg?si=M09jXD34EIqeM0D6"
+    "id": "st-michael-salutation-1",
+    "name": "1st Salutation: Choir of Seraphim",
+    "latinName": "Salutatio I: Seraphim",
+    "default": "By the intercession of St. Michael and the celestial Choir of Seraphim, may the Lord make us worthy to burn with the fire of perfect charity. Amen.",
+    "latin": "Per intercessionem Sancti Michaelis et Caelestis Chori Seraphim, Dominus nos dignos efficiat ad ardendum igne perfectae caritatis. Amen."
   },
   {
-    "id": "stay-with-me-lord",
-    "name": "Stay With Me Lord",
-    "latinName": "Stay With Me Lord",
-    "default": "Stay with me Lord, that I may never forget you.\nStay with me Lord, because I'm weak.\nStay with me Lord, for you are my live!\nStay with me Lord, for you are my Light!\n\nChorus:\nO how I need you my Jesus in this night of exile.\nStay with me my Jesus in the Breaking of the Bread.\nThe light which disperses all darkness.\nThe force that sustains me, the Unique Joy of my heart!\n\nStay with me Lord to show me your Will.\nStay with me Lord that I may hear Your voice and follow You.\nStay with me Lord for I desire to love You.\nStay with me Lord if you wish me to be faithful to You!",
-    "latin": "",
-    "youtube": "https://youtu.be/LKNj1IuPZYo?si=DqdInYLPC_jFA6qO"
+    "id": "st-michael-salutation-2",
+    "name": "2nd Salutation: Choir of Cherubim",
+    "latinName": "Salutatio II: Cherubim",
+    "default": "By the intercession of St. Michael and the celestial Choir of Cherubim, may the Lord vouchsafe to grant us grace to leave the ways of wickedness to run in the paths of Christian perfection. Amen.",
+    "latin": "Per intercessionem Sancti Michaelis et Caelestis Chori Cherubim, Dominus nobis concedat gratiam relinquendi vias peccati et currendi in semitis christianae perfectionis. Amen."
+  },
+  {
+    "id": "st-michael-salutation-3",
+    "name": "3rd Salutation: Choir of Thrones",
+    "latinName": "Salutatio III: Throni",
+    "default": "By the intercession of St. Michael and the celestial Choir of Thrones, may the Lord infuse into our hearts a true and sincere spirit of humility. Amen.",
+    "latin": "Per intercessionem Sancti Michaelis et Caelestis Chori Thronorum, Dominus infundat in cordibus nostris verum et sincere spiritum humilitatis. Amen."
+  },
+  {
+    "id": "st-michael-salutation-4",
+    "name": "4th Salutation: Choir of Dominions",
+    "latinName": "Salutatio IV: Dominationes",
+    "default": "By the intercession of St. Michael and the celestial Choir of Dominions, may the Lord give us grace to govern our senses and subdue our unruly passions. Amen.",
+    "latin": "Per intercessionem Sancti Michaelis et Caelestis Chori Dominationum, Dominus nobis det gratiam gubernandi sensus nostros et superandi inordinatas passiones. Amen."
+  },
+  {
+    "id": "st-michael-salutation-5",
+    "name": "5th Salutation: Choir of Powers",
+    "latinName": "Salutatio V: Potestates",
+    "default": "By the intercession of St. Michael and the celestial Choir of Powers, may the Lord vouch safe to protect our souls against the snares and temptations of the devil. Amen.",
+    "latin": "Per intercessionem Sancti Michaelis et Caelestis Chori Potestatum, Dominus protegat animas nostras contra insidias et tentationes diaboli. Amen."
+  },
+  {
+    "id": "st-michael-salutation-6",
+    "name": "6th Salutation: Choir of Virtues",
+    "latinName": "Salutatio VI: Virtutes",
+    "default": "By the intercession of St. Michael and the celestial Choir of Virtues, may the Lord preserve us from evil and suffer us not to fall into temptation. Amen.",
+    "latin": "Per intercessionem Sancti Michaelis et Caelestis Chori Virtutum, Dominus nos conservet a malo et ne inducamur in tentationem. Amen."
+  },
+  {
+    "id": "st-michael-salutation-7",
+    "name": "7th Salutation: Choir of Principalities",
+    "latinName": "Salutatio VII: Principatus",
+    "default": "By the intercession of St. Michael and the celestial Choir of Principalities, may God fill our souls with a true spirit of obedience. Amen.",
+    "latin": "Per intercessionem Sancti Michaelis et Caelestis Chori Principatuum, Deus impleat animas nostras vero spiritu oboedientiae. Amen."
+  },
+  {
+    "id": "st-michael-salutation-8",
+    "name": "8th Salutation: Choir of Archangels",
+    "latinName": "Salutatio VIII: Archangeli",
+    "default": "By the intercession of St. Michael and the celestial Choir of Archangels, may the Lord give us perseverance in faith and in all good works, in order that we gain the glory of Paradise. Amen.",
+    "latin": "Per intercessionem Sancti Michaelis et Caelestis Chori Archangelorum, Dominus nobis concedat perseverantiam in fide et in omnibus bonis operibus, ut ad gloriam Caeli pervenire possimus. Amen."
+  },
+  {
+    "id": "st-michael-salutation-9",
+    "name": "9th Salutation: Choir of Angels",
+    "latinName": "Salutatio IX: Angeli",
+    "default": "By the intercession of St. Michael and the celestial Choir of Angels, may the Lord grant us to be protected by them in this mortal life and conducted hereafter to eternal glory. Amen.",
+    "latin": "Per intercessionem Sancti Michaelis et Caelestis Chori Angelorum, Dominus nobis concedat ab eis protegi in hac vita mortali et perduci in vita futura ad Caelum. Amen."
+  },
+  {
+    "id": "st-michael-closing-prayer",
+    "name": "Prayer to Saint Michael the Archangel (Leo XIII)",
+    "latinName": "Oratio ad Sanctum Michaelem Archangelum (Leo XIII)",
+    "default": "O glorious Prince of the heavenly host, Saint Michael the Archangel, defend us in the battle and in the fearful warfare that we are waging against the principalities and powers, against the rulers of this world of darkness, against the evil spirits. Come thou to the assistance of men, whom Almighty God created immortal, making them in His own image and likeness and redeeming them at a great price from the tyranny of Satan. Fight this day the battle of the Lord with the legions of holy Angels, even as of old thou didst fight against Lucifer, the leader of the proud spirits and all his rebel angels, who were powerless to stand against thee, neither was their place found any more in heaven. And that apostate angel, transformed into an angel of darkness who still creeps about the earth to encompass our ruin, was cast headlong into the abyss together with his followers. But behold, that first enemy of mankind, and a murderer from the beginning, has regained his confidence. Changing himself into an angel of light, he goes about with the whole multitude of the wicked spirits to invade the earth and blot out the Name of God and of His Christ, to plunder, to slay and to consign to eternal damnation the souls that have been destined for a crown of everlasting life. This wicked serpent, like an unclean torrent, pours into men of depraved minds and corrupt hearts the poison of his malice, the spirit of lying, impiety and blasphemy, and the deadly breath of impurity and every form of vice and iniquity. These crafty enemies of mankind have filled to overflowing with gall and wormwood the Church, which is the Bride of the Lamb without spot; they have laid profane hands upon her most sacred treasures. Make haste, therefore, O invincible Prince, to help the people of God against the inroads of the lost spirits and grant us the victory. Amen. (Indulgence granted by Leo XIII, 25 Sep. 1888)",
+    "latin": "O gloriose Princeps caelestis militiae, Sancte Michael Archangele, defende nos in praelio et colluctatione, quae nobis est adversus principes et potestates, adversus mundi rectores tenebrarum harum, contra spiritualia nequitiae. Veni in auxilium hominum, quos Deus ad imaginem similitudinis suae fecit et a tyrannide diaboli emit pretio magno. Praeliare hodie cum exercitu sanctorum Angelorum praelia Domini, sicut pugnasti olim contra ducem superbiae Luciferum et angelos eius apostatas, et non praevaluerunt, neque locus inventus est eorum amplius in caelo. Sed proiectus est draco ille magnus, serpens antiquus, qui vocatur diabolus et Satanas, qui seducit universum orbem; proiectus est in terram, et angeli eius cum eo missi sunt. Ecce antiquus inimicus et homicida de initio erectus est. Transfiguratus in angelum lucis, cum tota multitudine malignorum spirituum circumeat et invadat terram, ut in ea deleat nomen Dei et Christi eius, animasque aeternae gloriae coronae destinatas furetur, mactet ac perdat in sempiternum interitum. Virus nequitiae suae, tamquam flumen inmundissimum, draco facinorosus transfundit in homines depravatos corde et mente corruptos; spiritum mendacii, impietatis et blasphemiae; halitumque mortiferum libidinis et vitiorum omnium et iniquitatum. Ecclesiam, Agni immaculati sponsam, faedissimi hostes repleverunt amaritudinibus, inebriarunt absinthio; ad ipsam eius sacratissima bona impias miserunt manus. Arripe itaque, invictissime Princeps, auxilium populo Dei adversus inruentes spirituales nequitias, et fac victoriam. Amen."
+  },
+  {
+    "id": "st-michael-opening-our-lady",
+    "name": "Opening Prayer to Our Lady",
+    "latinName": "Oratio Initialis ad Beatam Mariam Virginem",
+    "default": "Oh, Immaculate Heart! Help us to conquer the menace of evil, which so easily takes root in the hearts of the people of today, and whose immeasurable effects already weigh down upon our modern world and seem to block the paths towards the future!\n\nFrom famine and war, deliver us.\nFrom nuclear war, from incalculable self-destruction, from every kind of war, deliver us.\nFrom sins against the life of man from its very beginning, deliver us.\nFrom hatred and from the demeaning of the dignity of the children of God, deliver us.\nFrom every kind of injustice in the life of society, both national and international, deliver us.\nFrom readiness to trample on the commandments of God, deliver us.\nFrom attempts to stifle in human hearts the very truth of God, deliver us.\nFrom sins against the Holy Spirit, deliver us, deliver us.\n\nAccept, O Mother of Christ, this cry laden with the sufferings of all individual human beings, laden with the sufferings of whole societies.\n\nLet there be revealed, once more, in the history of the world your infinite power of merciful Love. May it put a stop to evil. May it transform consciences. May your Immaculate Heart reveal for all the light of Hope.",
+    "latin": "O Cor Immaculatum! Adiuva nos ad vincendum minaciam mali, quae tam facile in cordibus hominum hodiernis radices agit...\n\nA fame et bello, libera nos.\nA bello nucleari, ab incalculabili sui destructione, ab omni genere belli, libera nos.\nA peccatis contra vitam hominis ab ipso initio, libera nos.\nA odio et ab deminutione dignitatis filiorum Dei, libera nos.\nAb omni genere iniustitiae in vita societatis, tam nationalis quam internationalis, libera nos.\nA promptitudine ad conculcanda mandata Dei, libera nos.\nA conatibus suffocandi in cordibus humanis ipsam veritatem Dei, libera nos.\nA peccatis in Spiritum Sanctum, libera nos, libera nos.\n\nAccipe, o Mater Christi, hunc clamorem plenum doloribus omnium singulorum hominum, plenum doloribus totarum societatum.\n\nReveletur, semel adhuc, in history mundi tua infinita potestas misericordis Amoris. Finem imponat malo. Transformat conscientias. Revelet Cor tuum Immaculatum omnibus lucem Spei."
+  },
+  {
+    "id": "st-michael-concluding-prayer",
+    "name": "Concluding Prayer to St. Michael",
+    "latinName": "Oratio Conclusiva ad Sanctum Michaelem",
+    "default": "O glorious Prince St. Michael, chief and commander of the heavenly hosts, guardian of souls, vanquisher of rebel spirits, servant in the house of the Divine King, and our admirable conductor, thou who dost shine with excellence and superhuman virtue, vouchsafe to deliver us from all evil, who turn to thee with confidence, and enable us by thy gracious protection to serve God more and more faithfully every day.\n\nV. Pray for us, O glorious St. Michael, Prince of the Church of Jesus Christ\nR. That we may be made worthy of His promises.\n\nAlmighty and Everlasting God, who by a prodigy of goodness and a merciful desire for the salvation of all men, hast appointed the most glorious Archangel, St. Michael, Prince of Thy Church, make us worthy, we beseech Thee, to be delivered from all our enemies that none of them may harass us at the hour of death, but that we may be conducted by him into the august presence of Thy Divine Majesty. This we beg through the merits of Jesus Christ, our Lord. Amen.",
+    "latin": "O gloriose Princeps Sancte Michael, ductor et commander caelestium exercituum, custos animarum, victor rebellium spirituum, servus in domo Divini Regis et noster admirabilis conductor, qui virtute superhuman effulges, libera nos ab omni malo...\n\nV. Ora pro nobis, O gloriose Sancte Michael, Princeps Ecclesiae Iesu Christi.\nR. Ut digni efficiamur promissionibus Eius.\n\nOmnipotens sempiterne Deus, qui prodigio bonitatis et misericordi desiderio salutis omnium hominum, gloriosissimum Archangelum Sanctum Michaelem Principem Ecclesiae Tuae constituisti, fac nos dignos, quaesumus, ut ab omnibus inimicis nostris liberemur... Per merita Iesu Christi Domini nostri. Amen."
+  },
+  {
+    "id": "st-michael-act-of-consecration",
+    "name": "Saint Michael the Archangel - Act of Consecration",
+    "latinName": "Actus Consecrationis Sancto Michaeli Archangelo",
+    "default": "Saint Michael the Archangel, invincible prince of the angelic hosts and glorious protector of the universal Church, I greet you and praise you for that splendor with which God has adorned you so richly. I thank God for the great graces he has bestowed upon you, especially to remain faithful when Lucifer and his followers rebelled, and to battle victoriously for the honor of God and the divinity of the Son of Man.\n\nSaint Michael, I consecrate to you my soul and body. I choose you as my patron and protector and entrust the salvation of my soul to your care. Be the guardian of my obligation as a child of God and of the Catholic Church as again I renounce Satan, his works and pomps. Assist me by your powerful intercession in the fulfillment of these sacred promises, so that imitating your courage and loyalty to God, and trusting in your kind help and protection, I may be victorious over the enemies of my soul and be united with God in heaven forever. Amen.",
+    "latin": "Sancte Michael Archangele, invictissime princeps caelestium exercituum et gloriose protector universalis Ecclesiae, te saluto et te laudo propter illum splendorem quo Deus te tam divite ornavit. Gratias ago Deo pro magnis gratiis quas tibi largitus est, praesertim ut fidelis maneres cum Lucifer et eius sequaces rebellarunt, et ad victoriositer pugnandum pro honore Dei et divinitate Filii Hominis.\n\nSancte Michael, consecro tibi animam et corpus meum. Eligo te in patronum et protectorem meum et salutem animae meae meae curae committo. Esto custos obligationis meae ut filii Dei et Catholicae Ecclesiae dum iterum renuntio Satanae, operibus et pompis eius. Adiuva me tua potenti intercessione in impletione harum sacrarum promissionum, ut imitans tuam fortitudinem et fidelitatem erga Deum, et confidens in tuo benigno auxilio et praesidio, victor evadam de inimicis animae meae et coniungar cum Deo in caelo in aeternum. Amen."
   }
 ]
+

@@ -167,6 +167,12 @@ const navItems = [
     icon: 'rosary'
   },
   {
+    path: '/st-michael-rosary',
+    label: 'St. Michael Chaplet',
+    desc: 'Pray the Chaplet of St. Michael & the 9 Angelic Choirs',
+    icon: 'shield'
+  },
+  {
     path: '/divine-mercy',
     label: 'Divine Mercy Chaplet',
     desc: 'Pray the Chaplet of Divine Mercy',

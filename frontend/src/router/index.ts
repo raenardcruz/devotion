@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import Rosary from '../views/Rosary.vue'
+import StMichaelRosary from '../views/StMichaelRosary.vue'
 import DivineMercy from '../views/DivineMercy.vue'
 import PrayersGallery from '../views/PrayersGallery.vue'
 import Catechism from '../views/Catechism.vue'
@@ -27,6 +28,11 @@ const router = createRouter({
             path: '/rosary',
             name: 'Rosary',
             component: Rosary
+        },
+        {
+            path: '/st-michael-rosary',
+            name: 'StMichaelRosary',
+            component: StMichaelRosary
         },
         {
             path: '/divine-mercy',
