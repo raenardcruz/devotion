@@ -21,17 +21,21 @@ type GetMassReadingsResponse struct {
 }
 
 func get_mass_readings(dateStr string) (GetMassReadingsResponse, error) {
-	var targetDate string
+	var targetDateFormatted string // YYYY-MM-DD
+	var targetDateMMDDYY string    // MMDDYY
+
 	if dateStr != "" {
 		t, err := time.Parse("2006-01-02", dateStr)
 		if err != nil {
 			return GetMassReadingsResponse{}, fmt.Errorf("invalid reading date %q: use YYYY-MM-DD", dateStr)
 		}
-		targetDate = t.Format("010206")
+		targetDateFormatted = t.Format("2006-01-02")
+		targetDateMMDDYY = t.Format("010206")
 	} else {
-		targetDate = time.Now().Format("010206")
+		now := time.Now()
+		targetDateFormatted = now.Format("2006-01-02")
+		targetDateMMDDYY = now.Format("010206")
 	}
-	url := fmt.Sprintf("https://bible.usccb.org/bible/readings/%s", targetDate)
 
 	c := colly.NewCollector(
 		colly.AllowedDomains("bible.usccb.org"),
@@ -42,24 +46,61 @@ func get_mass_readings(dateStr string) (GetMassReadingsResponse, error) {
 	c.WithTransport(tr)
 	c.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
 
+	// Step 1: Attempt to find reading path from calendar table (td[data-date="YYYY-MM-DD"])
+	var calendarPath string
+	calCollector := c.Clone()
+	calCollector.OnHTML("td[data-date]", func(e *colly.HTMLElement) {
+		if e.Attr("data-date") == targetDateFormatted {
+			link := e.ChildAttr("a", "href")
+			if link != "" {
+				calendarPath = link
+			}
+		}
+	})
+
+	log.Printf("Fetching readings calendar from https://bible.usccb.org/readings/calendar...")
+	if err := calCollector.Visit("https://bible.usccb.org/readings/calendar"); err != nil {
+		log.Printf("[get_mass_readings] Warning fetching calendar: %v", err)
+	}
+
+	var urlsToTry []string
+	if calendarPath != "" {
+		if !strings.HasPrefix(calendarPath, "http") {
+			if !strings.HasPrefix(calendarPath, "/") {
+				calendarPath = "/" + calendarPath
+			}
+			calendarPath = "https://bible.usccb.org" + calendarPath
+		}
+		log.Printf("Found calendar reading URL for date %s: %s", targetDateFormatted, calendarPath)
+		urlsToTry = append(urlsToTry, calendarPath)
+	}
+
+	// Step 2: Fallbacks to date-based URLs (.cfm and standard date)
+	urlsToTry = append(urlsToTry,
+		fmt.Sprintf("https://bible.usccb.org/bible/readings/%s.cfm", targetDateMMDDYY),
+		fmt.Sprintf("https://bible.usccb.org/bible/readings/%s", targetDateMMDDYY),
+	)
+
 	var readings []Readings
 
-	c.OnHTML(".innerblock", func(e *colly.HTMLElement) {
-		typeText := strings.TrimSpace(e.ChildText("h3.name"))
+	// Target .container blocks containing .name and .address matching catholic-mass-readings & USCCB layout
+	c.OnHTML(".container", func(e *colly.HTMLElement) {
+		typeText := strings.TrimSpace(e.ChildText(".name"))
+		if typeText == "" {
+			typeText = strings.TrimSpace(e.ChildText("h3.name"))
+		}
+
 		citation := strings.TrimSpace(e.ChildText(".address a"))
 		if citation == "" {
 			citation = strings.TrimSpace(e.ChildText(".address"))
 		}
-		citation = strings.ReplaceAll(citation, "\n", " ")
-		citation = strings.TrimSpace(citation)
+		citation = cleanScrapedText(citation)
 
-		reading := Readings{
-			Type:     typeText,
-			Citation: citation,
-		}
-
-		if reading.Type != "" {
-			readings = append(readings, reading)
+		if typeText != "" && citation != "" {
+			readings = append(readings, Readings{
+				Type:     typeText,
+				Citation: citation,
+			})
 		}
 	})
 
@@ -67,19 +108,32 @@ func get_mass_readings(dateStr string) (GetMassReadingsResponse, error) {
 		log.Printf("[get_mass_readings] Error requesting %s: %v", r.Request.URL, err)
 	})
 
-	log.Printf("Fetching readings from %s...", url)
-	err := c.Visit(url)
-	if err != nil {
-		if !strings.HasSuffix(url, ".cfm") {
-			log.Printf("[get_mass_readings] Error visiting %s: %v. Retrying with .cfm...", url, err)
-			url = url + ".cfm"
-			log.Printf("Fetching readings from %s...", url)
-			err = c.Visit(url)
+	var lastErr error
+	for _, url := range urlsToTry {
+		log.Printf("Fetching readings from %s...", url)
+		err := c.Visit(url)
+		if err == nil && len(readings) > 0 {
+			return GetMassReadingsResponse{Readings: readings}, nil
+		}
+		if err != nil {
+			lastErr = err
 		}
 	}
-	if err != nil {
-		return GetMassReadingsResponse{}, fmt.Errorf("failed to visit USCCB: %w", err)
+
+	if len(readings) > 0 {
+		return GetMassReadingsResponse{Readings: readings}, nil
+	}
+
+	if lastErr != nil {
+		return GetMassReadingsResponse{}, fmt.Errorf("failed to visit USCCB: %w", lastErr)
 	}
 
 	return GetMassReadingsResponse{Readings: readings}, nil
+}
+
+func cleanScrapedText(s string) string {
+	s = strings.ReplaceAll(s, "\u00a0", " ")
+	s = strings.ReplaceAll(s, "\n", " ")
+	words := strings.Fields(s)
+	return strings.Join(words, " ")
 }
