@@ -245,7 +245,7 @@
           <div class="absolute inset-0 bg-[#322D29]/40 backdrop-blur-sm"></div>
           
           <!-- Drawer Content Panel -->
-          <div class="relative w-4/5 max-w-xs bg-white/95 backdrop-blur-md h-full shadow-2xl p-5 flex flex-col z-10 overflow-y-auto border-r border-[#D1C7BD]/60" @click.stop>
+          <div class="relative w-4/5 max-w-xs bg-white h-full shadow-2xl p-5 flex flex-col z-10 overflow-y-auto border-r border-[#D1C7BD]" @click.stop>
             <div class="flex items-center justify-between pb-4 border-b border-[#D1C7BD]/60 mb-4">
               <h3 class="font-serif text-base text-[#72383D] font-bold">Catechism Structure</h3>
               <button @click="isMobileMenuOpen = false" class="p-1.5 text-[#72383D] hover:text-[#322D29] rounded-lg">

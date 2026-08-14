@@ -35,6 +35,7 @@
 
               <!-- Fullscreen Card Toggle Button -->
               <button 
+                v-if="isFullscreenSupported"
                 @click="toggleFullscreen(cardContainerRef)"
                 class="flex items-center gap-1.5 px-3 py-1.5 bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
                 :title="isFullscreen ? 'Exit Fullscreen Card (ESC)' : 'Fullscreen Card Presentation (F)'"
@@ -107,25 +108,6 @@
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
             </svg>
             <span>Promises: Escort of 9 Angels, Continual Guidance, Deliverance from Purgatory</span>
-          </div>
-
-          <!-- Official PDF Booklet Link -->
-          <div class="pt-2">
-            <a 
-              href="https://www.dropbox.com/scl/fi/jqqsamecvha2ib5i4xz6o/4-x6-e-Booklet-The-Saint-Michael-Rosary-Prayer-Chaplet-1-.pdf.pdf?rlkey=516siw7pgeuy35vcw1rf1aky2&e=1&dl=0" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#72383D]/10 border border-[#72383D]/30 text-[#72383D] rounded-full hover:bg-[#72383D]/20 transition-all text-xs font-bold"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="12" y1="18" x2="12" y2="12"></line>
-                <line x1="9" y1="15" x2="12" y2="18"></line>
-                <line x1="15" y1="15" x2="12" y2="18"></line>
-              </svg>
-              <span>Download Printable 4"x6" e-Booklet Guide (PDF)</span>
-            </a>
           </div>
         </div>
       </div>
@@ -391,7 +373,7 @@ const steps = ref<StMichaelStep[]>(generateStMichaelSteps());
 const swipeContainer = ref<HTMLElement | null>(null);
 const cardContainerRef = ref<HTMLElement | null>(null);
 
-const { isFullscreen, toggleFullscreen } = useFullscreen(cardContainerRef);
+const { isFullscreen, isFullscreenSupported, toggleFullscreen } = useFullscreen(cardContainerRef);
 
 // Touch Swipe navigation
 useSwipe(swipeContainer, {

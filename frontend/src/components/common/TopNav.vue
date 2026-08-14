@@ -1,10 +1,11 @@
 <template>
-  <header class="sticky top-0 z-40 w-full bg-gradient-to-r from-[#EFE9E1]/90 via-white/95 to-[#EFE9E1]/90 backdrop-blur-md border-b border-[#D1C7BD]/60 py-4 px-6 md:px-12 flex items-center justify-between shadow-xs">
+  <header class="sticky top-0 z-40 w-full bg-[#EFE9E1]/90 via-white/95 to-[#EFE9E1]/90 backdrop-blur-xl border-b border-white/60 py-3.5 px-4 md:px-12 flex items-center justify-between shadow-2xs">
     <!-- Left Menu Icon -->
     <button 
       @click="toggleSidebar"
-      class="text-[#72383D] hover:text-[#322D29] transition-colors p-1.5 rounded-full hover:bg-[#D1C7BD]/30 outline-none border border-transparent shadow-none"
+      class="text-[#72383D] hover:text-[#322D29] transition-colors p-2.5 rounded-full hover:bg-[#D1C7BD]/30 outline-none border border-transparent shadow-none min-w-[44px] min-h-[44px] flex items-center justify-center active:scale-95 cursor-pointer"
       id="top-nav-menu-btn"
+      aria-label="Open Navigation Menu"
     >
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="4" x2="20" y1="12" y2="12"></line>
@@ -14,8 +15,8 @@
     </button>
 
     <!-- Center Title -->
-    <router-link to="/" class="absolute left-1/2 -translate-x-1/2 flex items-center">
-      <span class="font-serif text-lg md:text-xl font-bold tracking-[0.1em] bg-gradient-to-r from-[#72383D] via-[#AC9C8D] to-[#322D29] bg-clip-text text-transparent hover:opacity-80 transition-opacity">
+    <router-link to="/" class="absolute left-1/2 -translate-x-1/2 flex items-center min-h-[44px] justify-center">
+      <span class="font-serif text-lg md:text-xl font-bold tracking-[0.08em] bg-gradient-to-r from-[#72383D] via-[#AC9C8D] to-[#322D29] bg-clip-text text-transparent hover:opacity-80 transition-opacity">
         Faith and Devotion
       </span>
     </router-link>
@@ -62,7 +63,7 @@
       <div 
         v-if="isSidebarOpen"
         @click="closeSidebar"
-        class="fixed inset-0 z-50 bg-[#322D29]/40 backdrop-blur-sm cursor-pointer"
+        class="fixed inset-0 z-50 bg-[#322D29]/45 backdrop-blur-md cursor-pointer"
       ></div>
     </Transition>
 
@@ -70,16 +71,20 @@
     <Transition name="slide">
       <div 
         v-if="isSidebarOpen"
-        class="fixed top-0 left-0 bottom-0 z-50 w-80 max-w-[85vw] bg-gradient-to-b from-[#EFE9E1]/95 via-white/95 to-[#EFE9E1]/95 backdrop-blur-md border-r border-[#D1C7BD]/60 shadow-2xl flex flex-col"
+        @touchstart="onTouchStart"
+        @touchmove="onTouchMove"
+        @touchend="onTouchEnd"
+        class="fixed top-0 left-0 bottom-0 z-50 w-80 max-w-[85vw] bg-[#EFE9E1] border-r border-[#D1C7BD] shadow-2xl flex flex-col touch-pan-y"
       >
         <!-- Header -->
-        <div class="p-6 border-b border-[#D1C7BD]/60 flex items-center justify-between">
-          <span class="font-serif text-lg font-bold tracking-[0.1em] bg-gradient-to-r from-[#72383D] via-[#AC9C8D] to-[#322D29] bg-clip-text text-transparent">
+        <div class="p-5 border-b border-[#D1C7BD]/60 flex items-center justify-between">
+          <span class="font-serif text-lg font-bold tracking-[0.08em] bg-gradient-to-r from-[#72383D] via-[#AC9C8D] to-[#322D29] bg-clip-text text-transparent">
             Faith and Devotion
           </span>
           <button 
             @click="closeSidebar"
-            class="hover:text-[#72383D] transition-colors p-1.5 rounded-full hover:bg-[#D1C7BD]/30 border border-transparent outline-none cursor-pointer text-[#322D29]"
+            class="hover:text-[#72383D] transition-colors p-2 rounded-full hover:bg-[#D1C7BD]/30 border border-transparent outline-none cursor-pointer text-[#322D29] min-w-[44px] min-h-[44px] flex items-center justify-center active:scale-95"
+            aria-label="Close Navigation Menu"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" x2="6" y1="6" y2="18"></line>
@@ -89,21 +94,21 @@
         </div>
 
         <!-- Navigation Links -->
-        <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-2">
+        <nav class="flex-1 overflow-y-auto py-5 px-4 space-y-2">
           <router-link 
             v-for="item in navItems" 
             :key="item.path" 
             :to="item.path"
             @click="closeSidebar"
-            class="flex items-center space-x-4 p-3 rounded-2xl transition-all duration-200 group border"
+            class="flex items-center space-x-4 p-3 rounded-2xl transition-all duration-200 group border min-h-[48px] active:scale-[0.98]"
             :class="[isNavItemActive(item.path) ? 'bg-gradient-to-r from-[#72383D]/15 to-[#AC9C8D]/20 border-[#D1C7BD] text-[#72383D] font-bold shadow-xs' : 'text-[#322D29]/80 hover:text-[#72383D] border-transparent hover:bg-white/60']"
           >
             <!-- Icon Wrapper -->
             <div 
-              class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 shadow-xs"
+              class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 shadow-2xs shrink-0"
               :class="[isNavItemActive(item.path) ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white' : 'bg-[#D1C7BD]/40 text-[#72383D] group-hover:bg-gradient-to-r group-hover:from-[#72383D] group-hover:to-[#322D29] group-hover:text-white']"
             >
-              <!-- Inline SVGs depending on icon name -->
+              <!-- Inline SVGs -->
               <svg v-if="item.icon === 'home'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
               <svg v-else-if="item.icon === 'book'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path><path d="M6 6h10"></path><path d="M6 10h10"></path></svg>
               <svg v-else-if="item.icon === 'rosary'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-11-7-11S5 10.7 5 15a7 7 0 0 0 7 7z"></path><circle cx="12" cy="15" r="2"></circle></svg>
@@ -122,7 +127,7 @@
         </nav>
 
         <!-- Footer / AMDG -->
-        <div class="p-6 border-t border-[#D1C7BD]/60 text-center">
+        <div class="p-5 border-t border-[#D1C7BD]/60 text-center">
           <span class="text-xs text-[#72383D] tracking-wider uppercase font-semibold">
             Ad Maiorem Dei Gloriam
           </span>
@@ -138,6 +143,31 @@ import { useRoute } from 'vue-router';
 
 const route = useRoute();
 const isSidebarOpen = ref(false);
+
+// Touch gesture state for swipe-to-close drawer
+let touchStartX = 0;
+let touchCurrentX = 0;
+
+const onTouchStart = (e: TouchEvent) => {
+  if (e.touches[0]) {
+    touchStartX = e.touches[0].clientX;
+    touchCurrentX = touchStartX;
+  }
+};
+
+const onTouchMove = (e: TouchEvent) => {
+  if (e.touches[0]) {
+    touchCurrentX = e.touches[0].clientX;
+  }
+};
+
+const onTouchEnd = () => {
+  const deltaX = touchCurrentX - touchStartX;
+  // If user swiped left by more than 50px, dismiss drawer
+  if (deltaX < -50) {
+    closeSidebar();
+  }
+};
 
 const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value;
@@ -232,10 +262,10 @@ const navItems = [
 </script>
 
 <style scoped>
-/* Sidebar Transitions */
+/* Sidebar Transitions - Apple Spring Simulation */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .fade-enter-from,
 .fade-leave-to {
@@ -244,7 +274,7 @@ const navItems = [
 
 .slide-enter-active,
 .slide-leave-active {
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .slide-enter-from,
 .slide-leave-to {
