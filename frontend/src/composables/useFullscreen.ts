@@ -2,6 +2,17 @@ import { ref, onMounted, onUnmounted, type Ref } from 'vue';
 
 export function useFullscreen(targetRef?: Ref<HTMLElement | null>) {
   const isFullscreen = ref(false);
+  const isFullscreenSupported = ref(false);
+
+  const checkFullscreenSupport = () => {
+    if (typeof document === 'undefined') return false;
+    return !!(
+      document.fullscreenEnabled ||
+      (document as any).webkitFullscreenEnabled ||
+      (document as any).mozFullScreenEnabled ||
+      (document as any).msFullscreenEnabled
+    );
+  };
 
   const checkFullscreen = () => {
     isFullscreen.value = !!(
@@ -12,6 +23,7 @@ export function useFullscreen(targetRef?: Ref<HTMLElement | null>) {
   };
 
   const toggleFullscreen = async (elementOverride?: HTMLElement | null) => {
+    if (!isFullscreenSupported.value) return;
     try {
       const target = elementOverride || targetRef?.value || document.documentElement;
       if (!isFullscreen.value) {
@@ -37,16 +49,17 @@ export function useFullscreen(targetRef?: Ref<HTMLElement | null>) {
   };
 
   const enterFullscreen = async (elementOverride?: HTMLElement | null) => {
-    if (isFullscreen.value) return;
+    if (!isFullscreenSupported.value || isFullscreen.value) return;
     await toggleFullscreen(elementOverride);
   };
 
   const exitFullscreen = async () => {
-    if (!isFullscreen.value) return;
+    if (!isFullscreenSupported.value || !isFullscreen.value) return;
     await toggleFullscreen();
   };
 
   onMounted(() => {
+    isFullscreenSupported.value = checkFullscreenSupport();
     document.addEventListener('fullscreenchange', checkFullscreen);
     document.addEventListener('webkitfullscreenchange', checkFullscreen);
     document.addEventListener('msfullscreenchange', checkFullscreen);
@@ -60,8 +73,10 @@ export function useFullscreen(targetRef?: Ref<HTMLElement | null>) {
 
   return {
     isFullscreen,
+    isFullscreenSupported,
     toggleFullscreen,
     enterFullscreen,
     exitFullscreen
   };
 }
+

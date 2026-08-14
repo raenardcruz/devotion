@@ -50,6 +50,7 @@
                                 {{ stepHeading }}
                             </span>
                             <button 
+                                v-if="isFullscreenSupported"
                                 @click="$emit('toggle-fullscreen')"
                                 class="text-parchment-neutral/50 hover:text-parchment-primary transition-colors p-1.5 rounded-full hover:bg-parchment-primary/10 cursor-pointer"
                                 :title="isFullscreen ? 'Exit Fullscreen Card (ESC)' : 'Fullscreen Card Presentation (F)'"
@@ -193,12 +194,15 @@ import InterlinearText from '../common/InterlinearText.vue';
 import prayerData from '../../data/prayers.json';
 import { getYouTubeEmbedUrl } from '../../utils/youtube';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     currentStep: RosaryStep;
     showLatin?: boolean;
     mysteryTitle?: string;
     isFullscreen?: boolean;
-}>();
+    isFullscreenSupported?: boolean;
+}>(), {
+    isFullscreenSupported: true
+});
 
 const emit = defineEmits<{
     (e: 'restart'): void;

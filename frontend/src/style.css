@@ -161,12 +161,18 @@ h6 {
   font-family: 'Cinzel', serif;
   line-height: 1.15;
   letter-spacing: -0.02em;
+  font-optical-sizing: auto;
 }
 
 h1 {
-  font-size: 3.5em;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  letter-spacing: -0.025em;
+  line-height: 1.08;
+}
+
+button, a, input, select, textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button {
@@ -179,14 +185,20 @@ button {
   background-color: var(--parchment-neutral-light);
   color: var(--parchment-neutral);
   cursor: pointer;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1), background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
   will-change: transform;
 }
 
-button:hover {
-  border-color: var(--parchment-primary);
-  background-color: #D1C7BD;
-  transform: scale(1.02);
+@media (hover: hover) {
+  button:hover {
+    border-color: var(--parchment-primary);
+    background-color: #D1C7BD;
+    transform: scale(1.02);
+  }
 }
 
 button:active {
@@ -206,8 +218,10 @@ button.btn-primary {
   border-color: transparent;
 }
 
-button.btn-primary:hover {
-  background: linear-gradient(135deg, #8B464C 0%, #453E38 100%);
+@media (hover: hover) {
+  button.btn-primary:hover {
+    background: linear-gradient(135deg, #8B464C 0%, #453E38 100%);
+  }
 }
 
 /* Global Animations - Apple-aligned spring & ease definitions */

@@ -122,6 +122,7 @@
                         :currentStep="currentStep" 
                         :showLatin="showLatin" 
                         :isFullscreen="isFullscreen"
+                        :isFullscreenSupported="isFullscreenSupported"
                         @toggle-fullscreen="toggleFullscreen(cardContainerRef)"
                     />
                 </div>
@@ -180,7 +181,7 @@ const beadInDecade = ref(0); // 0 is Eternal Father, 1-10 are Passion beads
 const swipeContainer = ref<HTMLElement | null>(null);
 const cardContainerRef = ref<HTMLElement | null>(null);
 
-const { isFullscreen, toggleFullscreen } = useFullscreen(cardContainerRef);
+const { isFullscreen, isFullscreenSupported, toggleFullscreen } = useFullscreen(cardContainerRef);
 
 // Audio State
 const currentAudio = ref<HTMLAudioElement | null>(null);
