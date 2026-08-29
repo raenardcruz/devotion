@@ -518,11 +518,12 @@ const isFirstTextPara = (idx: number): boolean => {
         leave-from-class="opacity-100" 
         leave-to-class="opacity-0"
       >
-        <div v-if="isMobileMenuOpen" class="fixed inset-0 z-50 flex justify-start lg:hidden" @click="isMobileMenuOpen = false"          <!-- Backdrop -->
+        <div v-if="isMobileMenuOpen" class="fixed inset-0 z-[100] flex justify-start lg:hidden" @click="isMobileMenuOpen = false">
+          <!-- Backdrop -->
           <div class="absolute inset-0 bg-[#322D29]/40 backdrop-blur-xs"></div>
           
           <!-- Panel Content -->
-          <div class="relative w-4/5 max-w-xs bg-white/90 backdrop-blur-md h-full shadow-2xl p-5 flex flex-col z-10 overflow-y-auto border-r border-[#D1C7BD]/60 space-y-4" @click.stop>
+          <div class="relative w-4/5 max-w-xs bg-white h-full shadow-2xl p-5 flex flex-col z-10 overflow-y-auto border-r border-[#D1C7BD] space-y-4" @click.stop>
             <div class="flex items-center justify-between pb-3 border-b border-[#D1C7BD]/60">
               <h3 class="font-serif text-base text-[#72383D] font-bold">Chapters & Progress</h3>
               <button @click="isMobileMenuOpen = false" class="p-1.5 text-[#322D29]/50 hover:text-[#72383D] rounded-lg">

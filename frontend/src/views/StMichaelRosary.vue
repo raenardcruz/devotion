@@ -47,6 +47,7 @@
 
               <!-- Fullscreen Card Toggle Button -->
               <button 
+                v-if="isFullscreenSupported"
                 @click="toggleFullscreen(cardContainerRef)"
                 class="flex items-center gap-1.5 px-3 py-1.5 bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
                 :title="isFullscreen ? 'Exit Fullscreen Card (ESC)' : 'Fullscreen Card Presentation (F)'"
@@ -435,7 +436,7 @@ watch(hasIntentions, () => {
 const swipeContainer = ref<HTMLElement | null>(null);
 const cardContainerRef = ref<HTMLElement | null>(null);
 
-const { isFullscreen, toggleFullscreen } = useFullscreen(cardContainerRef);
+const { isFullscreen, isFullscreenSupported, toggleFullscreen } = useFullscreen(cardContainerRef);
 
 // Touch Swipe navigation
 useSwipe(swipeContainer, {

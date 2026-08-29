@@ -55,7 +55,7 @@
           <div class="absolute inset-0 bg-[#322D29]/40 backdrop-blur-xs"></div>
           
           <!-- Panel Content -->
-          <div class="relative w-4/5 max-w-xs bg-white/90 backdrop-blur-md h-full shadow-2xl p-4 flex flex-col z-10 overflow-y-auto border-r border-[#D1C7BD]/60" @click.stop>
+          <div class="relative w-4/5 max-w-xs bg-white h-full shadow-2xl p-4 flex flex-col z-10 overflow-y-auto border-r border-[#D1C7BD]" @click.stop>
             <div class="flex items-center justify-between pb-3 border-b border-[#D1C7BD]/60 mb-3">
               <h3 class="font-serif text-base text-[#72383D] font-bold">Magisterium Sanctuary</h3>
               <button @click="isMobileMenuOpen = false" class="p-1.5 text-[#322D29]/50 hover:text-[#72383D] rounded-lg">
@@ -727,12 +727,8 @@ onMounted(async () => {
     }
   }
 
-  const first = chatSessions.value[0];
-  if (first) {
-    activeSessionId.value = first.id;
-  } else {
-    createNewSession();
-  }
+  // Always default to creating a new chat session when landing on the page
+  createNewSession();
 });
 
 const copyPublicShareLink = (id: string) => {

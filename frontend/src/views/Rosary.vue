@@ -13,9 +13,9 @@
           </h1>
           
           <!-- Audio Controls & Language Toggle -->
-          <div class="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 sm:gap-3.5">
+          <div class="flex flex-wrap items-center justify-start sm:justify-end gap-2 sm:gap-3">
               <!-- Auto Play Toggle Switch -->
-              <label class="flex items-center space-x-1.5 text-[10px] font-bold uppercase tracking-wider text-[#322D29]/70 cursor-pointer select-none">
+              <label class="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-[#322D29]/80 cursor-pointer select-none bg-white/70 border border-[#D1C7BD]/80 px-3 py-2 rounded-full min-h-[44px]">
                   <span>Auto-Play</span>
                   <input type="checkbox" v-model="autoPlay" class="sr-only peer" />
                   <div class="relative w-8 h-4.5 bg-white/60 border border-[#D1C7BD]/80 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-[#322D29]/40 peer-checked:after:bg-[#72383D] after:border-[#D1C7BD] after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#72383D]/20"></div>
@@ -25,12 +25,12 @@
               <button 
                 v-if="currentStep.prayerId && getPrayerAudioUrl(currentStep.prayerId)"
                 @click="toggleAudio"
-                class="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#72383D] to-[#322D29] border border-transparent text-white rounded-full hover:from-[#8B464C] hover:to-[#453E38] active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none shadow-xs cursor-pointer"
+                class="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-[#72383D] to-[#322D29] border border-transparent text-white rounded-full hover:from-[#8B464C] hover:to-[#453E38] active:scale-95 transition-all text-xs font-bold uppercase tracking-wider outline-none shadow-xs cursor-pointer min-h-[44px]"
               >
-                <svg v-if="!isPlaying" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+                <svg v-if="!isPlaying" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
                   <polygon points="6 3 20 12 6 21 6 3"></polygon>
                 </svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="18" x2="18" y1="4" y2="20"></line>
                   <line x1="6" x2="6" y1="4" y2="20"></line>
                 </svg>
@@ -40,9 +40,9 @@
               <!-- Custom Prayers Configuration Button -->
               <button 
                 @click="showSettingsModal = true"
-                class="flex items-center gap-1.5 px-3.5 py-1.5 bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
+                class="flex items-center gap-1.5 px-3.5 py-2 bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-xs font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer min-h-[44px]"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
@@ -64,37 +64,37 @@
               <!-- Fullscreen Presentation Toggle Button -->
               <button 
                 @click="toggleFullscreen(cardContainerRef)"
-                class="flex items-center gap-1.5 px-3 py-1.5 bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
+                class="flex items-center gap-1.5 px-3.5 py-2 bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-xs font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer min-h-[44px]"
                 :title="isFullscreen ? 'Exit Fullscreen Card (ESC)' : 'Fullscreen Card Presentation (F)'"
               >
-                <svg v-if="!isFullscreen" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg v-if="!isFullscreen" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="15 3 21 3 21 9"></polyline>
                   <polyline points="9 21 3 21 3 15"></polyline>
                   <line x1="21" y1="3" x2="14" y2="10"></line>
                   <line x1="3" y1="21" x2="10" y2="14"></line>
                 </svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="4 14 10 14 10 20"></polyline>
                   <polyline points="20 10 14 10 14 4"></polyline>
                   <line x1="14" y1="10" x2="21" y2="3"></line>
                   <line x1="10" y1="14" x2="3" y2="21"></line>
                 </svg>
-                <span>{{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Card' }}</span>
+                <span>{{ isFullscreen ? 'Exit' : 'Fullscreen' }}</span>
               </button>
 
               <!-- Latin/English Language Toggle -->
-              <div class="flex items-center bg-white/70 border border-[#D1C7BD]/80 p-0.5 rounded-full backdrop-blur-md">
+              <div class="flex items-center bg-white/70 border border-[#D1C7BD]/80 p-0.5 rounded-full backdrop-blur-md min-h-[44px]">
                   <button 
                     @click="showLatin = false"
                     :class="[!showLatin ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-bold' : 'text-[#322D29]/70 hover:text-[#72383D]']"
-                    class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer"
+                    class="px-3.5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer min-h-[38px]"
                   >
                     EN
                   </button>
                   <button 
                     @click="showLatin = true"
                     :class="[showLatin ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-bold' : 'text-[#322D29]/70 hover:text-[#72383D]']"
-                    class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer"
+                    class="px-3.5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer min-h-[38px]"
                   >
                     LA
                   </button>
@@ -136,6 +136,7 @@
                         :showLatin="showLatin"
                         :mysteryTitle="currentStep.mysteryTitle || getCurrentMystery(currentStep).title"
                         :isFullscreen="isFullscreen"
+                        :isFullscreenSupported="isFullscreenSupported"
                         @restart="currentStepIndex = 0"
                         @video-active="stopAudio"
                         @toggle-fullscreen="toggleFullscreen(cardContainerRef)"
@@ -394,7 +395,7 @@ const sets = Object.keys(ROSARY_DATA);
 const swipeContainer = ref<HTMLElement | null>(null);
 const cardContainerRef = ref<HTMLElement | null>(null);
 
-const { isFullscreen, toggleFullscreen } = useFullscreen(cardContainerRef);
+const { isFullscreen, isFullscreenSupported, toggleFullscreen } = useFullscreen(cardContainerRef);
 
 // Custom prayers configuration state
 const beforePrayers = ref<string[]>([]);
