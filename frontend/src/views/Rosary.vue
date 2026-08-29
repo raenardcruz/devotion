@@ -49,6 +49,18 @@
                 <span>Prayers</span>
               </button>
 
+              <!-- Prayer Intentions Button -->
+              <button 
+                @click="showIntentionsModal = true"
+                class="flex items-center gap-1.5 px-3.5 py-1.5 bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
+              >
+                <span>🙏</span>
+                <span>Intentions</span>
+                <span v-if="activeCount > 0" class="w-4 h-4 rounded-full bg-[#72383D] text-white text-[9px] flex items-center justify-center font-bold">
+                  {{ activeCount }}
+                </span>
+              </button>
+
               <!-- Fullscreen Presentation Toggle Button -->
               <button 
                 @click="toggleFullscreen(cardContainerRef)"
@@ -107,8 +119,19 @@
             <transition name="fade-slide" mode="out-in">
                 <div :key="currentSetName + currentStepIndex + (showLatin ? '-la' : '-en')" class="flex flex-col gap-6 w-full">
                     
+                    <!-- Prayer Intentions Card -->
+                    <PrayerIntentionsCard 
+                        v-if="currentStep.type === 'intentions' || currentStep.prayerId === 'prayer-intentions'"
+                        :intentions="activeIntentions"
+                        :showLatin="showLatin"
+                        :isFullscreen="isFullscreen"
+                        @toggle-fullscreen="toggleFullscreen(cardContainerRef)"
+                        @open-intentions-modal="showIntentionsModal = true"
+                    />
+
                     <!-- Verse Card -->
                     <RosaryCard 
+                        v-else
                         :currentStep="currentStep" 
                         :showLatin="showLatin"
                         :mysteryTitle="currentStep.mysteryTitle || getCurrentMystery(currentStep).title"
@@ -326,6 +349,14 @@
         </div>
       </div>
     </transition>
+
+    <!-- Prayer Intentions Modal -->
+    <PrayerIntentionsModal 
+      :isOpen="showIntentionsModal"
+      devotionKey="rosary"
+      devotionTitle="The Holy Rosary"
+      @close="showIntentionsModal = false"
+    />
   </div>
 </template>
 
@@ -334,6 +365,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useSwipe } from '../composables/useSwipe';
 import { useDate } from '../composables/useDate';
 import { useFullscreen } from '../composables/useFullscreen';
+import { usePrayerIntentions } from '../composables/usePrayerIntentions';
 import { ROSARY_DATA, generateRosarySteps, type Mystery, type RosaryStep } from '../components/rosary/rosaryData';
 import { getMysteryVisual } from '../utils/mysteryVisuals';
 import { getPrayerAudioUrl } from '../utils/audioHelper';
@@ -344,8 +376,17 @@ import BottomNav from '../components/common/BottomNav.vue';
 import AppTabs from '../components/common/AppTabs.vue';
 import RosaryBeads from '../components/rosary/RosaryBeads.vue';
 import RosaryCard from '../components/rosary/VerseCard.vue';
+import PrayerIntentionsCard from '../components/intentions/PrayerIntentionsCard.vue';
+import PrayerIntentionsModal from '../components/intentions/PrayerIntentionsModal.vue';
 import RosaryControls from '../components/rosary/RosaryControls.vue';
 
+const {
+    activeIntentions,
+    activeCount,
+    hasIntentions
+} = usePrayerIntentions('rosary');
+
+const showIntentionsModal = ref(false);
 const currentSetName = ref('Joyful');
 const currentStepIndex = ref(0);
 const showLatin = ref(false);
@@ -454,7 +495,7 @@ onMounted(() => {
     }
 });
 
-const steps = computed(() => generateRosarySteps(currentSetName.value, beforePrayers.value, afterPrayers.value));
+const steps = computed(() => generateRosarySteps(currentSetName.value, beforePrayers.value, afterPrayers.value, hasIntentions.value));
 
 const selectablePrayers = computed(() => {
     // Filter out Divine Mercy specific prayers to keep selection options clean and focused.
@@ -567,9 +608,15 @@ const onSelectBead = (index: number) => {
     }
 };
 
-// Reset index when set changes
+// Reset index when set changes or intentions change
 watch(currentSetName, () => {
     currentStepIndex.value = 0;
+});
+
+watch(hasIntentions, () => {
+    if (currentStepIndex.value >= steps.value.length) {
+        currentStepIndex.value = 0;
+    }
 });
 
 // Audio Control Functions

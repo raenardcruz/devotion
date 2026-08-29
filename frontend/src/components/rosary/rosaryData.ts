@@ -15,7 +15,7 @@ export type RosaryData = {
     [key: string]: Mystery[];
 };
 
-export type RosaryStepType = 'intro' | 'mystery-header' | 'decade-bead' | 'decade-start' | 'decade-end' | 'closing' | 'opening';
+export type RosaryStepType = 'intro' | 'mystery-header' | 'decade-bead' | 'decade-start' | 'decade-end' | 'closing' | 'opening' | 'intentions';
 
 export type RosaryStep = {
     type: RosaryStepType;
@@ -1006,13 +1006,25 @@ export const ROSARY_DATA: RosaryData = {
 export const generateRosarySteps = (
     mysterySet: string,
     beforePrayerIds: string[] = [],
-    afterPrayerIds: string[] = []
+    afterPrayerIds: string[] = [],
+    hasIntentions: boolean = false
 ): RosaryStep[] => {
     const steps: RosaryStep[] = [];
     const mysteries = ROSARY_DATA[mysterySet] || [];
 
-    // 1. Intro
+    // 1. Intro: Sign of the Cross
     steps.push({ type: 'opening', prayerId: 'sign-of-the-cross' });
+
+    // 2. Prayer Intentions (if present)
+    if (hasIntentions) {
+        steps.push({
+            type: 'intentions',
+            prayerId: 'prayer-intentions',
+            title: 'Prayer Intentions',
+            content: 'Offer your personal intentions to the Lord through the intercession of Our Lady.',
+            latin: 'Intentiones Orationis'
+        });
+    }
 
     // Prepend custom prayers
     beforePrayerIds.forEach(prayerId => {

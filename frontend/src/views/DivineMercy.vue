@@ -54,6 +54,18 @@
                     </button>
                 </div>
 
+                <!-- Prayer Intentions Button -->
+                <button 
+                  @click="showIntentionsModal = true"
+                  class="flex items-center gap-1.5 px-3.5 py-1.5 bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
+                >
+                  <span>🙏</span>
+                  <span>Intentions</span>
+                  <span v-if="activeCount > 0" class="w-4 h-4 rounded-full bg-[#72383D] text-white text-[9px] flex items-center justify-center font-bold">
+                    {{ activeCount }}
+                  </span>
+                </button>
+
                 <!-- Fullscreen Presentation Toggle Button -->
                 <button 
                   @click="toggleFullscreen(cardContainerRef)"
@@ -117,8 +129,19 @@
                         />
                     </div>
 
-                    <!-- Prayer Card -->
+                    <!-- Intentions Card or Regular Prayer Card -->
+                    <PrayerIntentionsCard 
+                        v-if="currentStep.id === 'prayer-intentions'"
+                        :intentions="activeIntentions"
+                        :showLatin="showLatin"
+                        :isFullscreen="isFullscreen"
+                        @toggle-fullscreen="toggleFullscreen(cardContainerRef)"
+                        @open-intentions-modal="showIntentionsModal = true"
+                    />
+
+                    <!-- Regular Prayer Card -->
                     <PrayerCard 
+                        v-else
                         :currentStep="currentStep" 
                         :showLatin="showLatin" 
                         :isFullscreen="isFullscreen"
@@ -155,6 +178,14 @@
 
     <!-- Global Footer -->
     <BottomNav />
+
+    <!-- Prayer Intentions Modal -->
+    <PrayerIntentionsModal 
+      :isOpen="showIntentionsModal"
+      devotionKey="divine_mercy"
+      devotionTitle="The Divine Mercy Chaplet"
+      @close="showIntentionsModal = false"
+    />
   </div>
 </template>
 
@@ -162,7 +193,8 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useSwipe } from '../composables/useSwipe';
 import { useFullscreen } from '../composables/useFullscreen';
-import { DIVINE_MERCY_STEPS as steps, type Step } from '../components/divinemercy/divineMercyData';
+import { usePrayerIntentions } from '../composables/usePrayerIntentions';
+import { generateDivineMercySteps, type Step } from '../components/divinemercy/divineMercyData';
 import { getPrayerAudioUrl } from '../utils/audioHelper';
 
 import TopNav from '../components/common/TopNav.vue';
@@ -170,8 +202,17 @@ import BottomNav from '../components/common/BottomNav.vue';
 import PhaseLabel from '../components/divinemercy/PhaseLabel.vue';
 import DivineMercyBeads from '../components/divinemercy/DivineMercyBeads.vue';
 import PrayerCard from '../components/divinemercy/PrayerCard.vue';
+import PrayerIntentionsCard from '../components/intentions/PrayerIntentionsCard.vue';
+import PrayerIntentionsModal from '../components/intentions/PrayerIntentionsModal.vue';
 import DivineMercyControls from '../components/divinemercy/DivineMercyControls.vue';
 
+const {
+    activeIntentions,
+    activeCount,
+    hasIntentions
+} = usePrayerIntentions('divine_mercy');
+
+const showIntentionsModal = ref(false);
 const currentStepIndex = ref(0);
 const decadeIndex = ref(1);
 const showLatin = ref(false);
@@ -193,22 +234,26 @@ useSwipe(swipeContainer, {
     onSwipeRight: () => prev(),
 });
 
+const steps = computed(() => generateDivineMercySteps(hasIntentions.value));
+
 const currentStep = computed((): Step => {
-    const step = steps[currentStepIndex.value];
-    if (!step) return steps[0]!; // Fallback
+    const stepList = steps.value;
+    const step = stepList[currentStepIndex.value];
+    if (!step) return stepList[0]!; // Fallback
     
     if (step.type === 'decade') {
         if (beadInDecade.value === 0) {
-            return steps[6]!; // Eternal Father step
+            return stepList.find(s => s.id === 'eternal-father') || step;
         } else {
-            return steps[7]!; // Passion step
+            return stepList.find(s => s.id === 'sorrowful-passion') || step;
         }
     }
-    return step!;
+    return step;
 });
 
 const next = () => {
-    const step = steps[currentStepIndex.value];
+    const stepList = steps.value;
+    const step = stepList[currentStepIndex.value];
     if (!step) return;
 
     if (step.type === 'decade') {
@@ -216,18 +261,20 @@ const next = () => {
             beadInDecade.value++;
         } else {
             if (isShortVersion.value || decadeIndex.value >= 5) {
-                currentStepIndex.value = 8;
+                const holyGodIdx = stepList.findIndex(s => s.id === 'holy-god');
+                currentStepIndex.value = holyGodIdx !== -1 ? holyGodIdx : stepList.length - 3;
             } else {
                 decadeIndex.value++;
                 beadInDecade.value = 0;
             }
         }
     } else {
-        if (currentStepIndex.value === 5) {
-            currentStepIndex.value = 6;
+        const decadeStartIdx = stepList.findIndex(s => s.type === 'decade');
+        if (decadeStartIdx !== -1 && currentStepIndex.value === decadeStartIdx - 1) {
+            currentStepIndex.value = decadeStartIdx;
             decadeIndex.value = 1;
             beadInDecade.value = 0;
-        } else if (currentStepIndex.value === steps.length - 1) {
+        } else if (currentStepIndex.value === stepList.length - 1) {
             currentStepIndex.value = 0;
             decadeIndex.value = 1;
             beadInDecade.value = 0;
@@ -238,6 +285,7 @@ const next = () => {
 };
 
 const prev = () => {
+    const stepList = steps.value;
     if (beadInDecade.value > 0) {
         beadInDecade.value--;
     } else if (decadeIndex.value > 1 && !isShortVersion.value) {
@@ -245,12 +293,14 @@ const prev = () => {
         beadInDecade.value = 10;
     } else {
         if (currentStepIndex.value > 0) {
-            if (currentStepIndex.value === 8) {
-                currentStepIndex.value = 6;
+            const holyGodIdx = stepList.findIndex(s => s.id === 'holy-god');
+            const decadeStartIdx = stepList.findIndex(s => s.type === 'decade');
+            if (holyGodIdx !== -1 && currentStepIndex.value === holyGodIdx) {
+                currentStepIndex.value = decadeStartIdx;
                 decadeIndex.value = isShortVersion.value ? 1 : 5;
                 beadInDecade.value = 10;
-            } else if (currentStepIndex.value === 6) {
-                currentStepIndex.value = 5;
+            } else if (decadeStartIdx !== -1 && currentStepIndex.value === decadeStartIdx) {
+                currentStepIndex.value = decadeStartIdx - 1;
             } else {
                 currentStepIndex.value--;
             }

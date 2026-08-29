@@ -30,6 +30,7 @@ const displayCategory = computed(() => {
     if (props.showLatin) {
         const catMap: Record<string, string> = {
             'Introduction': 'Introductio',
+            'Intentions': 'Intentiones',
             'Opening Prayer': 'Oratio Initialis',
             'Foundation': 'Fundamentum',
             'The Decade': 'Decas',
@@ -43,6 +44,9 @@ const displayCategory = computed(() => {
 const displayTitle = computed(() => {
     const title = props.currentStep.title;
     if (props.showLatin) {
+        if (title === 'Prayer Intentions') {
+            return 'Intentiones Orationis';
+        }
         // Find if this title is in prayers.json and has a latinName
         const prayer = prayerData.find(p => p.name === title || (p.id === 'dm-closing' && title === 'Optional Closing'));
         if (prayer && (prayer as any).latinName) {

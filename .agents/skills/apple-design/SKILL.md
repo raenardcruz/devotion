@@ -1,282 +1,303 @@
 ---
 name: apple-design
-description: Apple's approach to interface design and fluid, physical motion, translated for the web. Use when building or reviewing gesture-driven UI, spring animations, drag/swipe/sheet interactions, momentum and interruptible transitions, translucent materials and depth, typography (optical sizing, tracking, leading), reduced-motion, or the design foundations (feedback, spatial consistency, restraint) behind Apple-style interfaces.
+description: Complete Apple-inspired UI & motion design system. Combines HIG principles, fluid motion physics (springs, velocity handoff, momentum projection, interruptibility), glassmorphism, dark mode, typography (optical sizing, clamp responsive scales), 8px spacing grid, and reusable UI component standards (cards, navbars, hero sections, buttons). Use when designing, building, or auditing Apple-style interfaces, responsive layouts, animations, and components.
 ---
 
-# Apple Design
+# Apple Design System & Fluid Interface Guide
 
-How Apple builds interfaces that stop feeling like a computer and start feeling like an extension of you. This knowledge comes from Apple's WWDC design talks — chiefly *Designing Fluid Interfaces* (WWDC 2018) — distilled and translated into the web platform (CSS, Pointer Events, `requestAnimationFrame`, spring libraries like Motion/Framer Motion).
+Combine Apple's WWDC design philosophy (*Designing Fluid Interfaces*, *Principles of Great Design*, *UI Typography*) with a ready-to-use CSS design system, component patterns, and accessibility guidelines.
 
-The through-line: **an interface feels alive when motion starts from the current on-screen value, inherits the user's velocity, projects momentum forward, and can be grabbed and reversed at any instant.** Springs are the tool that makes all of this natural, because they are inherently interruptible and velocity-aware.
+---
 
-## The Core Idea
+## 1. Core Principles & Philosophy
 
-> "When we align the interface to the way we think and move, something magical happens — it stops feeling like a computer and starts feeling like a seamless extension of us."
+### The Four Human Needs
+Apple frames interface design as serving four core human needs:
+- **Safety & Predictability**: Clear state feedback, non-destructive defaults, and reliable navigation.
+- **Understanding**: Clear layout hierarchy, familiar metaphors, and spatial consistency.
+- **Achievement**: Direct manipulation, low latency, and rapid task completion.
+- **Joy**: Fluid spring motion, refined typography, translucent depth, and tactile polish.
 
-An interface is fluid when it behaves like the physical world: things respond instantly, move continuously, carry momentum, resist at boundaries, and can be redirected mid-motion. Everything below is a way to get closer to that.
+### The Eight Design Principles (WWDC 2026)
+1. **Purpose**: Make with intention; decide what *not* to build. Every feature asks for the user's time and attention.
+2. **Agency**: Keep users in control with clear paths, simple undo, and minimal confirmation friction.
+3. **Responsibility**: Protect user interest (privacy, safety, transparent disclaimers).
+4. **Familiarity**: Build on known physical and UI metaphors; maintain spatial consistency (elements enter/dismiss along symmetric paths).
+5. **Flexibility**: Adapt gracefully across screen dimensions, input modes (touch vs mouse), and accessibility settings.
+6. **Simplicity**: Strip unnecessary clutter; prioritize clarity and content hierarchy over superficial minimalism.
+7. **Craft**: Uncompromising attention to spacing, typography, alignment, contrast, and smooth transitions.
+8. **Delight**: The natural result of mastering the other seven principles.
 
-Apple frames design as serving four human needs: **safety/predictability, understanding, achievement, and joy.** Every rule here serves one of them.
+---
 
-## 1. Response — kill latency
+## 2. Fluid Motion & Physics System
 
-The moment lag appears, the feeling of directness "falls off a cliff." Response is the foundation everything else is built on.
+### Key Motion Rules
+- **Instant Response**: Respond on `pointerdown` / press, not release. Eliminate input latency.
+- **1:1 Direct Manipulation**: Dragged elements track pointer location 1:1, respecting the initial grab offset.
+- **Interruptibility**: All animations must be interruptible. Read presentation values on interrupt instead of target values.
+- **Velocity Handoff**: Pass gesture release velocity into spring animations to avoid sudden speed discontinuities.
+- **Momentum Projection**: Project endpoints based on velocity (`current + (v / 1000) * d / (1 - d)` with `d ≈ 0.998`).
+- **Rubber-banding**: Apply progressive resistance at drag boundaries instead of hard stops.
 
-- **Respond on pointer-down, not on release.** Highlight a button the instant it's pressed. Waiting for `click`/touch-up to show feedback feels dead.
-- **Be vigilant about every latency.** Audit debounces, artificial timers, transition waits, and the ~300ms tap delay. Anything on the input path that isn't essential is a regression.
-- **Feedback must be continuous *during* the interaction, not just at the end.** For a drag, slider, or drawer, update the UI 1:1 with the pointer the whole way through — never animate only when the gesture completes.
+### Spring Mechanics & Presets
+Apple frames spring physics using **Damping Ratio** (overshoot control) and **Response Time** (settle speed in seconds).
 
-```css
-/* Feedback lives on the press, and it's instant */
-.button:active {
-  transform: scale(0.97);
-  transition: transform 100ms ease-out;
-}
-```
-
-## 2. Direct manipulation — 1:1 tracking
-
-> "Touch and content should move together."
-
-When the user drags something, it must stay glued to the finger — and respect the offset from *where they grabbed it*. Snapping to the element's center on grab breaks the illusion immediately.
-
-- Use Pointer Events with `setPointerCapture` so tracking continues even when the pointer leaves the element's bounds.
-- Track a short **velocity/position history** (last few `pointermove` events), not just the current point — you'll need velocity at release.
-
-```js
-el.addEventListener('pointerdown', (e) => {
-  el.setPointerCapture(e.pointerId);
-  const grabOffset = e.clientY - el.getBoundingClientRect().top; // respect where they grabbed
-  // ...track position + timestamp history for velocity
-});
-```
-
-## 3. Interruptibility — the single most important principle
-
-> "The thought and the gesture happen in parallel."
-
-Every animation must be interruptible and redirectable at any moment. A user must be able to grab a moving element mid-flight and reverse it without waiting for the animation to finish. A closing modal the user grabs again should follow the finger — not finish closing first, then reopen.
-
-- **Never lock out input during a transition.**
-- **Always animate from the *presentation* (current) value, never the target value.** On interrupt, read the element's live on-screen transform and start the new animation from there. Starting from the logical/target value causes a visible jump.
-- **Avoid CSS transitions and `@keyframes` for anything gesture-driven** — they can't be smoothly grabbed and reversed mid-flight. Springs animate from the current value by default, which is exactly what interruption needs.
-- **When a gesture reverses, blend velocity — don't hard-cut it.** Replacing one animation with another at a reversal creates a velocity discontinuity, a "brick wall." Spring libraries that carry velocity through a re-target avoid it. (This is what iOS's *additive animations* do natively; on the web, choose a spring library that re-targets from the current velocity.)
-- **Decompose 2D motion into independent X and Y springs.** A single spring on a 2D distance desyncs when X and Y have different velocities.
-
-## 4. Behavior over animation — use springs
-
-> "Think of animation as a conversation between you and the object, not something prescribed by the interface."
-
-A pre-scripted, fixed-duration animation can't respond to new input. A spring can — new input just changes the target, and the motion stays continuous. Reach for springs for anything a user can touch.
-
-Apple deliberately replaced the physics triplet (mass/stiffness/damping) with two designer-friendly parameters. Think in these:
-
-- **Damping ratio** — controls overshoot. `1.0` = critically damped, no bounce, smooth settle. `< 1.0` = overshoots and oscillates. Lower = bouncier.
-- **Response** — how quickly the value reaches the target, in seconds. Lower = snappier. **This is not "duration"** — a spring has no fixed duration; its settle time emerges from the parameters.
-
-**Defaults:**
-- Start most UI at **damping `1.0`** (critically damped) — graceful and non-distracting.
-- Add bounce (**damping ~`0.8`**) **only when the gesture itself carried momentum** (a flick, a throw, a drag release). Overshoot on a menu that just faded in feels wrong; overshoot on a card you flicked feels right.
-
-**Concrete values Apple ships:**
-
-| Interaction | Damping | Response |
-| --- | --- | --- |
-| Move / reposition (e.g. PiP) | `1.0` | `0.4` |
-| Rotation | `0.8` | `0.4` |
-| Drawer / sheet | `0.8` | `0.3` |
-
-**Web mapping (Motion / Framer Motion):** the `bounce` + `duration` spring API maps closely to Apple's damping + response. A safe house style is `damping: 1.0` springs everywhere by default; reserve bounce for momentum-driven, physical interactions.
+| Interaction | Damping Ratio | Response Time | Bounce | Usage |
+| :--- | :---: | :---: | :---: | :--- |
+| **Default UI Transition** | `1.0` (Critically Damped) | `0.3s - 0.4s` | `0` | Standard cards, menus, page fades |
+| **Reposition / Drag Release** | `0.8 - 1.0` | `0.4s` | Minimal | Sheet drags, floating panels |
+| **Momentum / Flick** | `0.8` | `0.3s` | Subtle | Flicked cards, pull-to-refresh |
 
 ```js
+// Web Spring Example (Motion / Framer Motion)
 import { animate } from 'motion';
 
 // Critically damped default (no overshoot)
-animate(el, { y: 0 }, { type: 'spring', bounce: 0, duration: 0.4 });
+animate(element, { y: 0 }, { type: 'spring', bounce: 0, duration: 0.4 });
 
-// Momentum interaction — a little bounce, only because a flick preceded it
-animate(el, { y: target }, { type: 'spring', bounce: 0.2, duration: 0.4 });
+// Momentum flick (subtle bounce from velocity handoff)
+animate(element, { y: target }, { type: 'spring', bounce: 0.2, duration: 0.4, velocity: releaseVelocity });
 ```
 
-## 5. Velocity handoff — the seam between drag and animation
+---
 
-When a gesture ends, the animation must **continue at the finger's exact velocity**, so there's no visible seam between dragging and animating. This is the detail that most separates "fluid" from "fine."
+## 3. Color System & Dark Mode
 
-Pass the pointer's release velocity as the spring's initial velocity. Some spring APIs want **relative** velocity — normalize it by the remaining distance to the target:
-
-```
-relativeVelocity = gestureVelocity / (targetValue − currentValue)
-```
-
-Example: element at `y=50`, target `y=150` (100px to go), finger moving 50px/s → initial spring velocity = `50 / 100 = 0.5`. Framer Motion / Motion take absolute px/s velocity directly (`velocity` option), so you usually hand it the raw value.
-
-## 6. Momentum projection — animate to where the gesture is *going*
-
-> "Take a small input and make a big output."
-
-Don't snap to the nearest boundary from the *release point*. Use velocity to **project the resting position** — exactly like scroll deceleration — then snap to the target nearest that projected point. This is what makes a flick feel like it throws the element.
-
-Apple's exact projection function (from the *Designing Fluid Interfaces* sample code):
-
-```js
-// decelerationRate ≈ 0.998 for normal scroll feel; 0.99 for snappier
-function project(initialVelocity /* px/s */, decelerationRate = 0.998) {
-  return (initialVelocity / 1000) * decelerationRate / (1 - decelerationRate);
+### CSS Design Tokens
+```css
+/* Light Mode */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f7;
+  --text-primary: #1d1d1f;
+  --text-secondary: #86868b;
+  --accent-blue: #0071e3;
+  --accent-green: #30d158;
+  --border-color: rgba(0, 0, 0, 0.1);
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08), 0 16px 32px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.12);
 }
 
-const projectedEndpoint = currentPosition + project(releaseVelocity);
-const target = nearestSnapPoint(projectedEndpoint);   // choose target from the projection
-animateSpringTo(target, { velocity: releaseVelocity }); // then hand off velocity (§5)
-```
-
-Note: the physics-textbook `v²/(2·decel)` is *not* what Apple ships — use the exponential-decay form above. This is the standard behavior in good bottom-sheets and carousels (Vaul, Embla).
-
-## 7. Spatial consistency — symmetric paths, anchored origins
-
-> "If something disappears one way, we expect it to emerge from where it came."
-
-- **Enter and exit along the same path.** A panel that slides in from the right must dismiss to the right. In-from-right / out-the-bottom feels disconnected and confusing.
-- **Anchor interactions to their source.** A menu, popover, or sheet should originate from the element that triggered it — set `transform-origin` to the trigger, so the spatial relationship between button and content is obvious. (This is the same origin-awareness point as popovers scaling from their trigger, not their center.)
-- **Mirror the easing on reversible transitions** so the outbound path matches the return path (use inverse cubic-bézier control points for the two directions).
-
-## 8. Hint in the direction of the gesture
-
-Humans predict a final state from a trajectory. Intermediate motion should telegraph where things are going — Control Center modules "grow up and out toward your finger." Make the in-between frames point at the outcome, not just interpolate blindly to it.
-
-## 9. Rubber-banding — soft boundaries
-
-At an edge, resist progressively instead of stopping hard. A hard stop reads as "frozen"; continuous resistance reads as "responsive, but there's nothing more here." Apply damping that increases the further past the boundary the user drags.
-
-```js
-// The further past the bound, the less the element follows — real things slow before they stop
-function rubberband(overshoot, dimension, constant = 0.55) {
-  return (overshoot * dimension * constant) / (dimension + constant * Math.abs(overshoot));
+/* Dark Mode Overrides */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #000000;
+    --bg-secondary: #1d1d1f;
+    --text-primary: #f5f5f7;
+    --text-secondary: #a1a1a6;
+    --accent-blue: #0a84ff;
+    --border-color: rgba(255, 255, 255, 0.1);
+    
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  }
 }
 ```
 
-## 10. Gesture design details (the "feel" checklist)
+---
 
-- **Tap:** highlight on touch-*down* (instant), commit on touch-*up*. Add ~10px of hysteresis/hit padding around the target, and allow cancel-by-dragging-away and back.
-- **Drag/swipe:** require a small movement threshold (hysteresis, ~10px) before committing to a direction, then track 1:1.
-- **Detect all plausible gestures in parallel from the first move**, then confidently cancel the losers once intent is clear. Avoid recognizers that only report a *final* state (`swipeleft`-type events) — they throw away the continuous tracking you need for feedback.
-- **Minimize disambiguation delays.** Double-tap detection unavoidably delays single taps; only pay that cost where double-tap truly exists.
+## 4. Typography & Optical Sizing
 
-## 11. Frame-level smoothness
+- **System Font Stack**:
+  ```css
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', sans-serif;
+  ```
+- **Fluid Heading Scale**:
+  ```css
+  h1 {
+    font-size: clamp(2.5rem, 5vw + 1rem, 4.5rem);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.02em; /* Tight negative tracking for large titles */
+  }
+  h2 {
+    font-size: clamp(1.75rem, 3vw + 1rem, 2.75rem);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+  }
+  body {
+    font-size: 1rem;
+    line-height: 1.6;
+    letter-spacing: 0;
+  }
+  ```
+- **Typography Guidelines**:
+  - Tighten letter-spacing (`-0.02em`) on large display titles.
+  - Keep body copy letter-spacing neutral (`0`).
+  - Tighten line-height on headings (`1.05 - 1.15`), expand on body copy (`1.5 - 1.6`).
 
-Smoothness is about *what's in the frames*, not just the frame rate.
+---
 
-- Keep the per-frame positional change below the perception threshold to avoid strobing.
-- For very fast motion, a subtle **motion blur / stretch** encodes speed and reads better than a hard sharp streak.
-- `requestAnimationFrame` is the web's display-synced clock (Apple uses `CADisplayLink`). Animate only compositor-friendly properties — `transform` and `opacity` — and hint with `will-change` where motion is imminent.
-
-## 12. Materials & depth — translucency conveys hierarchy
-
-Apple uses translucent materials as a floating functional layer that brings structure without stealing focus. On the web, approximate with `backdrop-filter`.
-
-- **Build nav/toolbars/sheets as translucent layers** (`backdrop-filter: blur()` + a semi-transparent background) with content scrolling underneath — not opaque bars that consume a fixed strip.
-- **Material weight encodes hierarchy:** darker/heavier materials separate structural regions (sidebars); lighter materials draw attention to interactive elements (buttons). **Never stack a light translucent surface on another** — legibility collapses.
-- **Bigger surfaces should read as thicker:** stronger blur + a deeper shadow than small chips. Consider context-aware shadow — heavier over busy/text content for separation, lighter over plain backgrounds.
-- **Dim to focus, separate to keep flow.** A modal task pairs the surface with a dimming scrim and pushes the background back/down. A parallel, non-blocking panel uses translucency and offset *without* a scrim so the flow isn't broken. For stacked sheets, progressively dim and push back each parent layer.
-- **Vibrancy keeps text legible over changing backgrounds.** Over blurred/translucent surfaces, don't use flat gray text — use higher-contrast, slightly heavier weight, and a small letter-spacing bump. Put color on a solid layer, not the translucent foreground.
-- **Scroll edge effects, not hard dividers.** Instead of a 1px border under a sticky header, fade a small blur/gradient mask where content meets floating chrome — only where floating UI actually overlaps content.
-- **Materialize, don't just fade.** For glass/blur surfaces, animate blur radius and scale together on enter/exit, so the surface reads as a real material arriving rather than a plain opacity fade.
+## 5. Spacing Grid & Radius Tokens
 
 ```css
-.toolbar {
-  background: rgba(255, 255, 255, 0.6);
+:root {
+  /* 8px Spacing Scale */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-12: 3rem;    /* 48px */
+  --space-16: 4rem;    /* 64px */
+
+  /* Border Radius Scale */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+}
+```
+
+---
+
+## 6. Materials, Depth & Glassmorphism
+
+```css
+/* Glassmorphic Card Surface */
+.glass-card {
+  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(20px) saturate(180%);
-  border-top: 1px solid rgba(255, 255, 255, 0.4); /* bright top edge = light catching the material */
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Translucent Header Chrome */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--border-color);
 }
 ```
 
-## 13. Multimodal feedback — motion + sound + haptics
+---
 
-Three rules for combining senses (from *Designing Audio-Haptic Experiences*):
+## 7. Reusable Component Patterns
 
-1. **Causality** — it must be obvious what caused the feedback. Trigger it on the actual causal event (the toggle flipping, the item snapping home), and match its character to the action's physicality.
-2. **Harmony** — the visual, the sound, and the haptic must fire on the **same frame**. Latency between them destroys the illusion. Don't let a CSS transition lag the audio/haptic (Vibration API).
-3. **Utility** — add feedback only where it earns its place. Reserve haptics/sound for meaningful moments (success, error, commit, snap). Over-feedback trains users to ignore all of it.
+### Hero Section
+```html
+<section class="hero">
+  <div class="hero-content">
+    <h1 class="hero-title">
+      Hi, I'm <span class="gradient-text">Your Name</span>
+    </h1>
+    <p class="hero-subtitle">Creating fluid, human-centric web experiences.</p>
+    <div class="hero-actions">
+      <button class="btn btn-primary">Explore Work</button>
+      <button class="btn btn-secondary">Get in Touch</button>
+    </div>
+  </div>
+</section>
+```
 
-## 14. Reduced motion & accessibility
-
-Reduced motion doesn't mean *no* feedback — it means a gentler, non-vestibular equivalent. Respond to three independent signals and bake them into your components:
-
-- **`prefers-reduced-motion: reduce`** — replace slides/springs/parallax with short opacity **cross-fades or static transitions**. Drop elastic/overshoot. Keep opacity/color changes that aid comprehension.
-- **`prefers-reduced-transparency: reduce`** — make translucent surfaces frostier/solid: raise background opacity, drop the blur.
-- **`prefers-contrast: more`** — near-solid backgrounds with a defined, contrasting border.
-
-Also: avoid full-viewport moving backgrounds, slow looping oscillations (near 0.2 Hz / one cycle per 5s), and abrupt brightness jumps (ease dark↔light theme changes). Make large moving objects semi-transparent while they travel, and fade big surfaces out during a large reposition and back in once settled.
-
+### Interactive Project Card
 ```css
-@media (prefers-reduced-motion: reduce) {
-  .sheet { transition: opacity 200ms ease; transform: none !important; }
+.project-card {
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  background: var(--bg-secondary);
+  box-shadow: var(--shadow-md);
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
-@media (prefers-reduced-transparency: reduce) {
-  .toolbar { background: white; backdrop-filter: none; }
+
+.project-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-xl);
 }
 ```
 
-## 15. Typography — optical sizing, tracking, leading
-
-Apple designs type to change shape with size; the same discipline applies on the web. (From *The Details of UI Typography*, WWDC 2020.)
-
-- **Tracking (letter-spacing) is size-specific — never one value for all sizes.** Large display text wants *negative* tracking (letters read too far apart as they grow); small text wants slightly *positive* tracking for legibility. A fixed `letter-spacing` is wrong somewhere. Tighten headings, leave body near `0`.
-- **Leading (line-height) tracks size inversely.** Tight on large headings, looser on body copy. Increase it for scripts with tall ascenders/descenders; tighten it for dense, information-heavy UI.
-- **Build hierarchy from weight + size + leading as a set,** not size alone. Emphasize with weight — it adds presence without taking more space.
-- **Respect the user's text-size setting** (Dynamic Type). Scale layout *with* the text — spacing in `rem`/`em`, not fixed px — so a larger font doesn't break the layout.
-- **Default to the platform's system font** before a custom face; it already ships optical sizing, tracking tables, and legibility tuning. Override only with a reason.
-
+### Pill Buttons
 ```css
-:root { font: 100%/1.5 system-ui, sans-serif; } /* body: system font, comfortable leading */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px; /* Touch target minimum */
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), background-color 200ms ease;
+}
 
-.display {
-  font-size: clamp(2rem, 5vw, 4rem);
-  line-height: 1.05;        /* tight leading for large text */
-  letter-spacing: -0.02em;  /* negative tracking as it grows */
-  font-optical-sizing: auto;
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn-primary {
+  background: var(--accent-blue);
+  color: #ffffff;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--accent-blue);
+  border: 1px solid var(--accent-blue);
 }
 ```
 
-## 16. Design foundations — the eight principles
+---
 
-The motion and craft above serve Apple's eight design principles (*Principles of Great Design*, WWDC 2026). Use these as the names you reason with:
+## 8. Performance & Accessibility Guidelines
 
-1. **Purpose.** Make with intention; decide what *not* to build. Every feature asks for the user's time, attention, and trust — spend that budget only where it pays off.
-2. **Agency.** Keep people in control: offer choices, don't force a single path. Back it with forgiveness — easy undo for slips, a confirmation dialog only for genuinely destructive, irreversible actions (use sparingly; overusing it trains people to click through).
-3. **Responsibility.** Act in the user's interest. Privacy: ask at the right moment, only for what's needed, transparently. Safety: anticipate misuse and harm — especially with AI (an allergy-aware recipe app must not suggest a harmful ingredient). Add previews, confirmations, disclaimers; cut a feature whose risk outweighs its value.
-4. **Familiarity.** Build on what people already know. Use metaphors that are neither too literal nor too abstract (a trash can means delete), and honor their physics. Be consistent: things that look the same must behave the same and live in the same place (close is always top-left on macOS) so people can predict what happens next. Only break a familiar pattern if you can prove it's better — then test it, don't assume.
-5. **Flexibility.** Design for different contexts, devices, and the full range of abilities. Adapt to the platform (iPhone = quick touch; desktop = deep workflows with precise pointer control) and to the situation. Design inclusively (age, language, expertise, accessibility). When no single layout fits everyone, let people personalize — rearrange controls, hide what they don't use.
-6. **Simplicity — not minimalism.** Strip the unnecessary so the core purpose shines; burying everything in one place looks minimal but isn't simple. Be concise (plain language, no jargon, fewer steps) and clear (use hierarchy — order, spacing, contrast — so the most important thing is the most obvious). Every element earns its place; sometimes *adding* context simplifies (a video scrubber that shows time remaining). Show the common path first, advanced options one level deeper.
-7. **Craft.** Uncompromising attention to detail builds trust. Beautiful typography, colors that adapt to light/dark, clear iconography, and responsive animations that give immediate, natural feedback. Nothing is random — every spacing, timing, and alignment value is a deliberate choice you can defend. Jittery scroll, misaligned icons, and layouts that break on rotation read as carelessness. Craft needs iteration and longevity — keep evolving the design as features and hardware change.
-8. **Delight.** The result of getting the other seven right, not confetti tacked on top. Decide the emotion you want people to feel (calm, confident, excited) and reinforce it in every decision.
+### Performance Rules
+- ✅ Animate exclusively GPU-accelerated properties (`transform`, `opacity`).
+- ❌ Avoid animating layout properties (`width`, `height`, `margin`, `top`, `left`).
+- ✅ Use `will-change` only on active/imminent interactions.
 
-Tactical rules that serve these:
+### Accessibility Standards
+- **Touch Targets**: Minimum **44px x 44px** hit target for all buttons and interactive controls.
+- **Contrast**: Maintain WCAG AA minimum 4.5:1 ratio for body text against backgrounds.
+- **Reduced Motion**:
+  ```css
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    .sheet, .card {
+      transform: none !important;
+    }
+  }
+  ```
+- **Reduced Transparency**:
+  ```css
+  @media (prefers-reduced-transparency: reduce) {
+    .glass-card, .navbar {
+      backdrop-filter: none !important;
+      background: var(--bg-primary) !important;
+    }
+  }
+  ```
 
-- **Feedback comes in four kinds:** status, completion, warning, error. Confirm meaningful actions, expose ongoing status, warn before problems, validate inline (not on submit).
-- **Wayfinding.** Every screen should answer: Where am I? Where can I go? What's there? How do I get out? Never trap the user.
-- **Grouping & mapping.** Proximity implies relationship; place a control near what it affects and arrange controls to mirror what they change. If you need a label to explain a control, the mapping is weak.
-- **Direct, specific labels beat safe generic ones.** Name nav items for their contents ("Progress", "Library"), not vague umbrellas ("Home"). Specificity creates predictability.
+---
 
-## 17. Process
+## 9. AI Assistant Checklist for Apple Design
 
-- **Prototype interactively — an interactive demo is worth "a million static designs."** You discover the interface by building and playing with it; a working prototype also sets a concrete bar that prevents a mediocre final implementation.
-- **Design interaction and visuals together.** "You shouldn't be able to tell where one ends and the other begins." Motion is not a layer added after the pixels.
-- **Test with real people in real context**, and review motion with fresh eyes — play it in slow motion / frame-by-frame to catch what's invisible at full speed.
-
-## Quick Reference
-
-| Need | Technique | Concrete value |
-| --- | --- | --- |
-| Default UI spring | Critically damped, no overshoot | `damping 1.0`, `response 0.3–0.4` |
-| Momentum / flick spring | Under-damped, slight bounce | `damping ~0.8`, `response 0.3–0.4` |
-| Gesture → spring velocity | Hand off release velocity | `gestureVelocity / (target − current)` if normalized |
-| Flick landing point | Project momentum | `current + (v/1000)·d/(1−d)`, `d ≈ 0.998` |
-| Interrupt cleanly | Start from presentation (live) value | read the on-screen transform |
-| Avoid reversal "brick wall" | Carry velocity through re-target | spring that blends velocity |
-| Reversible transition | Mirror the easing curve | inverse cubic-bézier |
-| Decide reverse vs. commit | Use velocity **sign**, not position | at release |
-| 1:1 drag | Pointer Events + capture | respect the grab offset |
-| Feedback | On pointer-down, continuous | never only at the end |
-| Boundary | Rubber-band, don't hard-stop | progressive resistance |
-| Translucent chrome | `backdrop-filter` layer | content scrolls under |
-| Type tracking | Size-specific, never fixed | tighten large text (`-0.02em`), body near `0` |
-| Reduced motion | Cross-fade, not slide/spring | `@media (prefers-reduced-motion)` |
+When designing, building, or auditing Apple-inspired UIs:
+1. **Semantic HTML**: Use proper tags (`<main>`, `<section>`, `<nav>`, `<article>`, `<button>`).
+2. **Fluid Scaling**: Use `clamp()` for headings and responsive grid layouts.
+3. **Glass & Depth**: Implement semi-transparent materials with backdrop filters and layered ambient shadows.
+4. **Touch & Focus**: Ensure min 44px targets and explicit visible focus indicators (`outline`).
+5. **Spring Motion**: Use 300ms-400ms spring/ease curves and eliminate input lag.
+6. **Dark Mode & A11y**: Always provide dark mode tokens and support `prefers-reduced-motion`.
