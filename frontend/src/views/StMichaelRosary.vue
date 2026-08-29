@@ -33,6 +33,18 @@
                 <span>{{ isPlaying ? 'Pause' : 'Listen' }}</span>
               </button>
 
+              <!-- Prayer Intentions Button -->
+              <button 
+                @click="showIntentionsModal = true"
+                class="flex items-center gap-1.5 px-3.5 py-1.5 bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
+              >
+                <span>🙏</span>
+                <span>Intentions</span>
+                <span v-if="activeCount > 0" class="w-4 h-4 rounded-full bg-[#72383D] text-white text-[9px] flex items-center justify-center font-bold">
+                  {{ activeCount }}
+                </span>
+              </button>
+
               <!-- Fullscreen Card Toggle Button -->
               <button 
                 @click="toggleFullscreen(cardContainerRef)"
@@ -102,30 +114,27 @@
           <p class="text-xs md:text-sm text-[#322D29]/80 leading-relaxed">
             The Chaplet of St. Michael is a powerful prayer revealed by St. Michael the Archangel to Antonia d'Astonac. St. Michael promised that whoever honors him with these 9 salutations before Holy Communion will be escorted by an angel from each of the 9 celestial choirs.
           </p>
-          <div class="flex items-center gap-2 pt-1 text-xs text-[#72383D] font-semibold">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-            </svg>
-            <span>Promises: Escort of 9 Angels, Continual Guidance, Deliverance from Purgatory</span>
-          </div>
-
-          <!-- Official PDF Booklet Link -->
-          <div class="pt-2">
-            <a 
-              href="https://www.dropbox.com/scl/fi/jqqsamecvha2ib5i4xz6o/4-x6-e-Booklet-The-Saint-Michael-Rosary-Prayer-Chaplet-1-.pdf.pdf?rlkey=516siw7pgeuy35vcw1rf1aky2&e=1&dl=0" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#72383D]/10 border border-[#72383D]/30 text-[#72383D] rounded-full hover:bg-[#72383D]/20 transition-all text-xs font-bold"
-            >
+          <div class="pt-2 border-t border-[#D1C7BD]/40 space-y-2">
+            <div class="flex items-center gap-1.5 text-xs text-[#72383D] font-bold uppercase tracking-wider">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="12" y1="18" x2="12" y2="12"></line>
-                <line x1="9" y1="15" x2="12" y2="18"></line>
-                <line x1="15" y1="15" x2="12" y2="18"></line>
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
               </svg>
-              <span>Download Printable 4"x6" e-Booklet Guide (PDF)</span>
-            </a>
+              <span>Promises of St. Michael</span>
+            </div>
+            <ul class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-[#322D29]/85">
+              <li class="flex items-start gap-2 bg-white/60 p-2.5 rounded-xl border border-[#D1C7BD]/50">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#72383D] mt-1.5 shrink-0"></span>
+                <span><strong>Angelic Escort:</strong> Escorted to Holy Communion by an angel from each of the 9 celestial choirs.</span>
+              </li>
+              <li class="flex items-start gap-2 bg-white/60 p-2.5 rounded-xl border border-[#D1C7BD]/50">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#72383D] mt-1.5 shrink-0"></span>
+                <span><strong>Life Protection:</strong> Continual angelic assistance, guidance, and spiritual defense throughout life.</span>
+              </li>
+              <li class="flex items-start gap-2 bg-white/60 p-2.5 rounded-xl border border-[#D1C7BD]/50">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#72383D] mt-1.5 shrink-0"></span>
+                <span><strong>Deliverance:</strong> Speedy deliverance from Purgatory after death for the devotee and their relatives.</span>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
@@ -143,7 +152,18 @@
         >
           <transition name="fade-slide" mode="out-in">
             <div :key="currentIndex + (showLatin ? '-la' : '-en')" class="flex flex-col gap-4 w-full">
-              <ParchmentCard class="!p-6 md:!p-8 relative min-h-[380px] flex flex-col justify-between shadow-lg border-[#D1C7BD]">
+              <!-- Prayer Intentions Card -->
+              <PrayerIntentionsCard 
+                v-if="currentStep.id === 'prayer-intentions'"
+                :intentions="activeIntentions"
+                :showLatin="showLatin"
+                :isFullscreen="isFullscreen"
+                @toggle-fullscreen="toggleFullscreen(cardContainerRef)"
+                @open-intentions-modal="showIntentionsModal = true"
+              />
+
+              <!-- Standard Prayer Card -->
+              <ParchmentCard v-else class="!p-6 md:!p-8 relative min-h-[380px] flex flex-col justify-between shadow-lg border-[#D1C7BD]">
                 <div>
                   <div class="flex items-center justify-between border-b border-[#D1C7BD]/60 pb-3 mb-4">
                     <div>
@@ -178,32 +198,32 @@
                     @selectBead="onSelectBead"
                   />
                 </div>
-
-                <!-- Card Bottom Navigation Controls -->
-                <div class="flex items-center justify-between pt-6 border-t border-[#D1C7BD]/60 mt-4">
-                  <button 
-                    @click="prevStep" 
-                    :disabled="currentIndex === 0"
-                    class="px-4 py-2 rounded-xl bg-white border border-[#D1C7BD] text-[#322D29] font-semibold text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#D1C7BD]/20 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                    Previous
-                  </button>
-
-                  <div class="text-xs font-bold text-[#72383D]">
-                    {{ currentIndex + 1 }} / {{ steps.length }}
-                  </div>
-
-                  <button 
-                    @click="nextStep" 
-                    :disabled="currentIndex === steps.length - 1"
-                    class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#72383D] to-[#322D29] border border-transparent text-white font-semibold text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:from-[#8B464C] hover:to-[#453E38] active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
-                  >
-                    Next
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                  </button>
-                </div>
               </ParchmentCard>
+
+              <!-- Card Bottom Navigation Controls -->
+              <div class="flex items-center justify-between pt-2 px-1">
+                <button 
+                  @click="prevStep" 
+                  :disabled="currentIndex === 0"
+                  class="px-4 py-2 rounded-xl bg-white border border-[#D1C7BD] text-[#322D29] font-semibold text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#D1C7BD]/20 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                  Previous
+                </button>
+
+                <div class="text-xs font-bold text-[#72383D]">
+                  {{ currentIndex + 1 }} / {{ steps.length }}
+                </div>
+
+                <button 
+                  @click="nextStep" 
+                  :disabled="currentIndex === steps.length - 1"
+                  class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#72383D] to-[#322D29] border border-transparent text-white font-semibold text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:from-[#8B464C] hover:to-[#453E38] active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                >
+                  Next
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+              </div>
             </div>
           </transition>
 
@@ -369,6 +389,14 @@
       </div>
 
     </main>
+
+    <!-- Prayer Intentions Modal -->
+    <PrayerIntentionsModal 
+      :isOpen="showIntentionsModal"
+      devotionKey="st_michael"
+      devotionTitle="Chaplet of St. Michael the Archangel"
+      @close="showIntentionsModal = false"
+    />
   </div>
 </template>
 
@@ -377,16 +405,32 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import TopNav from '../components/common/TopNav.vue';
 import ParchmentCard from '../components/common/ParchmentCard.vue';
 import StMichaelBeads from '../components/stmichael/StMichaelBeads.vue';
+import PrayerIntentionsCard from '../components/intentions/PrayerIntentionsCard.vue';
+import PrayerIntentionsModal from '../components/intentions/PrayerIntentionsModal.vue';
+import { usePrayerIntentions } from '../composables/usePrayerIntentions';
 import prayersData from '../data/prayers.json';
 import { generateStMichaelSteps, type StMichaelStep } from '../data/stMichaelData';
 import { useSwipe } from '../composables/useSwipe';
 import { useFullscreen } from '../composables/useFullscreen';
 import { getPrayerAudioUrl } from '../utils/audioHelper';
 
+const {
+  activeIntentions,
+  activeCount,
+  hasIntentions
+} = usePrayerIntentions('st_michael');
+
+const showIntentionsModal = ref(false);
 const showLatin = ref(false);
 const currentIndex = ref(0);
 const expandedSection = ref<'intro' | 'choirs' | 'pendant' | 'concluding'>('intro');
-const steps = ref<StMichaelStep[]>(generateStMichaelSteps());
+const steps = computed<StMichaelStep[]>(() => generateStMichaelSteps(hasIntentions.value));
+
+watch(hasIntentions, () => {
+  if (currentIndex.value >= steps.value.length) {
+    currentIndex.value = 0;
+  }
+});
 
 const swipeContainer = ref<HTMLElement | null>(null);
 const cardContainerRef = ref<HTMLElement | null>(null);

@@ -18,7 +18,7 @@ export const ST_MICHAEL_PROMISES = [
   "Deliverance from Purgatory for oneself and one's deceased relatives after death."
 ];
 
-export function generateStMichaelSteps(): StMichaelStep[] {
+export function generateStMichaelSteps(hasIntentions: boolean = false): StMichaelStep[] {
   const steps: StMichaelStep[] = [];
 
   // Medal & Introductory Prayers (Beginning)
@@ -29,6 +29,17 @@ export function generateStMichaelSteps(): StMichaelStep[] {
     prayerId: 'sign-of-the-cross',
     section: 'intro'
   });
+
+  // Prayer Intentions (if present)
+  if (hasIntentions) {
+    steps.push({
+      id: 'prayer-intentions',
+      title: 'Prayer Intentions',
+      subtitle: 'Petitions offered through St. Michael & the 9 Angelic Choirs',
+      prayerId: 'prayer-intentions',
+      section: 'intro'
+    });
+  }
 
   steps.push({
     id: 'opening-our-lady',
