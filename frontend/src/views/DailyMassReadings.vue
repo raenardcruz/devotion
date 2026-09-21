@@ -79,21 +79,35 @@ const downloadLatinMassPdf = async () => {
     const parts = latinMassDate.value.split('-');
     const mmddyyyy = `${parts[1]}-${parts[2]}-${parts[0]}`;
 
+    // Attempt direct binary PDF download if a headless browser backend is running
     const response = await fetch(`/api/missa-pdf?date=${mmddyyyy}`);
-    if (!response.ok) {
-      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+    const contentType = response.headers.get('content-type') || '';
+
+    if (response.ok && contentType.includes('application/pdf')) {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Traditional_Latin_Mass_${latinMassDate.value}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      return;
     }
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Traditional_Latin_Mass_${latinMassDate.value}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
+
+    // In serverless / edge deployment (e.g. Cloudflare Pages), launch the print-ready view
+    // which triggers the browser's native vector print dialog ("Save as PDF")
+    window.open(`/api/missa-html?date=${mmddyyyy}&print=true`, '_blank');
   } catch (err: any) {
-    latinMassPdfError.value = err.message || 'Failed to download PDF';
+    // Fall back to opening the printable document directly
+    try {
+      const parts = latinMassDate.value.split('-');
+      const mmddyyyy = `${parts[1]}-${parts[2]}-${parts[0]}`;
+      window.open(`/api/missa-html?date=${mmddyyyy}&print=true`, '_blank');
+    } catch {
+      latinMassPdfError.value = err.message || 'Failed to open Latin Mass Missal';
+    }
   } finally {
     isGeneratingPdf.value = false;
   }
@@ -526,7 +540,7 @@ const availableTabs = computed(() => {
                 <span class="font-serif text-sm tracking-wide">{{ latinMassDate }}</span>
               </div>
               <p class="text-[#322D29]/75 text-[11px] leading-relaxed">
-                Connects live to <strong>divinumofficium.com</strong> to retrieve the proper prayers (Feast, Epistle, Gospel, Collect, Secret, Preface, Postcommunion) and Ordinary of the 1962 Roman Missal, typeset in an authentic two-tone Orthodox prayer book format with English rubrics.
+                Connects live to <strong>divinumofficium.com</strong> to retrieve the proper prayers (Feast, Epistle, Gospel, Collect, Secret, Preface, Postcommunion) and Ordinary of the 1962 Roman Missal, typeset in an authentic two-tone Orthodox prayer book format with English rubrics. Ready for direct preview, printing, or saving as vector PDF.
               </p>
             </div>
 
@@ -572,7 +586,7 @@ const availableTabs = computed(() => {
               >
                 <div v-if="isGeneratingPdf" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 <span v-else>☩</span>
-                <span>{{ isGeneratingPdf ? 'Generating...' : 'Download PDF' }}</span>
+                <span>{{ isGeneratingPdf ? 'Preparing...' : 'Download / Save PDF' }}</span>
               </button>
             </div>
           </div>
