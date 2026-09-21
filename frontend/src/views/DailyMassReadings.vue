@@ -56,6 +56,55 @@ const handleApplyDate = () => {
   fetchReadings();
 };
 
+// Traditional Latin Mass PDF modal state
+const isLatinMassModalOpen = ref(false);
+const latinMassDate = ref(selectedDate.value);
+const isGeneratingPdf = ref(false);
+const latinMassPdfError = ref<string | null>(null);
+
+const openLatinMassModal = () => {
+  latinMassDate.value = selectedDate.value;
+  latinMassPdfError.value = null;
+  isLatinMassModalOpen.value = true;
+};
+
+const closeLatinMassModal = () => {
+  isLatinMassModalOpen.value = false;
+};
+
+const downloadLatinMassPdf = async () => {
+  isGeneratingPdf.value = true;
+  latinMassPdfError.value = null;
+  try {
+    const parts = latinMassDate.value.split('-');
+    const mmddyyyy = `${parts[1]}-${parts[2]}-${parts[0]}`;
+
+    const response = await fetch(`/api/missa-pdf?date=${mmddyyyy}`);
+    if (!response.ok) {
+      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+    }
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Traditional_Latin_Mass_${latinMassDate.value}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  } catch (err: any) {
+    latinMassPdfError.value = err.message || 'Failed to download PDF';
+  } finally {
+    isGeneratingPdf.value = false;
+  }
+};
+
+const openPrintableLatinMass = () => {
+  const parts = latinMassDate.value.split('-');
+  const mmddyyyy = `${parts[1]}-${parts[2]}-${parts[0]}`;
+  window.open(`/api/missa-html?date=${mmddyyyy}`, '_blank');
+};
+
 const contextMarkdownOptions = {
   paragraphClass: 'mb-2 last:mb-0',
   listClass: 'list-disc pl-4 space-y-1 my-2',
@@ -150,7 +199,7 @@ const availableTabs = computed(() => {
           <p class="text-[#322D29]/70 text-sm">
             {{ formattedWeek }}
           </p>
-          <div class="mt-5 flex items-center justify-center">
+          <div class="mt-5 flex items-center justify-center gap-3 flex-wrap">
             <button
               @click="openModal"
               class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 hover:bg-white text-[#72383D] border border-[#D1C7BD] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-[#72383D]/30 active:scale-95 cursor-pointer"
@@ -162,6 +211,15 @@ const availableTabs = computed(() => {
                 <line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
               <span>Change Date</span>
+            </button>
+
+            <button
+              @click="openLatinMassModal"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#72383D] to-[#542529] hover:from-[#8B444A] hover:to-[#72383D] text-white border border-[#542529] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-[#72383D]/30 active:scale-95 cursor-pointer"
+              title="Traditional Latin Mass (Divinum Officium) PDF with Orthodox Prayer Book styling"
+            >
+              <span class="text-sm font-serif">☦</span>
+              <span>Latin Mass (PDF)</span>
             </button>
           </div>
       </header>
@@ -432,6 +490,91 @@ const availableTabs = computed(() => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      </transition>
+
+      <!-- Latin Mass Orthodox PDF Modal -->
+      <transition name="fade">
+        <div
+          v-if="isLatinMassModalOpen"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+          @click.self="closeLatinMassModal"
+        >
+          <div
+            class="w-full max-w-lg rounded-2xl border border-[#C5A059] bg-[#FDFBF7] p-6 shadow-2xl text-[#1A1715] relative overflow-hidden"
+          >
+            <!-- Decorative corner crosses -->
+            <div class="absolute top-2.5 left-3 text-[#8C1D24] text-xs font-serif select-none">☩</div>
+            <div class="absolute top-2.5 right-3 text-[#8C1D24] text-xs font-serif select-none">☩</div>
+            <div class="absolute bottom-2.5 left-3 text-[#8C1D24] text-xs font-serif select-none">☩</div>
+            <div class="absolute bottom-2.5 right-3 text-[#8C1D24] text-xs font-serif select-none">☩</div>
+
+            <div class="text-center mb-5">
+              <div class="text-[#8C1D24] text-lg mb-0.5 tracking-widest font-serif">☦ ☩ ☦</div>
+              <h3 class="text-xl font-serif font-bold text-[#8C1D24] uppercase tracking-wider">
+                Sancta Missa Tridentina
+              </h3>
+              <p class="text-[11px] font-serif text-[#C5A059] tracking-widest uppercase font-bold mt-0.5">
+                Orthodox Prayer Book Edition · Rubrics in English
+              </p>
+            </div>
+
+            <div class="bg-[#FAF6EE] border border-[#C5A059]/40 rounded-xl p-4 mb-4 text-xs space-y-2">
+              <div class="flex items-center justify-between text-[#8C1D24] font-bold">
+                <span>Selected Liturgical Date:</span>
+                <span class="font-serif text-sm tracking-wide">{{ latinMassDate }}</span>
+              </div>
+              <p class="text-[#322D29]/75 text-[11px] leading-relaxed">
+                Connects live to <strong>divinumofficium.com</strong> to retrieve the proper prayers (Feast, Epistle, Gospel, Collect, Secret, Preface, Postcommunion) and Ordinary of the 1962 Roman Missal, typeset in an authentic two-tone Orthodox prayer book format with English rubrics.
+              </p>
+            </div>
+
+            <div class="mb-4">
+              <label for="latin-mass-modal-date" class="block text-xs font-bold uppercase tracking-wider text-[#72383D] mb-1.5">
+                Change Target Date:
+              </label>
+              <input
+                id="latin-mass-modal-date"
+                v-model="latinMassDate"
+                type="date"
+                class="w-full rounded-xl border border-[#D1C7BD] bg-white px-3 py-2 text-sm text-[#322D29] shadow-xs focus:border-[#72383D] focus:outline-none focus:ring-2 focus:ring-[#72383D]/20"
+              >
+            </div>
+
+            <div v-if="latinMassPdfError" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-800">
+              {{ latinMassPdfError }}
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                @click="closeLatinMassModal"
+                class="w-full sm:w-auto px-4 py-2 bg-transparent hover:bg-[#EFE9E1] text-[#322D29]/80 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+
+              <button
+                type="button"
+                @click="openPrintableLatinMass"
+                class="w-full sm:w-auto px-4 py-2 bg-white hover:bg-[#FAF6EE] text-[#8C1D24] border border-[#C5A059] rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <span>🖨️</span>
+                <span>Preview / Print</span>
+              </button>
+
+              <button
+                type="button"
+                @click="downloadLatinMassPdf"
+                :disabled="isGeneratingPdf"
+                class="w-full sm:w-auto px-5 py-2 bg-gradient-to-r from-[#8C1D24] to-[#6E151B] hover:from-[#A0222A] hover:to-[#8C1D24] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs focus:outline-none focus:ring-2 focus:ring-[#8C1D24]/40 active:scale-95 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <div v-if="isGeneratingPdf" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span v-else>☩</span>
+                <span>{{ isGeneratingPdf ? 'Generating...' : 'Download PDF' }}</span>
+              </button>
+            </div>
           </div>
         </div>
       </transition>
