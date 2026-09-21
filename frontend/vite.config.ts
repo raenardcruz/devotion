@@ -11,9 +11,11 @@ function missaPdfPlugin(): Plugin {
         const url = new URL(req.url || '', 'http://localhost');
         if (url.pathname === '/api/missa-pdf' || url.pathname === '/api/missa-html') {
           const dateParam = url.searchParams.get('date') || 'today';
+          const autoPrint = url.searchParams.get('print') === 'true';
+
           try {
             // @ts-ignore
-            const { parseDateArg, fetchMissa, parseMissaHtml, buildHtmlDocument, renderPdfWithChrome } = await import('../scripts/generate_missa_pdf.mjs');
+            const { parseDateArg, fetchMissa, parseMissaHtml, buildHtmlDocument } = await import('./src/utils/missa');
             const { divinumDate, isoDate } = parseDateArg(dateParam);
             
             let htmlContent = '';
@@ -40,11 +42,9 @@ function missaPdfPlugin(): Plugin {
               commemoration: parsed.commemoration,
               rubricsVersion: parsed.rubricsVersion,
               items: parsed.items,
-              dateStr: formattedDate
+              dateStr: formattedDate,
+              autoPrint
             });
-
-            const tempHtmlPath = path.join('/tmp', `missa_${isoDate}.html`);
-            fs.writeFileSync(tempHtmlPath, fullHtml, 'utf8');
 
             if (url.pathname === '/api/missa-html') {
               res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -52,15 +52,31 @@ function missaPdfPlugin(): Plugin {
               return;
             }
 
-            // PDF output
-            const pdfFileName = `Traditional_Latin_Mass_${isoDate}.pdf`;
-            const rootPdfPath = path.resolve(__dirname, '..', pdfFileName);
-            await renderPdfWithChrome(tempHtmlPath, rootPdfPath);
+            // PDF output: Try headless Chrome if present, otherwise redirect to print view
+            try {
+              // @ts-ignore
+              const { renderPdfWithChrome } = await import('../scripts/generate_missa_pdf.mjs');
+              const tempHtmlPath = path.join('/tmp', `missa_${isoDate}.html`);
+              fs.writeFileSync(tempHtmlPath, fullHtml, 'utf8');
 
-            const fileData = fs.readFileSync(rootPdfPath);
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `attachment; filename="${pdfFileName}"`);
-            res.end(fileData);
+              const pdfFileName = `Traditional_Latin_Mass_${isoDate}.pdf`;
+              const rootPdfPath = path.resolve(__dirname, '..', pdfFileName);
+              await renderPdfWithChrome(tempHtmlPath, rootPdfPath);
+
+              if (fs.existsSync(rootPdfPath)) {
+                const fileData = fs.readFileSync(rootPdfPath);
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition', `attachment; filename="${pdfFileName}"`);
+                res.end(fileData);
+                return;
+              }
+            } catch (chromeErr: any) {
+              console.warn('[Missa PDF Plugin] Headless Chrome unavailable, falling back to printable layout:', chromeErr.message);
+            }
+
+            // Fallback: Redirect to printable layout with print dialog ready
+            res.writeHead(302, { Location: `/api/missa-html?date=${encodeURIComponent(dateParam)}&print=true` });
+            res.end();
           } catch (err: any) {
             console.error('[Missa PDF Plugin Error]:', err);
             res.statusCode = 500;
