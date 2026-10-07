@@ -23,7 +23,9 @@
             }
           },
           fontFamily: {
-            serif: ['"Libre Caslon Text"', 'Cinzel', 'Playfair Display', 'serif'],
+            orthodox: ['"Cinzel Decorative"', 'Cinzel', 'Marcellus', 'serif'],
+            prayer: ['Cardo', '"EB Garamond"', '"Libre Caslon Text"', 'serif'],
+            serif: ['Cardo', '"EB Garamond"', '"Libre Caslon Text"', 'Cinzel', 'Playfair Display', 'serif'],
             sans: ['"Source Sans 3"', 'Inter', 'sans-serif'],
           }
         }
@@ -31,7 +33,7 @@
     }
   </script>
   <link
-    href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;500;600;700;800;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,700&family=Inter:wght@300;400;500;600;700&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Marcellus&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&display=swap"
     rel="stylesheet">
   <style>
     body {
@@ -41,7 +43,15 @@
     }
 
     .font-serif {
-      font-family: 'Libre Caslon Text', 'Playfair Display', serif;
+      font-family: 'Cardo', 'EB Garamond', 'Libre Caslon Text', 'Playfair Display', serif;
+    }
+
+    .font-prayer {
+      font-family: 'Cardo', 'EB Garamond', 'Libre Caslon Text', serif;
+    }
+
+    .font-orthodox {
+      font-family: 'Cinzel Decorative', 'Cinzel', 'Marcellus', serif;
     }
 
     .fade-enter-active,

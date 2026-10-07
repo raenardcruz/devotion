@@ -490,7 +490,7 @@ const getSnippet = (text: string) => {
             <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
             <path d="M12 8v4l3 3"></path>
           </svg>
-          <p class="text-sm font-seriftext-parchment-neutral/50">Your Scripture history is empty.</p>
+          <p class="text-sm font-serif text-parchment-neutral/50">Your Scripture history is empty.</p>
           <p class="text-xs text-parchment-neutral/40 mt-1">Select a passage above to research its context.</p>
         </div>
 
@@ -554,7 +554,7 @@ const getSnippet = (text: string) => {
 
               <!-- Collapsed Snippet -->
               <div v-if="!expandedIds.has(item.id)" class="text-left mt-3">
-                <p class="font-seriftext-sm text-parchment-neutral/70 leading-relaxed">
+                <p class="font-serif text-sm text-parchment-neutral/70 leading-relaxed">
                   "{{ getSnippet(item.content) }}"
                 </p>
               </div>
