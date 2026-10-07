@@ -54,11 +54,14 @@
           <!-- Using Reusable Parchment Card with hover animation -->
           <ParchmentCard hover-effect class="h-full flex flex-col justify-between">
             <div>
+              <div class="flex items-center gap-1.5 mb-1.5">
+                <span class="text-xs text-[#8B1E1E]">☦</span>
+                <span v-if="prayer.latinName" class="text-xs font-serif italic text-[#8B1E1E]/80 tracking-wide">{{ prayer.latinName }}</span>
+              </div>
               <h3 class="text-xl md:text-2xl font-serif text-parchment-neutral font-medium mb-3 group-hover:text-parchment-primary-dark transition-colors">
                 {{ prayer.name }}
-                <span v-if="prayer.latinName" class="block text-xs font-sans text-parchment-neutral/40font-normal mt-1">{{ prayer.latinName }}</span>
               </h3>
-              <p class="text-parchment-neutral/70 text-sm line-clamp-3 leading-relaxed">{{ prayer.default }}</p>
+              <p class="font-serif text-parchment-neutral/70 text-sm line-clamp-3 leading-relaxed">{{ prayer.default }}</p>
             </div>
             
             <div class="mt-5 flex items-center justify-between">
@@ -125,20 +128,41 @@
         <div class="absolute inset-0 bg-parchment-neutral/30 backdrop-blur-sm transition-opacity" @click="closePrayer"></div>
         
         <!-- Modal Card Container -->
-        <div class="relative bg-parchment-bg border border-parchment-border rounded-[2.5rem] p-6 md:p-10 max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl transform transition-all">
-          <button @click="closePrayer" class="absolute top-5 right-5 text-parchment-neutral/40 hover:text-parchment-neutral transition-colors p-2 rounded-full hover:bg-parchment-neutral-light border-none shadow-none">
+        <div class="relative prayer-book-frame rounded-[2.5rem] p-6 md:p-10 max-w-2xl w-full max-h-[88vh] overflow-y-auto shadow-2xl transform transition-all">
+          <button @click="closePrayer" class="absolute top-5 right-5 text-parchment-neutral/40 hover:text-parchment-neutral transition-colors p-2 rounded-full hover:bg-parchment-neutral-light border-none shadow-none z-10">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" x2="6" y1="6" y2="18"></line>
               <line x1="6" x2="18" y1="6" y2="18"></line>
             </svg>
           </button>
           
-          <div class="flex flex-col items-center mb-8 mt-4">
-            <h2 class="text-2xl md:text-3xl font-serif text-parchment-primary-dark mb-4 text-center font-medium">
+          <div class="flex flex-col items-center mb-6 mt-2">
+            <!-- Liturgical Header & Cross -->
+            <div class="flex items-center justify-center gap-2 mb-1.5 select-none">
+              <span class="text-[#8B1E1E] text-base font-serif">☦</span>
+              <span class="orthodox-rubric-title">
+                {{ showLatin ? 'Oratio Sacra' : 'Sacred Devotion' }}
+              </span>
+              <span class="text-[#8B1E1E] text-base font-serif">☦</span>
+            </div>
+
+            <h2 class="text-2xl md:text-3xl font-orthodox text-parchment-primary-dark mb-1 text-center font-bold tracking-wide">
               {{ showLatin && selectedPrayer.latinName ? selectedPrayer.latinName : selectedPrayer.name }}
             </h2>
+
+            <p v-if="selectedPrayer.latinName && !showLatin" class="orthodox-rubric text-xs text-center mb-2">
+              {{ selectedPrayer.latinName }}
+            </p>
+            <p v-else-if="selectedPrayer.name && showLatin" class="orthodox-rubric text-xs text-center mb-2">
+              {{ selectedPrayer.name }}
+            </p>
+
+            <!-- Liturgical Divider Rule -->
+            <div class="orthodox-divider my-2">
+              <span class="orthodox-cross">☦</span>
+            </div>
             
-            <div class="flex flex-col sm:flex-row items-center gap-3">
+            <div class="flex flex-col sm:flex-row items-center gap-3 mt-1">
               <!-- Latin/English Toggle (Only if Latin exists and we are in audio mode) -->
               <div v-if="selectedPrayer.latin && selectedPlayMode === 'audio'" class="flex items-center bg-parchment-neutral-light border border-parchment-border p-0.5 rounded-full w-fit">
                 <button 
@@ -195,7 +219,7 @@
 
           <!-- Content Block -->
           <transition name="fade-content" mode="out-in">
-            <div :key="selectedPlayMode + (showLatin ? 'latin' : 'english')" class="max-w-xl mx-auto text-parchment-neutral leading-loose">
+            <div :key="selectedPlayMode + (showLatin ? 'latin' : 'english')" class="max-w-xl mx-auto text-parchment-neutral">
               <!-- Video Player -->
               <div v-if="selectedPlayMode === 'video'" class="relative w-full aspect-video rounded-2xl overflow-hidden border border-parchment-border shadow-lg my-4">
                 <iframe
@@ -208,14 +232,18 @@
                 ></iframe>
               </div>
               
-              <!-- Text Content -->
-              <p 
-                v-else
-                :class="[showLatin ? 'font-seriftext-parchment-primary-dark text-lg' : 'font-serif text-base md:text-lg text-parchment-neutral/90']" 
-                class="whitespace-pre-line text-center"
-              >
-                {{ showLatin ? selectedPrayer.latin : selectedPrayer.default }}
-              </p>
+              <!-- Text Content in Orthodox Prayer Book Style -->
+              <div v-else class="py-2">
+                <div 
+                  class="orthodox-dropcap orthodox-prayer-text whitespace-pre-line text-base md:text-lg leading-loose text-[#221D1A]"
+                  v-html="formatPrayerText(showLatin ? selectedPrayer.latin : selectedPrayer.default)"
+                ></div>
+
+                <!-- Prayer Book Tailpiece Fleuron -->
+                <div class="orthodox-divider text-xs opacity-60 mt-6">
+                  <span class="orthodox-cross text-sm">✦ ☦ ✦</span>
+                </div>
+              </div>
             </div>
           </transition>
         </div>
@@ -268,6 +296,12 @@ const selectedPlayMode = ref<'audio' | 'video'>('audio');
 const youtubeEmbedUrl = computed(() => {
   return selectedPrayer.value ? getYouTubeEmbedUrl(selectedPrayer.value.youtube) : '';
 });
+
+// Format prayer text with Orthodox prayer book rubrics (highlighting Amen in red)
+const formatPrayerText = (text?: string) => {
+  if (!text) return '';
+  return text.replace(/\bAmen\.?/g, '<span class="orthodox-amen">$&</span>');
+};
 
 // Audio Player State
 const currentAudio = ref<HTMLAudioElement | null>(null);

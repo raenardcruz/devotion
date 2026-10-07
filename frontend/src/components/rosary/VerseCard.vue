@@ -142,7 +142,7 @@
                                     :class="[
                                         isFullscreen 
                                             ? 'text-xl md:text-3xl lg:text-4xl leading-relaxed font-serif py-3 text-center' 
-                                            : 'text-base md:text-lg font-sans leading-relaxed text-parchment-neutral/90',
+                                            : 'text-base md:text-lg font-serif leading-relaxed text-parchment-neutral/90',
                                         (showLatin && currentStep.latin) ? 'font-serif text-parchment-primary-dark' : ''
                                     ]"
                                     class="whitespace-pre-line"
@@ -154,7 +154,7 @@
                                 <p 
                                     v-if="showLatin && currentStep.latin && !interlinearWords"
                                     :class="[isFullscreen ? 'mt-4 text-sm md:text-lg text-center' : 'mt-3 text-xs']"
-                                    class="font-sans text-parchment-neutral/50 italic"
+                                    class="font-serif text-parchment-neutral/60 italic"
                                 >
                                     {{ currentStep.content }}
                                 </p>
