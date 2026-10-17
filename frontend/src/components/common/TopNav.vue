@@ -21,33 +21,40 @@
       </span>
     </router-link>
 
-    <!-- Right Navigation (Desktop) & Profile -->
+    <!-- Right Navigation (Desktop) -->
     <div class="flex items-center space-x-6 md:space-x-8">
-      <nav class="hidden md:flex items-center space-x-6">
+      <nav class="hidden lg:flex items-center space-x-6">
         <router-link 
           to="/" 
-          class="text-sm font-medium tracking-wider uppercase transition-colors"
+          class="text-xs font-semibold tracking-wider uppercase transition-colors py-1"
           :class="[isHomeActive ? 'text-[#72383D] font-bold border-b-2 border-[#72383D]' : 'text-[#322D29]/70 hover:text-[#72383D]']"
         >
           Home
         </router-link>
         <router-link 
           to="/daily-readings" 
-          class="text-sm font-medium tracking-wider uppercase transition-colors"
+          class="text-xs font-semibold tracking-wider uppercase transition-colors py-1"
+          :class="[isReadingsActive ? 'text-[#72383D] font-bold border-b-2 border-[#72383D]' : 'text-[#322D29]/70 hover:text-[#72383D]']"
+        >
+          Readings
+        </router-link>
+        <router-link 
+          to="/devotions" 
+          class="text-xs font-semibold tracking-wider uppercase transition-colors py-1"
           :class="[isDevotionsActive ? 'text-[#72383D] font-bold border-b-2 border-[#72383D]' : 'text-[#322D29]/70 hover:text-[#72383D]']"
         >
           Devotions
         </router-link>
         <router-link 
           to="/bible-study" 
-          class="text-sm font-medium tracking-wider uppercase transition-colors"
+          class="text-xs font-semibold tracking-wider uppercase transition-colors py-1"
           :class="[isBibleStudyActive ? 'text-[#72383D] font-bold border-b-2 border-[#72383D]' : 'text-[#322D29]/70 hover:text-[#72383D]']"
         >
           Bible Study
         </router-link>
         <router-link 
           to="/magisterium-chat" 
-          class="text-sm font-medium tracking-wider uppercase transition-colors"
+          class="text-xs font-semibold tracking-wider uppercase transition-colors py-1"
           :class="[isMagisteriumActive ? 'text-[#72383D] font-bold border-b-2 border-[#72383D]' : 'text-[#322D29]/70 hover:text-[#72383D]']"
         >
           Magisterium
@@ -112,9 +119,7 @@
               <svg v-if="item.icon === 'home'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
               <svg v-else-if="item.icon === 'book'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path><path d="M6 6h10"></path><path d="M6 10h10"></path></svg>
               <svg v-else-if="item.icon === 'rosary'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-11-7-11S5 10.7 5 15a7 7 0 0 0 7 7z"></path><circle cx="12" cy="15" r="2"></circle></svg>
-              <svg v-else-if="item.icon === 'heart'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
               <svg v-else-if="item.icon === 'shield'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"></path><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path></svg>
-              <svg v-else-if="item.icon === 'star'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.886L4.2 9.08l4.956 3.6L7.243 18.57 12 15l4.757 3.57-1.913-5.887 4.957-3.6-5.887-.193Z"></path></svg>
               <svg v-else-if="item.icon === 'scroll'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
               <svg v-else-if="item.icon === 'context'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
               <svg v-else-if="item.icon === 'chat'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
@@ -163,7 +168,6 @@ const onTouchMove = (e: TouchEvent) => {
 
 const onTouchEnd = () => {
   const deltaX = touchCurrentX - touchStartX;
-  // If user swiped left by more than 50px, dismiss drawer
   if (deltaX < -50) {
     closeSidebar();
   }
@@ -177,23 +181,24 @@ const closeSidebar = () => {
   isSidebarOpen.value = false;
 };
 
-const devotionsRoutes = [
-  '/daily-readings',
+const devotionChildRoutes = [
+  '/devotions',
   '/rosary',
+  '/seven-sorrows',
   '/st-michael-rosary',
   '/divine-mercy',
-  '/prayers',
-  '/catechism',
-  '/resources'
+  '/prayers'
 ];
 
 const isHomeActive = computed(() => route.path === '/');
-const isDevotionsActive = computed(() => devotionsRoutes.some(path => route.path.startsWith(path)));
+const isReadingsActive = computed(() => route.path.startsWith('/daily-readings'));
+const isDevotionsActive = computed(() => devotionChildRoutes.some(path => route.path.startsWith(path)));
 const isBibleStudyActive = computed(() => route.path.startsWith('/bible-study'));
 const isMagisteriumActive = computed(() => route.path.startsWith('/magisterium-chat'));
 
 const isNavItemActive = (itemPath: string) => {
   if (itemPath === '/') return route.path === '/';
+  if (itemPath === '/devotions') return isDevotionsActive.value;
   return route.path.startsWith(itemPath);
 };
 
@@ -205,40 +210,22 @@ const navItems = [
     icon: 'home'
   },
   {
+    path: '/devotions',
+    label: 'Devotions',
+    desc: 'Rosary, Seven Sorrows, Divine Mercy & St. Michael',
+    icon: 'rosary'
+  },
+  {
     path: '/daily-readings',
     label: 'Daily Readings',
     desc: 'Reflect on today\'s liturgical scriptures',
     icon: 'book'
   },
   {
-    path: '/rosary',
-    label: 'Scriptural Rosary',
-    desc: 'Meditate on the Holy Rosary mysteries',
-    icon: 'rosary'
-  },
-  {
-    path: '/st-michael-rosary',
-    label: 'St. Michael Chaplet',
-    desc: 'Pray the Chaplet of St. Michael & the 9 Angelic Choirs',
-    icon: 'shield'
-  },
-  {
-    path: '/divine-mercy',
-    label: 'Divine Mercy Chaplet',
-    desc: 'Pray the Chaplet of Divine Mercy',
-    icon: 'heart'
-  },
-  {
     path: '/catechism',
     label: 'Catechism',
     desc: 'Explore the teachings of the Church',
     icon: 'shield'
-  },
-  {
-    path: '/prayers',
-    label: 'Traditional Prayers',
-    desc: 'Novenas, litanies, and common prayers',
-    icon: 'star'
   },
   {
     path: '/resources',

@@ -14,7 +14,7 @@ export const MYSTERY_VISUALS: Record<string, MysteryVisual> = {
     meditation: "Reflect on the joy of charity and the promptness of Mary to serve her cousin Elizabeth. Seek to bring Christ to those you meet today."
   },
   "The Nativity": {
-    image: "/images/rosary/annunciation.png",
+    image: "/images/rosary/nativity.png",
     meditation: "Ponder the poverty and humility of the stable in Bethlehem. Let the light of the newborn Savior shine in the quiet places of your heart."
   },
   "The Presentation": {
@@ -27,22 +27,34 @@ export const MYSTERY_VISUALS: Record<string, MysteryVisual> = {
   },
   // Luminous
   "The Baptism of Jesus": {
-    image: "/images/rosary/annunciation.png",
+    image: "/images/rosary/baptism.png",
     meditation: "Hear the voice of the Father declaring you as His beloved child. Renew your baptismal call to live in holiness and justice."
   },
   "The Wedding at Cana": {
     image: "/images/rosary/wedding_cana.png",
     meditation: "Do whatever He tells you. Trust in the quiet intercession of Mary, who notices every human need and points us to her Son."
   },
+  "The Wedding Feast at Cana": {
+    image: "/images/rosary/wedding_cana.png",
+    meditation: "Do whatever He tells you. Trust in the quiet intercession of Mary, who notices every human need and points us to her Son."
+  },
   "The Proclamation of the Kingdom": {
-    image: "/images/rosary/transfiguration.png",
+    image: "/images/rosary/proclamation.png",
+    meditation: "Repent and believe in the Gospel. Open your heart to the transformative power of God's mercy and extend it to those around you."
+  },
+  "Proclamation of the Kingdom": {
+    image: "/images/rosary/proclamation.png",
     meditation: "Repent and believe in the Gospel. Open your heart to the transformative power of God's mercy and extend it to those around you."
   },
   "The Transfiguration": {
-    image: "/images/rosary/annunciation.png",
+    image: "/images/rosary/transfiguration.png",
     meditation: "Gaze upon the radiant glory of Christ. Let the hope of future glory strengthen you to carry your daily crosses with faith."
   },
   "The Institution of the Eucharist": {
+    image: "/images/rosary/institution_eucharist.png",
+    meditation: "Receive the Gift of Love. Rest in the real presence of Jesus, who feeds us with His own Body and Blood to remain in us."
+  },
+  "Institution of the Eucharist": {
     image: "/images/rosary/institution_eucharist.png",
     meditation: "Receive the Gift of Love. Rest in the real presence of Jesus, who feeds us with His own Body and Blood to remain in us."
   },
@@ -51,7 +63,15 @@ export const MYSTERY_VISUALS: Record<string, MysteryVisual> = {
     image: "/images/rosary/agony_garden.png",
     meditation: "Not my will, but Yours be done. Stand with Jesus in His darkest hour of sorrow, offering Him your console and obedience."
   },
+  "Agony in the Garden": {
+    image: "/images/rosary/agony_garden.png",
+    meditation: "Not my will, but Yours be done. Stand with Jesus in His darkest hour of sorrow, offering Him your console and obedience."
+  },
   "The Scourging at the Pillar": {
+    image: "/images/rosary/scourging_pillar.png",
+    meditation: "Offer your physical trials and suffering in union with the scourged body of Christ, who bore our wounds for our salvation."
+  },
+  "Scourging at the Pillar": {
     image: "/images/rosary/scourging_pillar.png",
     meditation: "Offer your physical trials and suffering in union with the scourged body of Christ, who bore our wounds for our salvation."
   },
@@ -59,12 +79,20 @@ export const MYSTERY_VISUALS: Record<string, MysteryVisual> = {
     image: "/images/rosary/crowning_thorns.png",
     meditation: "Ponder the mockery faced by the King of Kings. Pray for humility to accept insults and the grace to crown Him Lord of your thoughts."
   },
+  "Crowning with Thorns": {
+    image: "/images/rosary/crowning_thorns.png",
+    meditation: "Ponder the mockery faced by the King of Kings. Pray for humility to accept insults and the grace to crown Him Lord of your thoughts."
+  },
   "The Carrying of the Cross": {
     image: "/images/rosary/carrying_cross.png",
     meditation: "Take up your cross daily and follow Him. Like Simon of Cyrene, be ready to help lift the burdens of others along the way."
   },
+  "Carrying of the Cross": {
+    image: "/images/rosary/carrying_cross.png",
+    meditation: "Take up your cross daily and follow Him. Like Simon of Cyrene, be ready to help lift the burdens of others along the way."
+  },
   "The Crucifixion": {
-    image: "/images/rosary/annunciation.png",
+    image: "/images/rosary/crucifixion.png",
     meditation: "Father, forgive them, for they know not what they do. Stand at the foot of the Cross with Mary and receive the depth of His saving love."
   },
   // Glorious

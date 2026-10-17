@@ -9,19 +9,27 @@
       <!-- Sub-header & Controls Row -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#D1C7BD]/60 pb-4 mb-4 gap-3.5 animate-fade-in-down">
           <div>
-            <span class="text-xs font-bold tracking-widest text-[#72383D] uppercase block mb-1">Angelic Chaplet</span>
+            <router-link 
+              to="/devotions" 
+              class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-[#72383D]/70 hover:text-[#72383D] transition-colors mb-1 group"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:-translate-x-0.5 transition-transform">
+                <path d="m15 18-6-6 6-6"/>
+              </svg>
+              <span>All Devotions</span>
+            </router-link>
             <h1 class="font-serif text-2xl md:text-3xl bg-gradient-to-r from-[#72383D] via-[#AC9C8D] to-[#322D29] bg-clip-text text-transparent font-bold">
                 Chaplet of St. Michael the Archangel
             </h1>
           </div>
           
           <!-- Controls -->
-          <div class="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 sm:gap-3.5">
+          <div class="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 sm:gap-3">
               <!-- Audio Toggle & Audio Player Button -->
               <button 
                 v-if="currentStep.prayerId && getPrayerAudioUrl(currentStep.prayerId)"
                 @click="toggleAudio"
-                class="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#72383D] to-[#322D29] border border-transparent text-white rounded-full hover:from-[#8B464C] hover:to-[#453E38] active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none shadow-xs cursor-pointer"
+                class="flex items-center gap-1.5 px-3.5 py-2 min-h-[38px] bg-gradient-to-r from-[#72383D] to-[#322D29] border border-transparent text-white rounded-full hover:from-[#8B464C] hover:to-[#453E38] active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none shadow-xs cursor-pointer"
               >
                 <svg v-if="!isPlaying" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
                   <polygon points="6 3 20 12 6 21 6 3"></polygon>
@@ -36,7 +44,7 @@
               <!-- Prayer Intentions Button -->
               <button 
                 @click="showIntentionsModal = true"
-                class="flex items-center gap-1.5 px-3.5 py-1.5 bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
+                class="flex items-center gap-1.5 px-3.5 py-2 min-h-[38px] bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
               >
                 <span>🙏</span>
                 <span>Intentions</span>
@@ -49,7 +57,7 @@
               <button 
                 v-if="isFullscreenSupported"
                 @click="toggleFullscreen(cardContainerRef)"
-                class="flex items-center gap-1.5 px-3 py-1.5 bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
+                class="flex items-center gap-1.5 px-3 py-2 min-h-[38px] bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
                 :title="isFullscreen ? 'Exit Fullscreen Card (ESC)' : 'Fullscreen Card Presentation (F)'"
               >
                 <svg v-if="!isFullscreen" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -64,7 +72,7 @@
                   <line x1="14" y1="10" x2="21" y2="3"></line>
                   <line x1="10" y1="14" x2="3" y2="21"></line>
                 </svg>
-                <span>{{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Card' }}</span>
+                <span class="hidden sm:inline">{{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' }}</span>
               </button>
 
               <!-- Latin/English Language Toggle -->
@@ -72,14 +80,14 @@
                   <button 
                     @click="showLatin = false"
                     :class="[!showLatin ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-bold' : 'text-[#322D29]/70 hover:text-[#72383D]']"
-                    class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none cursor-pointer"
+                    class="px-3.5 py-1.5 min-h-[34px] rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none cursor-pointer"
                   >
                     EN
                   </button>
                   <button 
                     @click="showLatin = true"
                     :class="[showLatin ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-bold' : 'text-[#322D29]/70 hover:text-[#72383D]']"
-                    class="px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none cursor-pointer"
+                    class="px-3.5 py-1.5 min-h-[34px] rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none cursor-pointer"
                   >
                     LA
                   </button>
@@ -398,12 +406,16 @@
       devotionTitle="Chaplet of St. Michael the Archangel"
       @close="showIntentionsModal = false"
     />
+
+    <!-- Global Footer Navigation -->
+    <BottomNav />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import TopNav from '../components/common/TopNav.vue';
+import BottomNav from '../components/common/BottomNav.vue';
 import ParchmentCard from '../components/common/ParchmentCard.vue';
 import StMichaelBeads from '../components/stmichael/StMichaelBeads.vue';
 import PrayerIntentionsCard from '../components/intentions/PrayerIntentionsCard.vue';

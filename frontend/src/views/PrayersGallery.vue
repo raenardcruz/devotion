@@ -4,8 +4,19 @@
     <TopNav />
 
     <!-- Content Area -->
-    <div class="relative z-10 max-w-6xl mx-auto px-4 py-12 w-full flex-grow">
+    <div class="relative z-10 max-w-6xl mx-auto px-4 py-8 md:py-12 w-full flex-grow">
       <header class="mb-10 text-center animate-fade-in-down">
+        <div class="mb-3">
+          <router-link 
+            to="/devotions" 
+            class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-[#72383D]/70 hover:text-[#72383D] transition-colors group"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:-translate-x-0.5 transition-transform">
+              <path d="m15 18-6-6 6-6"/>
+            </svg>
+            <span>All Devotions</span>
+          </router-link>
+        </div>
         <h1 class="text-3xl md:text-5xl font-serif text-parchment-primary-dark mb-2">Prayers Gallery</h1>
         <p class="text-parchment-neutral/60 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">A collection of traditional Catholic prayers for reflection and devotion.</p>
       </header>

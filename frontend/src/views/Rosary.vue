@@ -7,13 +7,30 @@
     <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-6 md:py-8 flex flex-col relative z-10">
       
       <!-- Sub-header & Controls Row -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#D1C7BD]/60 pb-4 mb-4 gap-3.5 animate-fade-in-down">
+      <div class="flex flex-col border-b border-[#D1C7BD]/60 pb-4 mb-4 gap-3 animate-fade-in-down">
+        <div class="flex items-center justify-between">
+          <router-link
+            to="/devotions"
+            class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#72383D]/80 hover:text-[#72383D] transition-colors group"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:-translate-x-0.5 transition-transform">
+              <path d="m15 18-6-6 6-6"/>
+            </svg>
+            <span>All Devotions</span>
+          </router-link>
+
+          <span class="text-[11px] font-bold tracking-[0.2em] text-[#72383D] uppercase hidden sm:inline">
+            Scriptural Rosary &bull; Today: {{ todayMystery }}
+          </span>
+        </div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5">
           <h1 class="font-serif text-2xl md:text-3xl bg-gradient-to-r from-[#72383D] via-[#AC9C8D] to-[#322D29] bg-clip-text text-transparent font-bold">
               {{ displaySetName }}
           </h1>
           
           <!-- Audio Controls & Language Toggle -->
-          <div class="flex flex-wrap items-center justify-start sm:justify-end gap-2 sm:gap-3">
+          <div class="flex flex-wrap items-center justify-start sm:justify-end gap-2 sm:gap-2.5">
               <!-- Auto Play Toggle Switch -->
               <label class="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-[#322D29]/80 cursor-pointer select-none bg-white/70 border border-[#D1C7BD]/80 px-3 py-2 rounded-full min-h-[44px]">
                   <span>Auto-Play</span>
@@ -52,7 +69,7 @@
               <!-- Prayer Intentions Button -->
               <button 
                 @click="showIntentionsModal = true"
-                class="flex items-center gap-1.5 px-3.5 py-1.5 bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
+                class="flex items-center gap-1.5 px-3.5 py-2 bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-xs font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer min-h-[44px]"
               >
                 <span>🙏</span>
                 <span>Intentions</span>
@@ -100,6 +117,7 @@
                   </button>
               </div>
           </div>
+        </div>
       </div>
 
       <!-- Segmented Mystery Selection Tabs -->

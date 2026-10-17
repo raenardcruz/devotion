@@ -35,10 +35,10 @@
                                 Pray Again
                             </button>
                             <router-link 
-                                to="/"
+                                to="/devotions"
                                 class="px-6 py-2.5 bg-white border border-parchment-border hover:bg-parchment-neutral-light text-parchment-neutral rounded-full transition-all duration-300 font-bold uppercase tracking-wider text-xs shadow-sm hover:scale-[1.02] cursor-pointer text-center text-decoration-none"
                             >
-                                Return Home
+                                Back to Devotions
                             </router-link>
                         </div>
                     </div>
