@@ -271,6 +271,27 @@
     "latinName": "Actus Consecrationis Sancto Michaeli Archangelo",
     "default": "Saint Michael the Archangel, invincible prince of the angelic hosts and glorious protector of the universal Church, I greet you and praise you for that splendor with which God has adorned you so richly. I thank God for the great graces he has bestowed upon you, especially to remain faithful when Lucifer and his followers rebelled, and to battle victoriously for the honor of God and the divinity of the Son of Man.\n\nSaint Michael, I consecrate to you my soul and body. I choose you as my patron and protector and entrust the salvation of my soul to your care. Be the guardian of my obligation as a child of God and of the Catholic Church as again I renounce Satan, his works and pomps. Assist me by your powerful intercession in the fulfillment of these sacred promises, so that imitating your courage and loyalty to God, and trusting in your kind help and protection, I may be victorious over the enemies of my soul and be united with God in heaven forever. Amen.",
     "latin": "Sancte Michael Archangele, invictissime princeps caelestium exercituum et gloriose protector universalis Ecclesiae, te saluto et te laudo propter illum splendorem quo Deus te tam divite ornavit. Gratias ago Deo pro magnis gratiis quas tibi largitus est, praesertim ut fidelis maneres cum Lucifer et eius sequaces rebellarunt, et ad victoriositer pugnandum pro honore Dei et divinitate Filii Hominis.\n\nSancte Michael, consecro tibi animam et corpus meum. Eligo te in patronum et protectorem meum et salutem animae meae meae curae committo. Esto custos obligationis meae ut filii Dei et Catholicae Ecclesiae dum iterum renuntio Satanae, operibus et pompis eius. Adiuva me tua potenti intercessione in impletione harum sacrarum promissionum, ut imitans tuam fortitudinem et fidelitatem erga Deum, et confidens in tuo benigno auxilio et praesidio, victor evadam de inimicis animae meae et coniungar cum Deo in caelo in aeternum. Amen."
+  },
+  {
+    "id": "seven-sorrows-opening",
+    "name": "Seven Sorrows - Opening Offering",
+    "latinName": "Oblatio Initialis Septem Dolorum",
+    "default": "My God, I offer You this Rosary for Your glory, so I can honor Your Holy Mother, the Blessed Virgin, so I can share and meditate upon her suffering. I humbly beg You to give me true repentance for all my sins. Give me wisdom and humility, so that I may receive all the indulgences contained in this prayer. Amen.",
+    "latin": "Deus meus, offero Tibi hoc Rosarium ad gloriam Tuam, ut Sanctam Matrem Tuam, Beatam Virginem, honorem, eiusque dolores participem ac mediter. Humiliter Te deprecor ut veram omnium peccatorum meorum paenitentiam mihi tribuas. Da mihi sapientiam et humilitatem, ut omnes indulgentias huic orationi adnexas percipere valeam. Amen."
+  },
+  {
+    "id": "seven-sorrows-invocation",
+    "name": "Seven Sorrows - Marian Invocation",
+    "latinName": "Invocatio Matris Dolorosae",
+    "default": "V. Most Merciful Mother, remind us always about the sorrows of your Son.\nR. Holy Mother, pierce me through, in my heart each wound renew, of my Savior crucified.",
+    "latin": "V. Mater misericordissima, cordibus nostris affige Iesu crucifixi plagas.\nR. Sancta Mater, istud agas, crucifixi fige plagas cordi meo valide."
+  },
+  {
+    "id": "seven-sorrows-closing",
+    "name": "Concluding Prayer of the Seven Sorrows",
+    "latinName": "Oratio Conclusiva Septem Dolorum",
+    "default": "V. Pray for us, O Most Sorrowful Virgin.\nR. That we may be made worthy of the promises of Christ.\n\nLet us pray:\nLord Jesus, we now implore, both for the present and for the hour of our death, the intercession of the Most Blessed Virgin Mary, Thy Mother, whose holy soul was pierced at the time of Thy passion by a sword of grief. Grant us this favor, O Savior of the world, Who livest and reignest with the Father and the Holy Spirit forever and ever. Amen.",
+    "latin": "V. Ora pro nobis, Virgo dolorosissima.\nR. Ut digni efficiamur promissionibus Christi.\n\nOremus:\nInterveniat pro nobis, quaesumus, Domine Iesu Christe, nunc et in hora mortis nostrae, apud tuam clementiam Beata Virgo Maria, Mater tua, cuius sacratissimam animam in hora tuae Passionis doloris gladius pertransivit. Per Te, Iesu Christe, Salvator mundi, qui cum Patre et Spiritu Sancto vivis et regnas in saecula saeculorum. Amen."
   }
 ]
 

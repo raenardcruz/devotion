@@ -1,6 +1,8 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import Home from '../views/Home.vue'
+import Devotions from '../views/Devotions.vue'
 import Rosary from '../views/Rosary.vue'
+import SevenSorrows from '../views/SevenSorrows.vue'
 import StMichaelRosary from '../views/StMichaelRosary.vue'
 import DivineMercy from '../views/DivineMercy.vue'
 import PrayersGallery from '../views/PrayersGallery.vue'
@@ -13,21 +15,37 @@ import Admin from '../views/Admin.vue'
 
 const router = createRouter({
     history: createWebHashHistory(),
+    scrollBehavior(_to, _from, savedPosition) {
+        if (savedPosition) {
+            return savedPosition
+        }
+        return { top: 0, behavior: 'smooth' }
+    },
     routes: [
-        {
-            path: '/daily-readings',
-            name: 'DailyMassReadings',
-            component: DailyMassReadings
-        },
         {
             path: '/',
             name: 'Home',
             component: Home
         },
         {
+            path: '/devotions',
+            name: 'Devotions',
+            component: Devotions
+        },
+        {
+            path: '/daily-readings',
+            name: 'DailyMassReadings',
+            component: DailyMassReadings
+        },
+        {
             path: '/rosary',
             name: 'Rosary',
             component: Rosary
+        },
+        {
+            path: '/seven-sorrows',
+            name: 'SevenSorrows',
+            component: SevenSorrows
         },
         {
             path: '/st-michael-rosary',

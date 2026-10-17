@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue';
 
-export type DevotionKey = 'divine_mercy' | 'rosary' | 'st_michael';
+export type DevotionKey = 'divine_mercy' | 'rosary' | 'st_michael' | 'seven_sorrows';
 
 export interface PrayerCategory {
   id: string;

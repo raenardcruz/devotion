@@ -134,7 +134,7 @@ export const ROSARY_DATA: RosaryData = {
             "title": "The Nativity",
             "description": "Jesus is born in a stable in Bethlehem.",
             "virtues": ["Poverty of Spirit", "Detachment"],
-            "image": "/images/rosary/annunciation.png",
+            "image": "/images/rosary/nativity.png",
             "verses": [
                 {
                     "text": "And Joseph also went up from Galilee, from the city of Nazareth, to Judea, to the city of David, which is called Bethlehem, because he was of the house and lineage of David,",
@@ -280,7 +280,7 @@ export const ROSARY_DATA: RosaryData = {
             "title": "The Baptism of Jesus",
             "description": "Jesus is baptized by John in the Jordan, and the Holy Spirit descends upon Him.",
             "virtues": ["Fidelity to Baptismal Vows", "Openness to the Holy Spirit"],
-            "image": "/images/rosary/annunciation.png",
+            "image": "/images/rosary/baptism.png",
             "verses": [
                 {
                     "text": "John the baptizer appeared in the wilderness, preaching a baptism of repentance for the forgiveness of sins.",
@@ -376,7 +376,7 @@ export const ROSARY_DATA: RosaryData = {
             "title": "Proclamation of the Kingdom",
             "description": "Jesus announces the coming of the Kingdom of God and calls all to conversion.",
             "virtues": ["Repentance", "Conversion of Heart"],
-            "image": "/images/rosary/transfiguration.png",
+            "image": "/images/rosary/proclamation.png",
             "verses": [
                 {
                     "text": "Now after John was arrested, Jesus came into Galilee, preaching the gospel of God,",
@@ -424,7 +424,7 @@ export const ROSARY_DATA: RosaryData = {
             "title": "The Transfiguration",
             "description": "Jesus is transfigured on Mount Tabor, revealing His divine glory.",
             "virtues": ["Desire for Holiness", "Spiritual Courage"],
-            "image": "/images/rosary/annunciation.png",
+            "image": "/images/rosary/transfiguration.png",
             "verses": [
                 {
                     "text": "And after six days Jesus took with him Peter and James and John his brother, and led them up a high mountain apart.",
@@ -714,7 +714,7 @@ export const ROSARY_DATA: RosaryData = {
             "title": "The Crucifixion",
             "description": "Jesus is nailed to the cross and dies for our salvation.",
             "virtues": ["Salvation", "Self-Sacrifice for Love of God"],
-            "image": "/images/rosary/annunciation.png",
+            "image": "/images/rosary/crucifixion.png",
             "verses": [
                 {
                     "text": "And when they came to the place which is called The Skull, there they crucified him, and the criminals, one on the right and one on the left.",
