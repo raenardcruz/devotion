@@ -235,6 +235,15 @@ const availableTabs = computed(() => {
               <span class="text-sm font-serif">☦</span>
               <span>Latin Mass (PDF)</span>
             </button>
+
+            <a
+              :href="`/kindle?date=${selectedDate}`"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 hover:bg-white text-[#322D29] border border-[#D1C7BD] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-[#72383D]/30 active:scale-95 cursor-pointer"
+              title="Simplified E-Ink / Kindle Edition without animations"
+            >
+              <span>📖</span>
+              <span>Kindle View</span>
+            </a>
           </div>
       </header>
 

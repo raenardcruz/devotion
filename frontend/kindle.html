@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/cross.png" />
+  <title>Daily Readings (Kindle Edition) — Faith and Devotion</title>
+  <style>
+    /* Strict E-Ink optimization: zero animations, zero transitions, high-contrast black on white */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      animation: none !important;
+      transition: none !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #ffffff;
+      color: #000000;
+      font-family: Bookerly, Georgia, "Cardo", "EB Garamond", "Times New Roman", serif;
+      line-height: 1.6;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    .kindle-page {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 12px 16px 48px 16px;
+      font-size: 20px;
+    }
+
+    .kindle-header {
+      border-bottom: 2px solid #000000;
+      padding-bottom: 14px;
+      margin-bottom: 20px;
+    }
+
+    .kindle-topbar {
+      padding-bottom: 10px;
+      border-bottom: 1px solid #000000;
+      overflow: hidden;
+    }
+
+    .kindle-brand {
+      float: left;
+      font-size: 0.85em;
+      padding: 4px 0;
+    }
+
+    .kindle-tag {
+      font-family: sans-serif;
+      font-size: 0.75em;
+      border: 1px solid #000000;
+      padding: 1px 6px;
+      margin-left: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .kindle-font-controls {
+      float: right;
+    }
+
+    .kindle-btn {
+      background-color: #ffffff;
+      color: #000000;
+      border: 1.5px solid #000000;
+      padding: 5px 10px;
+      font-family: sans-serif;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      line-height: 1.2;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+
+    .kindle-btn:first-child {
+      margin-left: 0;
+    }
+
+    .kindle-btn-primary {
+      background-color: #000000;
+      color: #ffffff;
+    }
+
+    .kindle-title-block {
+      padding: 14px 0 10px 0;
+      text-align: center;
+      clear: both;
+    }
+
+    .kindle-kicker {
+      font-family: sans-serif;
+      font-size: 0.65em;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 4px;
+    }
+
+    .kindle-h1 {
+      font-size: 1.5em;
+      font-weight: bold;
+      margin: 0;
+      line-height: 1.25;
+      color: #000000;
+    }
+
+    .kindle-date-bar {
+      padding: 10px 0;
+      border-top: 1px solid #000000;
+      overflow: hidden;
+    }
+
+    .kindle-date-nav {
+      float: left;
+      margin-bottom: 6px;
+    }
+
+    .kindle-date-form {
+      float: right;
+    }
+
+    .kindle-label {
+      font-family: sans-serif;
+      font-size: 12px;
+      font-weight: bold;
+      margin-right: 4px;
+    }
+
+    .kindle-input {
+      border: 1.5px solid #000000;
+      background-color: #ffffff;
+      color: #000000;
+      padding: 4px 8px;
+      font-family: sans-serif;
+      font-size: 13px;
+      width: 135px;
+      vertical-align: middle;
+    }
+
+    .kindle-jump-nav {
+      clear: both;
+      border-top: 1px solid #000000;
+      padding-top: 10px;
+      margin-top: 4px;
+      font-family: sans-serif;
+      font-size: 13px;
+      line-height: 2;
+    }
+
+    .kindle-jump-label {
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      margin-right: 6px;
+    }
+
+    .kindle-jump-link {
+      color: #000000;
+      text-decoration: underline;
+      font-weight: bold;
+      padding: 3px 8px;
+      border: 1px solid #000000;
+      background-color: #f5f5f5;
+      margin-right: 6px;
+      display: inline-block;
+      line-height: 1.3;
+    }
+
+    .kindle-status-box {
+      border: 2px solid #000000;
+      padding: 20px;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .kindle-small {
+      font-size: 0.85em;
+    }
+
+    .kindle-section {
+      border-bottom: 2px solid #000000;
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+    }
+
+    .kindle-section-header {
+      border-bottom: 1px solid #000000;
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+
+    .kindle-section-meta {
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+
+    .kindle-section-type {
+      float: left;
+      font-family: sans-serif;
+      font-size: 0.65em;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .kindle-badge {
+      float: right;
+      font-family: sans-serif;
+      font-size: 11px;
+      font-weight: bold;
+      border: 1px solid #000000;
+      padding: 1px 6px;
+      background-color: #f5f5f5;
+    }
+
+    .kindle-citation-row {
+      clear: both;
+      overflow: hidden;
+      padding-top: 2px;
+    }
+
+    .kindle-h2 {
+      float: left;
+      font-size: 1.25em;
+      font-weight: bold;
+      margin: 0;
+      color: #000000;
+    }
+
+    .kindle-top-link {
+      float: right;
+      font-family: sans-serif;
+      font-size: 12px;
+      font-weight: bold;
+      color: #000000;
+      text-decoration: underline;
+      padding-top: 4px;
+    }
+
+    .kindle-scripture-text {
+      white-space: pre-line;
+      font-size: 1em;
+      line-height: 1.65;
+      margin-bottom: 18px;
+    }
+
+    .kindle-psalm-text {
+      line-height: 1.75;
+    }
+
+    .kindle-meditation-box {
+      border: 1.5px solid #000000;
+      border-left-width: 5px;
+      padding: 14px 16px;
+      margin-top: 16px;
+      background-color: #fafafa;
+    }
+
+    .kindle-meditation-header {
+      overflow: hidden;
+      border-bottom: 1px solid #000000;
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+    }
+
+    .kindle-h3 {
+      float: left;
+      font-family: sans-serif;
+      font-size: 0.75em;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 0;
+    }
+
+    .kindle-meditation-body {
+      clear: both;
+      font-size: 0.92em;
+      line-height: 1.55;
+    }
+
+    .kindle-md-p {
+      margin: 0 0 10px 0;
+    }
+
+    .kindle-md-p:last-child {
+      margin-bottom: 0;
+    }
+
+    .kindle-md-ul {
+      margin: 8px 0;
+      padding-left: 20px;
+      list-style-type: disc;
+    }
+
+    .kindle-md-li {
+      margin-bottom: 6px;
+    }
+
+    .kindle-md-h {
+      font-weight: bold;
+      margin: 12px 0 6px 0;
+      font-size: 1em;
+    }
+
+    .kindle-citations-wrapper {
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px solid #000000;
+    }
+
+    .kindle-citations-toggle {
+      width: 100%;
+      text-align: left;
+      padding: 8px 10px;
+      background-color: #ffffff;
+      margin-left: 0;
+      overflow: hidden;
+    }
+
+    .kindle-citations-toggle-left {
+      float: left;
+    }
+
+    .kindle-citations-toggle-right {
+      float: right;
+    }
+
+    .kindle-citations-list {
+      margin-top: 10px;
+    }
+
+    .kindle-citation-item {
+      border: 1px solid #000000;
+      background-color: #ffffff;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      font-size: 0.85em;
+    }
+
+    .kindle-citation-item-header {
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+
+    .kindle-ref-tag {
+      float: right;
+      font-family: monospace;
+      font-size: 0.9em;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+
+    .kindle-citation-author {
+      font-style: italic;
+      margin-bottom: 6px;
+      clear: both;
+    }
+
+    .kindle-citation-quote {
+      margin: 6px 0;
+      padding-left: 10px;
+      border-left: 3px solid #000000;
+    }
+
+    .kindle-citation-link-wrap {
+      margin-top: 6px;
+    }
+
+    .kindle-link {
+      color: #000000;
+      font-weight: bold;
+      text-decoration: underline;
+    }
+
+    .kindle-source-note {
+      font-family: sans-serif;
+      font-size: 0.7em;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-top: 1px solid #000000;
+      padding-top: 8px;
+      margin-top: 12px;
+    }
+
+    .kindle-pastoral-box {
+      border: 1.5px solid #000000;
+      padding: 14px 16px;
+      text-align: center;
+      margin-top: 24px;
+    }
+
+    .kindle-pastoral-title {
+      font-family: sans-serif;
+      font-size: 0.7em;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .kindle-pastoral-text {
+      font-size: 0.88em;
+      margin: 0 0 6px 0;
+    }
+
+    .kindle-pastoral-sub {
+      font-family: sans-serif;
+      font-size: 0.65em;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .kindle-footer {
+      margin-top: 20px;
+      text-align: center;
+      font-family: sans-serif;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 560px) {
+      .kindle-brand,
+      .kindle-font-controls,
+      .kindle-date-nav,
+      .kindle-date-form {
+        float: none;
+        display: block;
+        margin-bottom: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="kindle-top" class="kindle-page">
+    <header class="kindle-header">
+      <div class="kindle-topbar">
+        <div class="kindle-brand">
+          <strong>&#9766; Faith &amp; Devotion</strong>
+          <span class="kindle-tag">Kindle / E-Ink</span>
+        </div>
+        <div class="kindle-font-controls">
+          <button type="button" class="kindle-btn" id="btn-font-dec" title="Decrease font size">A&minus;</button>
+          <button type="button" class="kindle-btn" id="btn-font-reset" title="Reset font size">20px</button>
+          <button type="button" class="kindle-btn" id="btn-font-inc" title="Increase font size">A+</button>
+          <a href="/#/daily-readings" class="kindle-btn">Standard View</a>
+        </div>
+      </div>
+
+      <div class="kindle-title-block">
+        <div class="kindle-kicker">Daily Mass Readings &amp; Meditations</div>
+        <h1 class="kindle-h1" id="liturgical-date-heading">Loading Date...</h1>
+      </div>
+
+      <div class="kindle-date-bar">
+        <div class="kindle-date-nav">
+          <button type="button" class="kindle-btn" id="btn-prev-day">&larr; Prev Day</button>
+          <button type="button" class="kindle-btn" id="btn-today">Today</button>
+          <button type="button" class="kindle-btn" id="btn-next-day">Next Day &rarr;</button>
+        </div>
+        <form class="kindle-date-form" id="date-form">
+          <label for="kindle-date-input" class="kindle-label">Date:</label>
+          <input id="kindle-date-input" type="date" placeholder="YYYY-MM-DD" class="kindle-input" />
+          <button type="submit" class="kindle-btn kindle-btn-primary">Go</button>
+        </form>
+      </div>
+
+      <nav class="kindle-jump-nav" id="jump-nav" style="display: none;" aria-label="Jump to reading"></nav>
+    </header>
+
+    <main id="kindle-main">
+      <div class="kindle-status-box">
+        <p><strong>Loading the liturgy...</strong></p>
+        <p class="kindle-small">Please wait while readings and meditations are retrieved.</p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      var ENV_BASE_URL = "__VITE_API_BASE_URL__";
+      var ENV_API_TOKEN = "__VITE_API_TOKEN__";
+
+      function getApiBaseUrl() {
+        var base = ENV_BASE_URL;
+        if (!base || base.indexOf("__VITE_") === 0 || (base.indexOf("http://") !== 0 && base.indexOf("https://") !== 0 && base.indexOf("/") !== 0)) {
+          base = "https://devotionapi.raenardcruz.com";
+        }
+        return base.replace(/\/$/, "");
+      }
+
+      function getApiToken() {
+        if (!ENV_API_TOKEN || ENV_API_TOKEN.indexOf("__VITE_") === 0) {
+          return "";
+        }
+        return ENV_API_TOKEN;
+      }
+
+      function pad2(n) {
+        return n < 10 ? "0" + n : "" + n;
+      }
+
+      function getLocalISOString(dateObj) {
+        var d = dateObj || new Date();
+        return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+      }
+
+      function formatReadableDate(isoStr) {
+        var parts = isoStr.split("-");
+        if (parts.length !== 3) return isoStr;
+        var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), 12, 0, 0);
+        if (isNaN(d.getTime())) return isoStr;
+        var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        return days[d.getDay()] + ", " + months[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear();
+      }
+
+      function getQueryDate() {
+        var search = window.location.search || "";
+        var match = search.match(/[?&]date=(\d{4}-\d{2}-\d{2})/);
+        if (match && match[1]) return match[1];
+        return getLocalISOString(new Date());
+      }
+
+      function escapeHtml(str) {
+        if (!str) return "";
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      function cleanContext(contextStr) {
+        if (!contextStr) return "";
+        return String(contextStr).replace(/<details[\s\S]*?<\/details>/gi, "").replace(/^\s+|\s+$/g, "");
+      }
+
+      function renderMarkdown(md) {
+        if (!md) return "";
+        var html = escapeHtml(md);
+
+        html = html.replace(/^### (.*?)$/gm, '<div class="kindle-md-h">$1</div>');
+        html = html.replace(/^## (.*?)$/gm, '<div class="kindle-md-h">$1</div>');
+        html = html.replace(/^# (.*?)$/gm, '<div class="kindle-md-h">$1</div>');
+
+        html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+        html = html.replace(/__(.*?)__/g, "<strong>$1</strong>");
+        html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
+        html = html.replace(/_(.*?)_/g, "<em>$1</em>");
+        html = html.replace(/`(.*?)`/g, "<code>$1</code>");
+        html = html.replace(/^&gt; (.*?)$/gm, '<blockquote class="kindle-citation-quote">$1</blockquote>');
+
+        html = html
+          .replace(/&lt;strong(.*?)&gt;/g, "<strong$1>")
+          .replace(/&lt;\/strong&gt;/g, "</strong>")
+          .replace(/&lt;br\s*\/?&gt;/g, "<br/>");
+
+        var lines = html.split("\n");
+        var inList = false;
+        var out = [];
+
+        for (var i = 0; i < lines.length; i++) {
+          var trimmed = lines[i].replace(/^\s+|\s+$/g, "");
+          var listMatch = trimmed.match(/^[\*\-]\s+(.*)$/);
+          if (listMatch) {
+            if (!inList) {
+              out.push('<ul class="kindle-md-ul">');
+              inList = true;
+            }
+            out.push('<li class="kindle-md-li">' + listMatch[1] + "</li>");
+            continue;
+          } else if (inList) {
+            out.push("</ul>");
+            inList = false;
+          }
+
+          if (trimmed === "") continue;
+
+          if (
+            trimmed.indexOf("<div") === 0 ||
+            trimmed.indexOf("<blockquote") === 0 ||
+            trimmed.indexOf("<ul") === 0
+          ) {
+            out.push(trimmed);
+          } else {
+            out.push('<p class="kindle-md-p">' + trimmed + "</p>");
+          }
+        }
+        if (inList) out.push("</ul>");
+        return out.join("\n");
+      }
+
+      function extractCitations(reading) {
+        if (!reading) return [];
+        if (reading.citations && reading.citations.length > 0) {
+          return reading.citations;
+        }
+        if (reading.context && reading.context.indexOf("<details") !== -1) {
+          var list = [];
+          var detailsMatch = reading.context.match(/<details[\s\S]*?<\/details>/i);
+          if (detailsMatch) {
+            var detailsContent = detailsMatch[0];
+            var regex = /\*\*\d+\.\s*(.*?)\*\*(?:\s*—\s*\*?(.*?)\*?)?(?:\s*\((.*?)\))?\s*\n(?:>\s*(.*?)(?=\n\n|\n\*\*|\n<\/details>|$))/g;
+            var m;
+            while ((m = regex.exec(detailsContent)) !== null) {
+              list.push({
+                title: m[1] ? m[1].replace(/^\s+|\s+$/g, "") : "",
+                document_title: m[1] ? m[1].replace(/^\s+|\s+$/g, "") : "",
+                author: m[2] ? m[2].replace(/^\s+|\s+$/g, "") : "",
+                ref: m[3] ? m[3].replace(/^\s+|\s+$/g, "") : "",
+                text: m[4] ? m[4].replace(/^\s+|\s+$/g, "") : ""
+              });
+            }
+          }
+          return list;
+        }
+        return [];
+      }
+
+      // Font size management
+      var FONT_KEY = "kindle_readings_font_size";
+      var currentFontSize = 20;
+      var pageEl = document.getElementById("kindle-top");
+      var btnReset = document.getElementById("btn-font-reset");
+
+      function applyFontSize(size) {
+        currentFontSize = size;
+        if (pageEl) pageEl.style.fontSize = size + "px";
+        if (btnReset) btnReset.innerHTML = size + "px";
+        try {
+          localStorage.setItem(FONT_KEY, String(size));
+        } catch (e) {}
+      }
+
+      try {
+        var savedSize = parseInt(localStorage.getItem(FONT_KEY) || "20", 10);
+        if (!isNaN(savedSize) && savedSize >= 14 && savedSize <= 34) {
+          applyFontSize(savedSize);
+        }
+      } catch (e) {}
+
+      document.getElementById("btn-font-dec").onclick = function () {
+        if (currentFontSize > 14) applyFontSize(currentFontSize - 2);
+      };
+      document.getElementById("btn-font-inc").onclick = function () {
+        if (currentFontSize < 34) applyFontSize(currentFontSize + 2);
+      };
+      document.getElementById("btn-font-reset").onclick = function () {
+        applyFontSize(20);
+      };
+
+      // Date state and navigation
+      var selectedDate = getQueryDate();
+      var dateInputEl = document.getElementById("kindle-date-input");
+      var headingEl = document.getElementById("liturgical-date-heading");
+      var mainEl = document.getElementById("kindle-main");
+      var jumpNavEl = document.getElementById("jump-nav");
+
+      function updateHeaderDate() {
+        if (dateInputEl) dateInputEl.value = selectedDate;
+        if (headingEl) headingEl.innerHTML = escapeHtml(formatReadableDate(selectedDate));
+      }
+
+      function setDateAndFetch(newDate) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) return;
+        selectedDate = newDate;
+        updateHeaderDate();
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, "", "?date=" + encodeURIComponent(selectedDate));
+        }
+        loadReadings();
+      }
+
+      function shiftDate(days) {
+        var parts = selectedDate.split("-");
+        var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), 12, 0, 0);
+        if (isNaN(d.getTime())) return;
+        d.setDate(d.getDate() + days);
+        setDateAndFetch(getLocalISOString(d));
+      }
+
+      document.getElementById("btn-prev-day").onclick = function () {
+        shiftDate(-1);
+      };
+      document.getElementById("btn-today").onclick = function () {
+        setDateAndFetch(getLocalISOString(new Date()));
+      };
+      document.getElementById("btn-next-day").onclick = function () {
+        shiftDate(1);
+      };
+      document.getElementById("date-form").onsubmit = function (e) {
+        if (e && e.preventDefault) e.preventDefault();
+        if (dateInputEl && dateInputEl.value) {
+          setDateAndFetch(dateInputEl.value.replace(/^\s+|\s+$/g, ""));
+        }
+        return false;
+      };
+
+      // Global toggle handler for Magisterium citations
+      window.toggleKindleCitations = function (key) {
+        var listEl = document.getElementById("citations-list-" + key);
+        var labelEl = document.getElementById("citations-state-" + key);
+        if (!listEl) return;
+        var isHidden = listEl.style.display === "none";
+        listEl.style.display = isHidden ? "block" : "none";
+        if (labelEl) {
+          labelEl.innerHTML = isHidden ? "[Hide &minus;]" : "[Show +]";
+        }
+      };
+
+      function renderReadings(data) {
+        var sections = [];
+        if (data.first_reading) {
+          sections.push({
+            key: "first_reading",
+            id: "section-first-reading",
+            label: "First Reading",
+            shortLabel: "First Reading",
+            badge: "Sacred Scripture",
+            meditationTitle: "Contextual Meditation",
+            reading: data.first_reading,
+            isPsalm: false
+          });
+        }
+        if (data.responsorial_psalm) {
+          sections.push({
+            key: "responsorial_psalm",
+            id: "section-psalm",
+            label: "Responsorial Psalm",
+            shortLabel: "Psalm",
+            badge: "Sacred Scripture",
+            meditationTitle: "Psalm Context",
+            reading: data.responsorial_psalm,
+            isPsalm: true
+          });
+        }
+        if (data.second_reading) {
+          sections.push({
+            key: "second_reading",
+            id: "section-second-reading",
+            label: "Second Reading",
+            shortLabel: "Second Reading",
+            badge: "Sacred Scripture",
+            meditationTitle: "Contextual Meditation",
+            reading: data.second_reading,
+            isPsalm: false
+          });
+        }
+        if (data.gospel) {
+          sections.push({
+            key: "gospel",
+            id: "section-gospel",
+            label: "Gospel Reading",
+            shortLabel: "Gospel",
+            badge: "Sacred Gospel",
+            meditationTitle: "Gospel Reflection",
+            reading: data.gospel,
+            isPsalm: false
+          });
+        }
+
+        // Render Jump Nav
+        var jumpHtml = '<span class="kindle-jump-label">Jump to:</span>';
+        for (var j = 0; j < sections.length; j++) {
+          jumpHtml += '<a href="#' + sections[j].id + '" class="kindle-jump-link">' + escapeHtml(sections[j].shortLabel) + "</a>";
+        }
+        if (data.pope_quote) {
+          jumpHtml += '<a href="#section-pope-quote" class="kindle-jump-link">Words of the Popes</a>';
+        }
+        if (jumpNavEl) {
+          jumpNavEl.innerHTML = jumpHtml;
+          jumpNavEl.style.display = "block";
+        }
+
+        var html = "";
+        for (var i = 0; i < sections.length; i++) {
+          var sec = sections[i];
+          var r = sec.reading;
+          var citations = extractCitations(r);
+
+          html += '<article id="' + sec.id + '" class="kindle-section">';
+          html += '  <div class="kindle-section-header">';
+          html += '    <div class="kindle-section-meta">';
+          html += '      <span class="kindle-section-type">' + escapeHtml(sec.label) + "</span>";
+          html += '      <span class="kindle-badge">' + escapeHtml(sec.badge) + "</span>";
+          html += "    </div>";
+          html += '    <div class="kindle-citation-row">';
+          html += '      <h2 class="kindle-h2">' + escapeHtml(r.citation) + "</h2>";
+          html += '      <a href="#kindle-top" class="kindle-top-link">&uarr; Top</a>';
+          html += "    </div>";
+          html += "  </div>";
+
+          html += '  <div class="kindle-scripture-text' + (sec.isPsalm ? " kindle-psalm-text" : "") + '">' + (r.text || "") + "</div>";
+
+          if (r.context) {
+            html += '  <div class="kindle-meditation-box">';
+            html += '    <div class="kindle-meditation-header">';
+            html += '      <h3 class="kindle-h3">' + escapeHtml(sec.meditationTitle) + "</h3>";
+            html += '      <span class="kindle-badge">AI-Assisted Reflection</span>';
+            html += "    </div>";
+            html += '    <div class="kindle-meditation-body">' + renderMarkdown(cleanContext(r.context)) + "</div>";
+
+            if (citations.length > 0) {
+              html += '    <div class="kindle-citations-wrapper">';
+              html += '      <button type="button" class="kindle-btn kindle-citations-toggle" onclick="toggleKindleCitations(\'' + sec.key + '\')">';
+              html += '        <span class="kindle-citations-toggle-left">Fact-Checked Magisterium Citations (' + citations.length + ")</span>";
+              html += '        <span class="kindle-citations-toggle-right" id="citations-state-' + sec.key + '">[Show +]</span>';
+              html += "      </button>";
+              html += '      <div class="kindle-citations-list" id="citations-list-' + sec.key + '" style="display: none;">';
+
+              for (var c = 0; c < citations.length; c++) {
+                var item = citations[c];
+                var title = item.document_title || item.title || "Magisterial Document";
+                html += '        <div class="kindle-citation-item">';
+                html += '          <div class="kindle-citation-item-header">';
+                if (item.ref) {
+                  html += '            <span class="kindle-ref-tag">[' + escapeHtml(item.ref) + "]</span>";
+                }
+                html += "            <strong>" + (c + 1) + ". " + escapeHtml(title) + "</strong>";
+                html += "          </div>";
+                if (item.author) {
+                  html += '          <div class="kindle-citation-author">&mdash; ' + escapeHtml(item.author) + "</div>";
+                }
+                if (item.text) {
+                  html += '          <blockquote class="kindle-citation-quote">' + renderMarkdown(item.text) + "</blockquote>";
+                }
+                if (item.url) {
+                  html += '          <div class="kindle-citation-link-wrap">';
+                  html += '            <a href="' + escapeHtml(item.url) + '" target="_blank" rel="noopener noreferrer" class="kindle-link">View Source Document &rarr;</a>';
+                  html += "          </div>";
+                }
+                html += "        </div>";
+              }
+
+              html += "      </div>";
+              html += "    </div>";
+            }
+
+            html += "  </div>";
+          }
+
+          html += "</article>";
+        }
+
+        if (data.pope_quote) {
+          html += '<article id="section-pope-quote" class="kindle-section">';
+          html += '  <div class="kindle-section-header">';
+          html += '    <div class="kindle-section-meta">';
+          html += '      <span class="kindle-section-type">Words of the Popes</span>';
+          html += '      <span class="kindle-badge">Papal Magisterium</span>';
+          html += "    </div>";
+          html += '    <div class="kindle-citation-row">';
+          html += '      <h2 class="kindle-h2">Holy Father\'s Reflection</h2>';
+          html += '      <a href="#kindle-top" class="kindle-top-link">&uarr; Top</a>';
+          html += "    </div>";
+          html += "  </div>";
+          html += '  <div class="kindle-scripture-text">' + data.pope_quote + "</div>";
+          html += '  <div class="kindle-source-note">Source: Vatican News Daily Liturgy</div>';
+          html += "</article>";
+        }
+
+        html += '<aside class="kindle-pastoral-box">';
+        html += '  <div class="kindle-pastoral-title">Pastoral Call to Community &amp; Prayer</div>';
+        html += '  <p class="kindle-pastoral-text">"Digital tools serve to support human reflection, but can never replace personal prayer, attendance at the Holy Sacrifice of the Mass, or the grace of the Sacraments in your local parish community."</p>';
+        html += '  <div class="kindle-pastoral-sub">Guided by Pope Leo XIV\'s Encyclical <em>Magnifica Humanitas</em></div>';
+        html += "</aside>";
+
+        html += '<footer class="kindle-footer">';
+        html += "  <p>Holy Bible, New Living Translation Catholic Edition, copyright &copy; 2016 by Tyndale House Foundation. All rights reserved. Used by permission of Tyndale House Publishers.</p>";
+        html += '  <p><a href="#kindle-top" class="kindle-link">&uarr; Back to Top</a></p>';
+        html += "</footer>";
+
+        if (mainEl) mainEl.innerHTML = html;
+      }
+
+      function renderError(msg) {
+        if (jumpNavEl) jumpNavEl.style.display = "none";
+        if (mainEl) {
+          mainEl.innerHTML =
+            '<div class="kindle-status-box">' +
+            "<p><strong>Liturgy Fetch Error</strong></p>" +
+            "<p>" + escapeHtml(msg) + "</p>" +
+            '<p><button type="button" class="kindle-btn kindle-btn-primary" id="btn-retry">Try Again</button></p>' +
+            "</div>";
+          var retryBtn = document.getElementById("btn-retry");
+          if (retryBtn) retryBtn.onclick = loadReadings;
+        }
+      }
+
+      function loadReadings() {
+        if (jumpNavEl) jumpNavEl.style.display = "none";
+        if (mainEl) {
+          mainEl.innerHTML =
+            '<div class="kindle-status-box">' +
+            "<p><strong>Loading the liturgy for " + escapeHtml(selectedDate) + "...</strong></p>" +
+            '<p class="kindle-small">Please wait while readings and meditations are retrieved.</p>' +
+            "</div>";
+        }
+
+        var url = getApiBaseUrl() + "/devotion?date=" + encodeURIComponent(selectedDate);
+        var token = getApiToken();
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.setRequestHeader("Accept", "application/json");
+        if (token) {
+          xhr.setRequestHeader("Authorization", "Bearer " + token);
+        }
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState !== 4) return;
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              var data = JSON.parse(xhr.responseText);
+              renderReadings(data);
+            } catch (err) {
+              renderError("Failed to parse readings response.");
+            }
+          } else if (xhr.status === 401) {
+            renderError("Unauthorized access. Please check API token configuration.");
+          } else if (xhr.status === 0) {
+            renderError("Server cannot be reached. Please check your internet connection.");
+          } else {
+            renderError("Request failed with status " + xhr.status);
+          }
+        };
+        xhr.send();
+      }
+
+      updateHeaderDate();
+      loadReadings();
+    })();
+  </script>
+</body>
+</html>

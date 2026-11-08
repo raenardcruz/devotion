@@ -1,7 +1,37 @@
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 import fs from 'fs'
+
+function kindleHtmlPlugin(mode: string): Plugin {
+  const env = loadEnv(mode, process.cwd(), '');
+  const apiBaseUrl = env.VITE_API_BASE_URL || process.env.VITE_API_BASE_URL || 'https://devotionapi.raenardcruz.com';
+  const apiToken = env.VITE_API_TOKEN || process.env.VITE_API_TOKEN || '';
+
+  const injectEnv = (html: string) => {
+    return html
+      .replace(/__VITE_API_BASE_URL__/g, apiBaseUrl)
+      .replace(/__VITE_API_TOKEN__/g, apiToken);
+  };
+
+  return {
+    name: 'kindle-html-plugin',
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        if (req.url) {
+          const url = new URL(req.url, 'http://localhost');
+          if (url.pathname === '/kindle' || url.pathname === '/kindle/') {
+            req.url = '/kindle.html' + url.search;
+          }
+        }
+        next();
+      });
+    },
+    transformIndexHtml(html) {
+      return injectEnv(html);
+    }
+  };
+}
 
 function missaPdfPlugin(): Plugin {
   return {
@@ -91,11 +121,20 @@ function missaPdfPlugin(): Plugin {
 }
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [vue(), missaPdfPlugin()],
+export default defineConfig(({ mode }) => ({
+  plugins: [vue(), kindleHtmlPlugin(mode), missaPdfPlugin()],
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        kindle: path.resolve(__dirname, 'kindle.html'),
+      }
+    }
+  },
   server: {
     proxy: {
       '/mass-readings': 'http://localhost:8788'
     }
   }
-})
+}))
+

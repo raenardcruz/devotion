@@ -8,6 +8,7 @@ import DivineMercy from '../views/DivineMercy.vue'
 import PrayersGallery from '../views/PrayersGallery.vue'
 import Catechism from '../views/Catechism.vue'
 import DailyMassReadings from '../views/DailyMassReadings.vue'
+import KindleReadings from '../views/KindleReadings.vue'
 import Resources from '../views/Resources.vue'
 import BibleStudy from '../views/BibleStudy.vue'
 import MagisteriumChat from '../views/MagisteriumChat.vue'
@@ -15,9 +16,12 @@ import Admin from '../views/Admin.vue'
 
 const router = createRouter({
     history: createWebHashHistory(),
-    scrollBehavior(_to, _from, savedPosition) {
+    scrollBehavior(to, _from, savedPosition) {
         if (savedPosition) {
             return savedPosition
+        }
+        if (to.path === '/kindle') {
+            return { top: 0 }
         }
         return { top: 0, behavior: 'smooth' }
     },
@@ -36,6 +40,11 @@ const router = createRouter({
             path: '/daily-readings',
             name: 'DailyMassReadings',
             component: DailyMassReadings
+        },
+        {
+            path: '/kindle',
+            name: 'KindleReadings',
+            component: KindleReadings
         },
         {
             path: '/rosary',

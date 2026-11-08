@@ -222,6 +222,12 @@ const navItems = [
     icon: 'book'
   },
   {
+    path: '/kindle',
+    label: 'Kindle Readings',
+    desc: 'E-Ink friendly daily readings without animations',
+    icon: 'book'
+  },
+  {
     path: '/catechism',
     label: 'Catechism',
     desc: 'Explore the teachings of the Church',
