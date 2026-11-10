@@ -179,11 +179,9 @@ func adminGeminiModelsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	geminiModels := []string{
-		"gemini-3-flash-preview",
-		"gemini-3.1-flash-lite",
-		"gemini-3.5-flash",
+		"gemini-4-argon",
+		"gemini-3.8-flash",
 		"gemini-3.5-flash-lite",
-		"gemini-3.6-flash",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
