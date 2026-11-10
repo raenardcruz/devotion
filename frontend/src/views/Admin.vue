@@ -37,18 +37,16 @@ const settings = ref<Settings>({
   gemini_api_key: '',
   magisterium_api_key: '',
   bible_api_key: '',
-  gemini_model: 'gemini-3.1-flash-lite',
+  gemini_model: 'gemini-4-argon',
   ollama_model: 'gemma4:cloud',
   context_instruction: '',
   enable_fact_checker: true,
 });
 
 const geminiModelsList = ref<string[]>([
-  'gemini-3.1-flash-lite',
-  'gemini-2.5-flash',
-  'gemini-2.5-pro',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
+  'gemini-4-argon',
+  'gemini-3.8-flash',
+  'gemini-3.5-flash-lite'
 ]);
 const ollamaModelsList = ref<string[]>([]);
 const loadingOllamaModels = ref(false);
