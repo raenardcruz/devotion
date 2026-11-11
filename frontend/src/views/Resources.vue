@@ -4,6 +4,7 @@ import TopNav from '../components/common/TopNav.vue';
 import BottomNav from '../components/common/BottomNav.vue';
 import AppButton from '../components/common/AppButton.vue';
 import writingsIndex from '../components/resources/index.json';
+import EpubDownloadModal from '../components/resources/EpubDownloadModal.vue';
 
 interface Chapter {
   id: string;
@@ -55,6 +56,7 @@ const searchQuery = ref<string>('');
 const writingSearchQuery = ref<string>('');
 const isSelectorOpen = ref<boolean>(false);
 const isMobileMenuOpen = ref<boolean>(false);
+const isEpubModalOpen = ref<boolean>(false);
 const isLoading = ref<boolean>(false);
 const errorMsg = ref<string>('');
 
@@ -241,6 +243,44 @@ const selectedWritingTitle = computed(() => {
   return 'Select Writing';
 });
 
+const activeWriting = computed(() => {
+  return writingsIndex.find(w => w.id === selectedDocId.value) || null;
+});
+
+const currentAuthor = computed(() => {
+  return activeWriting.value?.title || activeDoc.value?.title || 'Early Church Resource';
+});
+
+const currentEra = computed(() => {
+  return activeWriting.value?.years || '';
+});
+
+const currentDocumentTitle = computed(() => {
+  return activeDoc.value?.title || activeWriting.value?.title || 'Church Father Writing';
+});
+
+const validSections = computed(() => {
+  if (!activeDoc.value) return [];
+  return activeDoc.value.sections.filter(s => s.chapters.length > 0);
+});
+
+const currentSectionId = computed(() => {
+  if (!activeChapter.value || !activeDoc.value) return undefined;
+  for (const s of activeDoc.value.sections) {
+    if (s.chapters.some(c => c.id === activeChapter.value?.id)) {
+      return s.id;
+    }
+  }
+  return undefined;
+});
+
+const openEpubModal = async () => {
+  if (!activeDoc.value) {
+    await loadWriting(selectedDocId.value);
+  }
+  isEpubModalOpen.value = true;
+};
+
 const filteredWritings = computed(() => {
   if (!writingSearchQuery.value.trim()) return writingsIndex;
   const query = writingSearchQuery.value.toLowerCase();
@@ -392,85 +432,103 @@ const isFirstTextPara = (idx: number): boolean => {
         <p class="text-[#72383D] text-xs uppercase tracking-[0.25em] font-bold">Timeless writings of faith and theology</p>
       </header>
 
-      <!-- Searchable Selector for Writings -->
-      <div class="relative max-w-md mx-auto mb-8 w-full animate-fade-in-down z-50">
-        <!-- Backdrop overlay for dropdown closing -->
-        <div v-if="isSelectorOpen" class="fixed inset-0 z-40" @click="isSelectorOpen = false"></div>
+      <!-- Searchable Selector for Writings & EPUB Download Action -->
+      <div class="relative max-w-xl mx-auto mb-8 w-full animate-fade-in-down z-50 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <!-- Searchable Selector for Writings -->
+        <div class="relative flex-grow w-full">
+          <!-- Backdrop overlay for dropdown closing -->
+          <div v-if="isSelectorOpen" class="fixed inset-0 z-40" @click="isSelectorOpen = false"></div>
 
-        <!-- Trigger Button -->
-        <button 
-          @click="isSelectorOpen = !isSelectorOpen"
-          class="relative z-50 w-full bg-white/70 backdrop-blur-md border border-[#D1C7BD]/80 hover:border-[#72383D] rounded-2xl py-3.5 px-5 shadow-xs hover:shadow-sm flex items-center justify-between transition-all duration-300 group outline-none cursor-pointer"
-        >
-          <div class="flex items-center gap-3">
-            <span class="text-[#72383D]">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
-                <path d="M6 6h10M6 10h10M6 14h10"/>
-              </svg>
-            </span>
-            <div class="text-left">
-              <span class="text-[10px] text-[#322D29]/60 tracking-widest uppercase font-bold block">Selected Writing</span>
-              <span class="font-serif text-sm md:text-base text-[#72383D] font-semibold group-hover:text-[#322D29] transition-colors">
-                {{ selectedWritingTitle }}
-              </span>
-            </div>
-          </div>
-          <span class="text-[#72383D] group-hover:text-[#322D29] transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300" :class="{'rotate-180': isSelectorOpen}">
-              <path d="m6 9 6 6 6-6"/>
-            </svg>
-          </span>
-        </button>
-
-        <!-- Dropdown Card -->
-        <div 
-          v-if="isSelectorOpen"
-          class="absolute left-0 right-0 mt-2 bg-white/95 backdrop-blur-md border border-[#D1C7BD] rounded-2xl shadow-xl z-50 p-4 max-h-[350px] flex flex-col gap-3 animate-fade-in"
-        >
-          <!-- Filter Search -->
-          <div class="relative">
-            <input 
-              v-model="writingSearchQuery"
-              type="text"
-              placeholder="Search writings / authors..."
-              class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#D1C7BD]/80 bg-white/80 text-[#322D29] placeholder-[#322D29]/40 focus:border-[#72383D] transition-all outline-none text-xs"
-            >
-            <span class="absolute left-3 top-3 text-[#72383D]">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-              </svg>
-            </span>
-          </div>
-
-          <!-- Writings List -->
-          <div class="flex-grow overflow-y-auto space-y-1 pr-1">
-            <button
-              v-for="writing in filteredWritings"
-              :key="writing.id"
-              @click="selectWriting(writing.id)"
-              class="w-full text-left text-xs py-2.5 px-3.5 rounded-xl transition-colors flex items-center justify-between border-none outline-none cursor-pointer"
-              :class="selectedDocId === writing.id 
-                ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-semibold shadow-xs' 
-                : 'text-[#322D29]/80 hover:bg-[#D1C7BD]/30 hover:text-[#72383D]'"
-            >
-              <span class="truncate pr-4">
-                {{ writing.title }}
-                <span v-if="writing.years" class="text-[10px] font-sans ml-1.5" :class="selectedDocId === writing.id ? 'text-white/80' : 'text-[#322D29]/60'">
-                  ({{ writing.years }})
-                </span>
-              </span>
-              <span v-if="selectedDocId === writing.id" class="text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"></polyline>
+          <!-- Trigger Button -->
+          <button 
+            @click="isSelectorOpen = !isSelectorOpen"
+            class="relative z-50 w-full bg-white/70 backdrop-blur-md border border-[#D1C7BD]/80 hover:border-[#72383D] rounded-2xl py-3.5 px-5 shadow-xs hover:shadow-sm flex items-center justify-between transition-all duration-300 group outline-none cursor-pointer"
+          >
+            <div class="flex items-center gap-3">
+              <span class="text-[#72383D]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                  <path d="M6 6h10M6 10h10M6 14h10"/>
                 </svg>
               </span>
-            </button>
-            <div v-if="filteredWritings.length === 0" class="py-6 text-center text-xs text-[#322D29]/40 italic">
-              No writings found matching "{{ writingSearchQuery }}"
+              <div class="text-left">
+                <span class="text-[10px] text-[#322D29]/60 tracking-widest uppercase font-bold block">Selected Writing</span>
+                <span class="font-serif text-sm md:text-base text-[#72383D] font-semibold group-hover:text-[#322D29] transition-colors">
+                  {{ selectedWritingTitle }}
+                </span>
+              </div>
+            </div>
+            <span class="text-[#72383D] group-hover:text-[#322D29] transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300" :class="{'rotate-180': isSelectorOpen}">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </span>
+          </button>
+
+          <!-- Dropdown Card -->
+          <div 
+            v-if="isSelectorOpen"
+            class="absolute left-0 right-0 mt-2 bg-white/95 backdrop-blur-md border border-[#D1C7BD] rounded-2xl shadow-xl z-50 p-4 max-h-[350px] flex flex-col gap-3 animate-fade-in"
+          >
+            <!-- Filter Search -->
+            <div class="relative">
+              <input 
+                v-model="writingSearchQuery"
+                type="text"
+                placeholder="Search writings / authors..."
+                class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#D1C7BD]/80 bg-white/80 text-[#322D29] placeholder-[#322D29]/40 focus:border-[#72383D] transition-all outline-none text-xs"
+              >
+              <span class="absolute left-3 top-3 text-[#72383D]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                </svg>
+              </span>
+            </div>
+
+            <!-- Writings List -->
+            <div class="flex-grow overflow-y-auto space-y-1 pr-1">
+              <button
+                v-for="writing in filteredWritings"
+                :key="writing.id"
+                @click="selectWriting(writing.id)"
+                class="w-full text-left text-xs py-2.5 px-3.5 rounded-xl transition-colors flex items-center justify-between border-none outline-none cursor-pointer"
+                :class="selectedDocId === writing.id 
+                  ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-semibold shadow-xs' 
+                  : 'text-[#322D29]/80 hover:bg-[#D1C7BD]/30 hover:text-[#72383D]'"
+              >
+                <span class="truncate pr-4">
+                  {{ writing.title }}
+                  <span v-if="writing.years" class="text-[10px] font-sans ml-1.5" :class="selectedDocId === writing.id ? 'text-white/80' : 'text-[#322D29]/60'">
+                    ({{ writing.years }})
+                  </span>
+                </span>
+                <span v-if="selectedDocId === writing.id" class="text-white">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </span>
+              </button>
+              <div v-if="filteredWritings.length === 0" class="py-6 text-center text-xs text-[#322D29]/40 italic">
+                No writings found matching "{{ writingSearchQuery }}"
+              </div>
             </div>
           </div>
         </div>
+
+        <!-- Download EPUB Button -->
+        <button
+          type="button"
+          @click="openEpubModal"
+          :disabled="isLoading"
+          class="shrink-0 bg-white/70 backdrop-blur-md border border-[#D1C7BD]/80 hover:border-[#72383D] rounded-2xl py-3.5 px-5 shadow-xs hover:shadow-sm flex items-center justify-center gap-2.5 transition-all duration-300 group outline-none cursor-pointer text-[#72383D] hover:bg-white active:scale-95 disabled:opacity-40"
+          title="Download as EPUB e-book"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:scale-110">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+            <path d="M6 6h10M6 10h10M6 14h10"/>
+          </svg>
+          <span class="font-serif text-sm font-semibold">Download EPUB</span>
+        </button>
       </div>      <!-- Loading State -->
       <div v-if="isLoading" class="flex-grow flex flex-col items-center justify-center py-20 space-y-4 animate-pulse">
         <div class="w-12 h-12 border-4 border-[#D1C7BD] border-t-[#72383D] rounded-full animate-spin"></div>
@@ -545,6 +603,18 @@ const isFirstTextPara = (idx: number): boolean => {
                 <div class="bg-gradient-to-r from-[#72383D] to-[#322D29] h-1.5 rounded-full transition-all duration-500" :style="{ width: `${docProgress}%` }"></div>
               </div>
             </div>
+
+            <!-- Mobile EPUB Download Action -->
+            <button
+              @click="openEpubModal(); isMobileMenuOpen = false"
+              class="w-full py-2.5 px-3 rounded-xl border border-[#D1C7BD]/80 bg-white/80 hover:bg-[#EFE9E1]/80 text-[#72383D] font-serif font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs active:scale-98"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                <path d="M6 6h10M6 10h10M6 14h10"/>
+              </svg>
+              <span>Download EPUB Edition</span>
+            </button>
 
             <!-- Search -->
             <div>
@@ -630,6 +700,19 @@ const isFirstTextPara = (idx: number): boolean => {
             </div>
           </div>
 
+          <!-- Desktop EPUB Download Button -->
+          <button
+            @click="openEpubModal"
+            :disabled="isLoading"
+            class="w-full py-3 px-4 rounded-2xl border border-[#D1C7BD]/80 bg-white/70 hover:bg-white text-[#72383D] hover:border-[#72383D] font-serif font-semibold text-xs flex items-center justify-center gap-2.5 transition-all shadow-xs hover:shadow-sm cursor-pointer disabled:opacity-40 active:scale-98"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+              <path d="M6 6h10M6 10h10M6 14h10"/>
+            </svg>
+            <span>Download EPUB Edition</span>
+          </button>
+
           <!-- Table of Contents List -->
           <div class="bg-white/60 border border-[#D1C7BD]/60 rounded-3xl p-6 shadow-xs backdrop-blur-md lg:max-h-[50vh] lg:overflow-y-auto scrollbar-hide">
             <h3 class="font-serif text-xs mb-4 text-[#72383D] tracking-widest uppercase font-bold border-b border-[#D1C7BD]/60 pb-2.5">Chapters</h3>
@@ -679,6 +762,24 @@ const isFirstTextPara = (idx: number): boolean => {
           <div class="bg-white/60 border border-[#D1C7BD]/60 rounded-3xl p-6 md:p-8 flex-grow flex flex-col min-h-[60vh] relative shadow-xs backdrop-blur-md">
             <!-- Reader Area -->
             <div v-if="activeChapter" id="reader-content" class="flex-grow overflow-y-auto lg:overflow-y-auto space-y-8 pr-2 select-text max-h-[65vh] lg:max-h-none">
+              <!-- Reader Top Action Bar -->
+              <div class="flex items-center justify-between border-b border-[#D1C7BD]/40 pb-3">
+                <span class="text-[11px] font-serif text-[#72383D] font-bold tracking-widest uppercase truncate max-w-[200px] sm:max-w-md">
+                  {{ currentAuthor }}
+                </span>
+                <button
+                  @click="openEpubModal"
+                  class="text-[11px] text-[#72383D] hover:text-[#322D29] bg-[#EFE9E1]/70 hover:bg-[#EFE9E1] border border-[#D1C7BD]/60 px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer font-serif font-semibold shrink-0"
+                  title="Download complete writing as EPUB"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                    <path d="M6 6h10M6 10h10M6 14h10"/>
+                  </svg>
+                  <span>EPUB Edition</span>
+                </button>
+              </div>
+
               <!-- Book-style Header -->
               <div class="text-center mb-12 mt-6">
                 <div class="text-[11px] text-[#72383D] font-serif tracking-[0.25em] uppercase mb-3 font-bold">
@@ -758,6 +859,17 @@ const isFirstTextPara = (idx: number): boolean => {
 
     <!-- Global Footer -->
     <BottomNav />
+
+    <!-- EPUB Download & Optional Cover Modal -->
+    <EpubDownloadModal
+      :is-open="isEpubModalOpen"
+      :book-title="currentDocumentTitle"
+      :author="currentAuthor"
+      :era="currentEra"
+      :sections="validSections"
+      :current-section-id="currentSectionId"
+      @close="isEpubModalOpen = false"
+    />
   </div>
 </template>
 
