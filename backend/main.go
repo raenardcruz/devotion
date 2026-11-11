@@ -47,14 +47,18 @@ func main() {
 	http.Handle("/bible", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(biblePassageHandler))))
 	http.Handle("/context", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(bibleContextHandler))))
 	http.Handle("/magisterium/chat", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(magisteriumChatHandler))))
+	http.Handle("/magisterium/rag", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(magisteriumRAGHandler))))
+	http.HandleFunc("/magisterium/live", geminiLiveHandler)
 	http.Handle("/magisterium/conversations/save", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(publicConversationsSaveHandler))))
 	http.Handle("/magisterium/conversations/public", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(publicConversationsListHandler))))
+	http.Handle("/magisterium/conversations/delete", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(publicConversationsDeleteHandler))))
 
 	// Admin API Endpoints
 	http.Handle("/api/admin/login", corsMiddleware(http.HandlerFunc(adminLoginHandler)))
 	http.Handle("/api/admin/settings", corsMiddleware(http.HandlerFunc(adminSettingsHandler)))
 	http.Handle("/api/admin/ollama-models", corsMiddleware(http.HandlerFunc(adminOllamaModelsHandler)))
 	http.Handle("/api/admin/gemini-models", corsMiddleware(http.HandlerFunc(adminGeminiModelsHandler)))
+	http.Handle("/api/admin/gemini-live-models", corsMiddleware(http.HandlerFunc(adminGeminiLiveModelsHandler)))
 
 	// Start Cron Jobs
 	startCronJobs(ctx)
@@ -77,8 +81,8 @@ func corsMiddleware(next http.Handler) http.Handler {
 			allowedOrigin = "*"
 		}
 		w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept")
 
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)

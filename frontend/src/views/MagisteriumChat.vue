@@ -163,13 +163,26 @@
                     <span>{{ formatIsoDate(pub.created_at) }}</span>
                   </div>
                 </div>
-                <button 
-                  @click.stop="copyPublicShareLink(pub.id)"
-                  class="text-[10px] bg-[#EFE9E1] hover:bg-[#D1C7BD] text-[#72383D] font-bold px-2 py-1 rounded-lg border border-[#D1C7BD] flex items-center space-x-1 transition-colors cursor-pointer"
-                  title="Copy Public Share Link"
-                >
-                  <span>🔗 Share</span>
-                </button>
+                <div class="flex items-center space-x-1 shrink-0">
+                  <button 
+                    @click.stop="copyPublicShareLink(pub.id)"
+                    class="text-[10px] bg-[#EFE9E1] hover:bg-[#D1C7BD] text-[#72383D] font-bold px-2 py-1 rounded-lg border border-[#D1C7BD] flex items-center space-x-1 transition-colors cursor-pointer"
+                    title="Copy Public Share Link"
+                  >
+                    <span>🔗 Share</span>
+                  </button>
+                  <button 
+                    @click.stop="deletePublicConversation(pub.id)"
+                    :disabled="isDeletingPublic === pub.id"
+                    class="text-stone-400 hover:text-red-600 transition-all p-1.5 rounded-lg hover:bg-red-50 cursor-pointer disabled:opacity-50"
+                    title="Delete Public Conversation"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </div>
               </div>
 
               <div v-if="publicConversations.length === 0" class="text-center py-8 px-4 text-xs text-black/50 space-y-2 font-serif">
@@ -284,13 +297,26 @@
                   <span>{{ formatIsoDate(pub.created_at) }}</span>
                 </div>
               </div>
-              <button 
-                @click.stop="copyPublicShareLink(pub.id)"
-                class="text-[10px] hover:bg-[#D1C7BD] text-[#72383D] font-bold px-2 py-1 rounded-lg border border-[#D1C7BD] flex items-center space-x-1 transition-colors"
-                title="Copy Public Share Link"
-              >
-                <span>🔗 Share</span>
-              </button>
+              <div class="flex items-center space-x-1 shrink-0">
+                <button 
+                  @click.stop="copyPublicShareLink(pub.id)"
+                  class="text-[10px] hover:bg-[#D1C7BD] text-[#72383D] font-bold px-2 py-1 rounded-lg border border-[#D1C7BD] flex items-center space-x-1 transition-colors cursor-pointer"
+                  title="Copy Public Share Link"
+                >
+                  <span>🔗 Share</span>
+                </button>
+                <button 
+                  @click.stop="deletePublicConversation(pub.id)"
+                  :disabled="isDeletingPublic === pub.id"
+                  class="opacity-0 group-hover:opacity-100 text-stone-400 hover:text-red-600 transition-all p-1.5 rounded-lg hover:bg-red-50 cursor-pointer disabled:opacity-50"
+                  title="Delete Public Conversation"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <div v-if="publicConversations.length === 0" class="text-center py-8 px-4 text-xs text-[#322D29]/60 space-y-2 font-serif">
@@ -301,7 +327,81 @@
         </aside>
 
         <!-- Main Chat Box Panel -->
-        <div class="lg:col-span-8 xl:col-span-9 flex flex-col bg-white/60 border border-[#D1C7BD]/60 backdrop-blur-md rounded-3xl shadow-sm overflow-hidden h-[calc(100dvh-11rem)] min-h-[500px] sm:h-[720px] lg:h-[820px]">
+        <div class="lg:col-span-8 xl:col-span-9 flex flex-col bg-white/60 border border-[#D1C7BD]/60 backdrop-blur-md rounded-3xl shadow-sm overflow-hidden h-[calc(100dvh-11rem)] min-h-[500px] sm:h-[720px] lg:h-[820px] relative">
+          
+          <!-- Magisterium Live Synthesizer Workstation -->
+          <!-- Mobile: Full-screen overlay; Desktop: occupies chat window (with expand toggle) -->
+          <MagisteriumSynthesizer
+            v-if="isLiveConnected || isLiveConnecting"
+            :is-live-connected="isLiveConnected"
+            :is-connecting="isLiveConnecting"
+            :is-muted="isLiveMuted"
+            :is-gemini-speaking="isGeminiSpeaking"
+            :is-user-speaking="isUserSpeaking"
+            :is-querying-r-a-g="isQueryingRAG"
+            :current-rag-query="currentRagQuery"
+            :current-citations="liveCitations"
+            :live-transcript="liveTranscript"
+            :user-live-transcript="userLiveTranscript"
+            :live-status="liveStatus"
+            :live-error="liveError"
+            :audio-level="audioLevel"
+            :session-messages="activeSession?.messages || []"
+            :active-session-title="activeSession?.title"
+            @toggle-mute="toggleLiveMute"
+            @stop-live="stopLiveSession"
+            @send-text="sendLiveTextMessage"
+            @interrupt="interruptLivePlayback"
+          />
+
+          <!-- Standard Chat Window View (When Live Mode is Inactive) -->
+          <template v-else>
+            <!-- Chat Box Header with Session Title, Gemini Live Toggle and Actions -->
+            <div class="px-4 sm:px-6 py-3 bg-white/80 border-b border-[#D1C7BD]/60 backdrop-blur-md flex items-center justify-between gap-3 shrink-0">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <span class="w-2.5 h-2.5 rounded-full shrink-0 bg-[#72383D]/40"></span>
+                <span class="font-serif font-bold text-xs sm:text-sm text-[#322D29] truncate">
+                  {{ activeSession?.title || 'Magisterium Discussion' }}
+                </span>
+                <span v-if="isCurrentSessionPublic" class="shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-[#72383D]/10 text-[#72383D] border border-[#72383D]/20">
+                  Public Sanctuary
+                </span>
+              </div>
+
+              <div class="flex items-center gap-2 shrink-0">
+                <!-- Delete Public Conversation Button (when viewing a public sanctuary discussion) -->
+                <button
+                  v-if="isCurrentSessionPublic"
+                  type="button"
+                  @click="deletePublicConversation(activeSessionId)"
+                  :disabled="isDeletingPublic === activeSessionId"
+                  class="px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-serif font-semibold text-stone-500 hover:text-red-700 hover:bg-red-50 border border-[#D1C7BD] transition-all cursor-pointer flex items-center space-x-1.5 disabled:opacity-50"
+                  title="Delete this discussion from Public Sanctuary"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                  <span class="hidden sm:inline">Delete Public Chat</span>
+                </button>
+
+                <!-- Gemini Live Toggle Pill -->
+                <button
+                  type="button"
+                  @click="toggleLiveSession"
+                  :disabled="isLiveConnecting"
+                  class="px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-serif font-bold flex items-center space-x-1.5 transition-all shadow-xs cursor-pointer border bg-white hover:bg-[#EFE9E1] text-[#72383D] border-[#D1C7BD]"
+                  title="Connect to real-time Gemini Live voice synthesizer"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="22"></line>
+                  </svg>
+                  <span>Gemini Live</span>
+                </button>
+              </div>
+            </div>
           
           <!-- Scrollable Chat Window -->
           <div ref="chatContainer" class="flex-1 p-5 md:p-8 overflow-y-auto space-y-6 scrollbar-thin">
@@ -378,7 +478,14 @@
                 <div class="bg-white/60 border border-[#D1C7BD]/60 rounded-3xl rounded-tl-none p-5 md:p-6 text-sm text-[#322D29] shadow-sm space-y-4 w-full backdrop-blur-md">
                   
                   <!-- Assistant Answer Content -->
-                  <div class="whitespace-pre-wrap font-serif text-[15px] leading-relaxed text-[#322D29]/90 space-y-2" v-html="formatResponse(msg.content)"></div>
+                  <div class="whitespace-pre-wrap font-serif text-[15px] leading-relaxed text-[#322D29]/90 space-y-2">
+                    <span v-html="formatResponse(msg.content)"></span>
+                    <!-- Streaming Cursor Indicator -->
+                    <span 
+                      v-if="isStreaming && activeMessages.indexOf(msg) === activeMessages.length - 1" 
+                      class="inline-block w-2 h-4 ml-1 bg-[#72383D] animate-pulse align-middle rounded-xs"
+                    ></span>
+                  </div>
 
                   <!-- Structured Search Results & Citations (Formatted Schema) -->
                   <div v-if="msg.citations && msg.citations.length > 0" class="mt-5 pt-4 border-t border-[#D1C7BD]/60 bg-[#EFE9E1]/60 rounded-2xl p-4 space-y-3">
@@ -467,7 +574,7 @@
                 M
               </div>
               <div class="bg-white/90 border border-[#D1C7BD] rounded-3xl rounded-tl-none p-4 text-sm text-[#322D29] flex items-center space-x-3 shadow-2xs">
-                <span class="text-xs font-serif text-[#322D29]/70 italic">Searching Magisterium AI database...</span>
+                <span class="text-xs font-serif text-[#322D29]/70 italic">{{ streamStatus || 'Searching Magisterium AI database...' }}</span>
                 <span class="flex space-x-1">
                   <span class="w-2 h-2 bg-[#72383D] rounded-full animate-bounce"></span>
                   <span class="w-2 h-2 bg-[#72383D] rounded-full animate-bounce [animation-delay:0.2s]"></span>
@@ -499,18 +606,46 @@
                 ref="textareaRef"
                 v-model="inputQuery"
                 rows="1"
-                placeholder="Ask a question on Catholic scripture, doctrine, or Church teaching..."
-                :disabled="isLoading"
+                :placeholder="isLiveConnected ? 'Speak into your microphone, or type here to prompt Gemini Live...' : (isLoading || isStreaming) ? 'Magisterium is responding...' : 'Ask a question on Catholic scripture, doctrine, or Church teaching...'"
+                :disabled="isLoading || isStreaming"
                 @keydown.enter.exact.prevent="sendMessage"
                 @input="adjustTextareaHeight"
                 class="flex-1 px-4 py-2.5 sm:py-3 bg-white/80 border border-[#D1C7BD]/60 rounded-2xl text-xs sm:text-sm text-[#322D29] placeholder-[#322D29]/40 focus:outline-none focus:ring-2 focus:ring-[#72383D] focus:border-transparent transition-all shadow-xs disabled:opacity-60 font-serif resize-none min-h-[44px] max-h-36 overflow-y-auto leading-relaxed scrollbar-thin"
               ></textarea>
 
+              <!-- Gemini Live Mic Toggle Button -->
+              <button 
+                type="button" 
+                @click="toggleLiveSession"
+                :disabled="isLiveConnecting || isStreaming"
+                class="p-3 border rounded-2xl transition-all shadow-xs flex items-center justify-center shrink-0 group h-[44px] w-[44px] cursor-pointer disabled:opacity-40"
+                :class="[
+                  isLiveConnected 
+                    ? 'bg-red-500 hover:bg-red-600 text-white border-red-600 animate-pulse shadow-md' 
+                    : isLiveConnecting
+                      ? 'bg-amber-100 text-amber-800 border-amber-300 animate-pulse'
+                      : 'bg-[#EFE9E1] hover:bg-[#D1C7BD] text-[#72383D] border-[#D1C7BD]'
+                ]"
+                :title="isLiveConnected ? 'Disconnect Gemini Live' : 'Start Gemini Live Voice Session'"
+              >
+                <svg v-if="!isLiveConnected" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:scale-110 transition-transform">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                  <line x1="12" y1="19" x2="12" y2="22"></line>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                  <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V5a3 3 0 0 0-5.94-.6"></path>
+                  <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
+                  <line x1="12" y1="19" x2="12" y2="22"></line>
+                </svg>
+              </button>
+
               <!-- Publish to Public Sanctuary Toggle Icon Button -->
               <button 
                 type="button" 
                 @click="openPublishModal"
-                :disabled="activeMessages.length === 0"
+                :disabled="activeMessages.length === 0 || isLoading || isStreaming"
                 class="p-3 bg-[#EFE9E1] hover:bg-[#D1C7BD] text-[#72383D] border border-[#D1C7BD] rounded-2xl transition-all shadow-xs flex items-center justify-center shrink-0 disabled:opacity-40 disabled:cursor-not-allowed group h-[44px] w-[44px] cursor-pointer"
                 title="Publish Conversation to Public Sanctuary"
               >
@@ -521,10 +656,25 @@
                 </svg>
               </button>
 
+              <!-- Stop Stream Button -->
+              <button
+                v-if="isLoading || isStreaming"
+                type="button"
+                @click="stopGeneration"
+                class="p-3 bg-red-600 hover:bg-red-700 text-white rounded-2xl transition-all shadow-xs flex items-center justify-center shrink-0 active:scale-95 h-[44px] px-4 sm:px-5 font-semibold cursor-pointer"
+                title="Stop generating"
+              >
+                <span class="hidden sm:inline mr-1 text-xs">Stop</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+                </svg>
+              </button>
+
               <!-- Submit / Send Button -->
               <button
+                v-else
                 type="submit"
-                :disabled="!inputQuery.trim() || isLoading"
+                :disabled="!inputQuery.trim()"
                 class="p-3 bg-gradient-to-r from-[#72383D] to-[#322D29] text-white rounded-2xl hover:from-[#8B464C] hover:to-[#453E38] transition-all shadow-xs flex items-center justify-center shrink-0 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 h-[44px] px-4 sm:px-6 rounded-2xl flex items-center space-x-2 font-semibold cursor-pointer"
               >
                 <span class="hidden sm:inline">Send</span>
@@ -535,7 +685,8 @@
               </button>
             </form>
           </div>
-        </div>
+        </template>
+      </div>
 
       </div>
 
@@ -597,12 +748,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import TopNav from '../components/common/TopNav.vue';
 import BottomNav from '../components/common/BottomNav.vue';
 import AppButton from '../components/common/AppButton.vue';
 import { useDevotionApi } from '../composables/useDevotionApi';
+import { useGeminiLive, type LiveTurnResult } from '../composables/useGeminiLive';
+import MagisteriumSynthesizer from '../components/magisterium/MagisteriumSynthesizer.vue';
 
 interface Citation {
   title?: string;
@@ -648,7 +801,7 @@ interface PublicConversation {
 }
 
 const route = useRoute();
-const { fetchWithAuth } = useDevotionApi();
+const { fetchWithAuth, getApiUrl, getAuthHeaders } = useDevotionApi();
 
 const LOCAL_STORAGE_KEY = 'magisterium_chat_sessions_v1';
 
@@ -659,7 +812,11 @@ const activeSessionId = ref<string>('');
 const isMobileMenuOpen = ref(false);
 const inputQuery = ref('');
 const isLoading = ref(false);
+const isStreaming = ref(false);
+const streamStatus = ref<string>('');
 const chatError = ref<string | null>(null);
+let abortController: AbortController | null = null;
+let scrollRafId: number | null = null;
 const chatContainer = ref<HTMLDivElement | null>(null);
 const textareaRef = ref<HTMLTextAreaElement | null>(null);
 const messageRefs = ref<HTMLElement[]>([]);
@@ -705,6 +862,10 @@ const publishMessage = ref<string | null>(null);
 
 const activeSession = computed(() => {
   return chatSessions.value.find(s => s.id === activeSessionId.value) || null;
+});
+
+const isCurrentSessionPublic = computed(() => {
+  return publicConversations.value.some(p => p.id === activeSessionId.value);
 });
 
 const activeMessages = computed(() => {
@@ -802,7 +963,82 @@ const submitPublishConversation = async () => {
   }
 };
 
+const isDeletingPublic = ref<string | null>(null);
+
+const deletePublicConversation = async (id: string) => {
+  if (!window.confirm('Are you sure you want to remove this conversation from the Public Sanctuary?')) {
+    return;
+  }
+  isDeletingPublic.value = id;
+  try {
+    await fetchWithAuth('/magisterium/conversations/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+
+    // Remove from public conversations
+    publicConversations.value = publicConversations.value.filter(p => p.id !== id);
+
+    // If active session is the deleted public session, remove from local sessions list if present
+    if (activeSessionId.value === id) {
+      chatSessions.value = chatSessions.value.filter(s => s.id !== id);
+      saveSessionsToLocalStorage();
+      const first = chatSessions.value[0];
+      if (first) {
+        activeSessionId.value = first.id;
+      } else {
+        createNewSession();
+      }
+    }
+
+    copyNotice.value = 'Conversation successfully removed from Public Sanctuary!';
+    setTimeout(() => {
+      copyNotice.value = null;
+    }, 3000);
+  } catch (err: any) {
+    console.error('Failed to delete public conversation:', err);
+    chatError.value = err.message || 'Failed to remove conversation from Public Sanctuary.';
+  } finally {
+    isDeletingPublic.value = null;
+  }
+};
+
+const streamScrollToBottom = () => {
+  if (scrollRafId !== null) return;
+  scrollRafId = requestAnimationFrame(() => {
+    scrollRafId = null;
+    if (chatContainer.value) {
+      chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+    }
+  });
+};
+
+const stopGeneration = () => {
+  if (abortController) {
+    abortController.abort();
+    abortController = null;
+  }
+  if (scrollRafId !== null) {
+    cancelAnimationFrame(scrollRafId);
+    scrollRafId = null;
+  }
+  isLoading.value = false;
+  isStreaming.value = false;
+  streamStatus.value = '';
+
+  const current = activeSession.value;
+  if (current && current.messages.length > 0) {
+    const last = current.messages[current.messages.length - 1];
+    if (last && last.role === 'assistant' && !last.content.trim() && (!last.citations || last.citations.length === 0)) {
+      current.messages.pop();
+    }
+  }
+  saveSessionsToLocalStorage();
+};
+
 const loadPublicSession = (pub: PublicConversation) => {
+  stopGeneration();
   // Load public conversation as a readable local chat session
   let existing = chatSessions.value.find(s => s.id === pub.id);
   if (!existing) {
@@ -852,6 +1088,7 @@ const saveSessionsToLocalStorage = () => {
 };
 
 const createNewSession = () => {
+  stopGeneration();
   const existingEmpty = chatSessions.value.find(s => s.messages.length === 0);
   if (existingEmpty) {
     activeSessionId.value = existingEmpty.id;
@@ -869,11 +1106,17 @@ const createNewSession = () => {
 };
 
 const selectSession = (id: string) => {
+  if (activeSessionId.value !== id) {
+    stopGeneration();
+  }
   activeSessionId.value = id;
   scrollToBottom();
 };
 
 const deleteSession = (id: string) => {
+  if (activeSessionId.value === id) {
+    stopGeneration();
+  }
   chatSessions.value = chatSessions.value.filter(s => s.id !== id);
   if (activeSessionId.value === id) {
     const first = chatSessions.value[0];
@@ -966,9 +1209,81 @@ const formatResponse = (text: string) => {
   return `<p class="my-1">${html}</p>`;
 };
 
+const onLiveTurnComplete = (result: LiveTurnResult) => {
+  const currentSession = chatSessions.value.find(s => s.id === activeSessionId.value);
+  if (!currentSession) return;
+
+  if (result.userQuery) {
+    currentSession.messages.push({
+      role: 'user',
+      content: result.userQuery,
+    });
+  }
+
+  currentSession.messages.push({
+    role: 'assistant',
+    content: result.response,
+    citations: result.citations,
+  });
+
+  if (currentSession.messages.length <= 2 && result.userQuery) {
+    currentSession.title = result.userQuery.length > 28 ? result.userQuery.substring(0, 28) + '...' : result.userQuery;
+  }
+  currentSession.updatedAt = Date.now();
+  saveSessionsToLocalStorage();
+  scrollToBottom();
+};
+
+const {
+  isLiveConnected,
+  isConnecting: isLiveConnecting,
+  isMuted: isLiveMuted,
+  isGeminiSpeaking,
+  isUserSpeaking,
+  isQueryingRAG,
+  currentRagQuery,
+  currentCitations: liveCitations,
+  liveTranscript,
+  userLiveTranscript,
+  liveStatus,
+  liveError,
+  audioLevel,
+  startLiveSession,
+  stopLiveSession,
+  toggleMute: toggleLiveMute,
+  sendTextMessage: sendLiveTextMessage,
+  interruptPlayback: interruptLivePlayback,
+} = useGeminiLive(onLiveTurnComplete);
+
+const toggleLiveSession = async () => {
+  if (isLiveConnected.value || isLiveConnecting.value) {
+    stopLiveSession();
+  } else {
+    chatError.value = null;
+    await startLiveSession();
+  }
+};
+
+watch(liveError, (val) => {
+  if (val) {
+    chatError.value = val;
+  }
+});
+
+onUnmounted(() => {
+  stopGeneration();
+  stopLiveSession();
+});
+
 const sendMessage = async () => {
   const query = inputQuery.value.trim();
-  if (!query || isLoading.value) return;
+  if (!query || isLoading.value || isStreaming.value) return;
+
+  if (isLiveConnected.value) {
+    sendLiveTextMessage(query);
+    inputQuery.value = '';
+    return;
+  }
 
   const currentSession = chatSessions.value.find(s => s.id === activeSessionId.value);
   if (!currentSession) return;
@@ -984,8 +1299,13 @@ const sendMessage = async () => {
 
   inputQuery.value = '';
   isLoading.value = true;
+  isStreaming.value = false;
+  streamStatus.value = 'Searching Magisterium AI database...';
   saveSessionsToLocalStorage();
   await scrollToBottom();
+
+  abortController = new AbortController();
+  let assistantMsg: ChatMessage | null = null;
 
   try {
     const payloadMessages = currentSession.messages.map(m => ({
@@ -993,34 +1313,168 @@ const sendMessage = async () => {
       content: m.content,
     }));
 
-    const res = await fetchWithAuth<MagisteriumResponse>('/magisterium/chat', {
+    const url = getApiUrl('/magisterium/chat');
+    const headers = getAuthHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'text/event-stream, application/json',
+    });
+
+    const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         messages: payloadMessages,
         mode: 'llm_summary',
+        stream: true,
       }),
+      signal: abortController.signal,
     });
 
-    if (res && res.response) {
-      currentSession.messages.push({
-        role: 'assistant',
-        content: res.response,
-        citations: res.citations || [],
-      });
-      if (res.usage) {
-        apiUsage.value = res.usage;
+    if (response.status === 401) {
+      throw new Error('Unauthorized access. Please check your API Token configuration.');
+    }
+
+    if (!response.ok) {
+      let errorMsg = `Request failed: ${response.status} ${response.statusText}`;
+      try {
+        const errJson = await response.json();
+        if (errJson && errJson.error) {
+          errorMsg = errJson.error;
+        }
+      } catch {
+        // ignore
       }
-      currentSession.updatedAt = Date.now();
-      saveSessionsToLocalStorage();
+      throw new Error(errorMsg);
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('text/event-stream') && response.body) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      const ensureAssistantMsg = () => {
+        if (!assistantMsg) {
+          assistantMsg = {
+            role: 'assistant',
+            content: '',
+            citations: [],
+          };
+          currentSession.messages.push(assistantMsg);
+        }
+        return assistantMsg;
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith('data:')) continue;
+          const dataStr = trimmed.replace(/^data:\s*/, '').trim();
+          if (dataStr === '[DONE]') continue;
+
+          try {
+            const event = JSON.parse(dataStr);
+            if (event.type === 'status') {
+              streamStatus.value = event.message || '';
+            } else if (event.type === 'citations') {
+              const msg = ensureAssistantMsg();
+              msg.citations = event.citations || [];
+              if (event.usage) {
+                apiUsage.value = event.usage;
+              }
+              streamStatus.value = 'Synthesizing Catholic response...';
+              streamScrollToBottom();
+            } else if (event.type === 'chunk') {
+              const msg = ensureAssistantMsg();
+              msg.content += event.delta || '';
+              isLoading.value = false;
+              isStreaming.value = true;
+              streamScrollToBottom();
+            } else if (event.type === 'done') {
+              const msg = ensureAssistantMsg();
+              if (event.response && !msg.content) {
+                msg.content = event.response;
+              }
+              isStreaming.value = false;
+              isLoading.value = false;
+            } else if (event.type === 'error') {
+              throw new Error(event.error || 'Magisterium streaming error');
+            }
+          } catch (parseErr: any) {
+            if (parseErr.message && !parseErr.message.includes('JSON')) {
+              throw parseErr;
+            }
+          }
+        }
+      }
+
+      if (buffer.trim().startsWith('data:')) {
+        const dataStr = buffer.trim().replace(/^data:\s*/, '').trim();
+        if (dataStr && dataStr !== '[DONE]') {
+          try {
+            const event = JSON.parse(dataStr);
+            if (event.type === 'chunk') {
+              const msg = ensureAssistantMsg();
+              msg.content += event.delta || '';
+            } else if (event.type === 'done') {
+              const msg = ensureAssistantMsg();
+              if (event.response && !msg.content) {
+                msg.content = event.response;
+              }
+            }
+          } catch {
+            // ignore
+          }
+        }
+      }
+
+      if (assistantMsg) {
+        currentSession.updatedAt = Date.now();
+        saveSessionsToLocalStorage();
+      } else {
+        throw new Error('No response was generated by Magisterium AI.');
+      }
     } else {
-      throw new Error('Received an empty response from Magisterium AI.');
+      // Non-streaming fallback
+      const res = await response.json() as MagisteriumResponse;
+      if (res && res.response) {
+        currentSession.messages.push({
+          role: 'assistant',
+          content: res.response,
+          citations: res.citations || [],
+        });
+        if (res.usage) {
+          apiUsage.value = res.usage;
+        }
+        currentSession.updatedAt = Date.now();
+        saveSessionsToLocalStorage();
+      } else {
+        throw new Error('Received an empty response from Magisterium AI.');
+      }
     }
   } catch (err: any) {
+    if (err.name === 'AbortError') {
+      return;
+    }
     console.error('Magisterium chat error:', err);
     chatError.value = err.message || 'An error occurred while calling the Magisterium AI endpoint.';
+    const targetMsg = assistantMsg as ChatMessage | null;
+    if (targetMsg && !targetMsg.content.trim() && (!targetMsg.citations || targetMsg.citations.length === 0)) {
+      const idx = currentSession.messages.indexOf(targetMsg);
+      if (idx !== -1) currentSession.messages.splice(idx, 1);
+    }
   } finally {
     isLoading.value = false;
+    isStreaming.value = false;
+    streamStatus.value = '';
+    abortController = null;
     await scrollToBottom();
   }
 };

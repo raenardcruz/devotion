@@ -182,10 +182,31 @@ func adminGeminiModelsHandler(w http.ResponseWriter, r *http.Request) {
 		"gemini-4-argon",
 		"gemini-3.8-flash",
 		"gemini-3.5-flash-lite",
+		"gemini-3.1-flash-lite",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"models": geminiModels,
+	})
+}
+
+func adminGeminiLiveModelsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	liveModels := []string{
+		"gemini-3.8-live",
+		"gemini-3.8-live-extended-thinking",
+		"gemini-2.5-flash-native-audio",
+		"gemini-2.0-flash-exp",
+		"gemini-2.0-flash",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"models": liveModels,
 	})
 }

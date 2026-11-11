@@ -1,16 +1,13 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/raenardcruz/ollama-adk-wrapper"
 	"google.golang.org/adk/model"
@@ -26,6 +23,7 @@ type MagisteriumChatMessage struct {
 type MagisteriumChatRequest struct {
 	Messages []MagisteriumChatMessage `json:"messages"`
 	Mode     string                   `json:"mode,omitempty"` // "magisterium" or "llm_summary"
+	Stream   bool                     `json:"stream,omitempty"`
 }
 
 type MagisteriumCitation struct {
@@ -74,9 +72,55 @@ func magisteriumChatHandler(w http.ResponseWriter, r *http.Request) {
 		apiKey = os.Getenv("MAGISTERIUM_API_KEY")
 	}
 
+	isStreaming := req.Stream || strings.Contains(r.Header.Get("Accept"), "text/event-stream")
+	var flusher http.Flusher
+	if isStreaming {
+		var ok bool
+		flusher, ok = w.(http.Flusher)
+		if !ok {
+			isStreaming = false
+		}
+	}
+
 	if apiKey == "" {
+		if isStreaming {
+			w.Header().Set("Content-Type", "text/event-stream")
+			w.Header().Set("Cache-Control", "no-cache")
+			w.Header().Set("Connection", "keep-alive")
+			w.Header().Set("X-Accel-Buffering", "no")
+			data, _ := json.Marshal(map[string]any{
+				"type":  "error",
+				"error": "Magisterium AI API Key is not configured in Admin Settings.",
+			})
+			fmt.Fprintf(w, "data: %s\n\n", data)
+			flusher.Flush()
+			return
+		}
 		respondWithError(w, http.StatusBadRequest, "Magisterium AI API Key is not configured in Admin Settings.")
 		return
+	}
+
+	if isStreaming {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+		w.Header().Set("X-Accel-Buffering", "no")
+		flusher.Flush()
+	}
+
+	sendSSE := func(payload any) error {
+		if !isStreaming || flusher == nil {
+			return nil
+		}
+		data, err := json.Marshal(payload)
+		if err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(w, "data: %s\n\n", data); err != nil {
+			return err
+		}
+		flusher.Flush()
+		return nil
 	}
 
 	llmProvider := settings.MagisteriumLLMProvider
@@ -89,6 +133,12 @@ func magisteriumChatHandler(w http.ResponseWriter, r *http.Request) {
 	latestQuestion := req.Messages[len(req.Messages)-1].Content
 
 	if len(req.Messages) > 1 {
+		if isStreaming {
+			_ = sendSSE(map[string]any{
+				"type":    "status",
+				"message": "Understanding conversation context...",
+			})
+		}
 		log.Printf("[magisteriumChatHandler] Follow-up detected (%d messages). Generating standalone query via LLM (%s)...", len(req.Messages), llmProvider)
 		generatedQuery, err := generateStandaloneQueryWithLLM(r.Context(), req.Messages, llmProvider, settings)
 		if err != nil {
@@ -104,140 +154,92 @@ func magisteriumChatHandler(w http.ResponseWriter, r *http.Request) {
 		searchQuery = latestQuestion
 	}
 
-	// Call Magisterium API endpoint
-	magisteriumURL := os.Getenv("MAGISTERIUM_API_URL")
-	if magisteriumURL == "" {
-		magisteriumURL = "https://www.magisterium.com/api/v1/search"
-	}
-
-	payload := map[string]interface{}{
-		"query":      searchQuery,
-		"numResults": 5,
-	}
-
-	jsonBytes, err := json.Marshal(payload)
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Failed to marshal request payload")
-		return
-	}
-
-	client := http.Client{Timeout: 30 * time.Second}
-	httpReq, err := http.NewRequest(http.MethodPost, magisteriumURL, bytes.NewBuffer(jsonBytes))
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Failed to create HTTP request to Magisterium AI")
-		return
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", apiKey))
-
-	resp, err := client.Do(httpReq)
-	if err != nil {
-		log.Printf("[magisteriumChatHandler] HTTP error calling Magisterium AI: %v", err)
-		respondWithError(w, http.StatusBadGateway, "Failed to connect to Magisterium AI service")
-		return
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Failed to read response from Magisterium AI")
-		return
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		log.Printf("[magisteriumChatHandler] Magisterium API error response (Status %d): %s", resp.StatusCode, string(respBody))
-		var errData map[string]interface{}
-		errMsg := fmt.Sprintf("Magisterium AI request failed with status %d", resp.StatusCode)
-		if json.Unmarshal(respBody, &errData) == nil {
-			if msg, ok := errData["message"].(string); ok {
-				errMsg = msg
-			} else if msg, ok := errData["error"].(string); ok {
-				errMsg = msg
-			}
-		}
-		respondWithError(w, resp.StatusCode, errMsg)
-		return
-	}
-
-	log.Printf("[magisteriumChatHandler] Raw Magisterium AI Response: %s", string(respBody))
-
-	var rawResp map[string]interface{}
-	if err := json.Unmarshal(respBody, &rawResp); err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Failed to parse Magisterium AI response")
-		return
-	}
-
-	var citations []MagisteriumCitation
-	var answerText string
-
-	// Extract results according to target schema { data: { results: [...] } }
-	var resultsList []interface{}
-
-	if dataObj, ok := rawResp["data"].(map[string]interface{}); ok {
-		if resArr, ok := dataObj["results"].([]interface{}); ok {
-			resultsList = resArr
-		}
-		if ans, ok := dataObj["answer"].(string); ok && strings.TrimSpace(ans) != "" {
-			answerText = ans
-		}
-	}
-
-	// Fallback to top-level results if data wrapper is omitted
-	if len(resultsList) == 0 {
-		if resArr, ok := rawResp["results"].([]interface{}); ok {
-			resultsList = resArr
-		}
-	}
-
-	if answerText == "" {
-		if ans, ok := rawResp["answer"].(string); ok && strings.TrimSpace(ans) != "" {
-			answerText = ans
-		}
-	}
-
-	// Process schema items from data.results
-	for _, item := range resultsList {
-		itemMap, ok := item.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		author, _ := itemMap["author"].(string)
-		docTitle, _ := itemMap["document_title"].(string)
-		refStr, _ := itemMap["ref"].(string)
-		textVal, _ := itemMap["text"].(string)
-		titleVal, _ := itemMap["title"].(string)
-		urlVal, _ := itemMap["url"].(string)
-		scoreVal, _ := itemMap["score"].(float64)
-
-		displayTitle := titleVal
-		if displayTitle == "" {
-			displayTitle = docTitle
-		}
-		if displayTitle == "" {
-			displayTitle = refStr
-		}
-
-		citations = append(citations, MagisteriumCitation{
-			Title:         displayTitle,
-			DocumentTitle: docTitle,
-			Author:        author,
-			Ref:           refStr,
-			Score:         scoreVal,
-			URL:           urlVal,
-			Text:          textVal,
+	if isStreaming {
+		_ = sendSSE(map[string]any{
+			"type":    "status",
+			"message": "Searching Catholic Church documents...",
 		})
 	}
 
+	// Call Magisterium API endpoint via Magisterium RAG Agent
+	citations, usageInfo, err := ExecuteMagisteriumRAG(r.Context(), searchQuery, 5, apiKey)
+	if err != nil {
+		log.Printf("[magisteriumChatHandler] Magisterium RAG error: %v", err)
+		if isStreaming {
+			_ = sendSSE(map[string]any{
+				"type":  "error",
+				"error": fmt.Sprintf("Failed to query Magisterium AI: %v", err),
+			})
+			return
+		}
+		respondWithError(w, http.StatusBadGateway, fmt.Sprintf("Failed to query Magisterium AI: %v", err))
+		return
+	}
+
+	if isStreaming {
+		_ = sendSSE(map[string]any{
+			"type":      "citations",
+			"citations": citations,
+			"usage":     usageInfo,
+		})
+	}
+
+	var answerText string
+
 	// Default to LLM summary mode (or if explicitly requested as "llm_summary"), summarize citations with configured LLM (Ollama or Gemini)
 	if (req.Mode == "" || req.Mode == "llm_summary") && len(citations) > 0 {
-		llmProvider := settings.MagisteriumLLMProvider
-		if llmProvider == "" {
-			llmProvider = "ollama"
+		if isStreaming {
+			_ = sendSSE(map[string]any{
+				"type":    "status",
+				"message": "Synthesizing Catholic response...",
+			})
+			summary, err := streamCitationsSummaryWithLLM(r.Context(), latestQuestion, citations, llmProvider, settings, func(delta string) error {
+				return sendSSE(map[string]any{
+					"type":  "chunk",
+					"delta": delta,
+				})
+			})
+			if err != nil {
+				log.Printf("[magisteriumChatHandler] Warning: streaming custom LLM summary failed: %v", err)
+				if r.Context().Err() != nil {
+					return
+				}
+				// Fallback to formatted citations
+				var parts []string
+				for idx, c := range citations {
+					header := fmt.Sprintf("**%d. %s**", idx+1, c.DocumentTitle)
+					if c.Author != "" {
+						header += fmt.Sprintf(" — *%s*", c.Author)
+					}
+					if c.Ref != "" {
+						header += fmt.Sprintf(" (%s)", c.Ref)
+					}
+					parts = append(parts, fmt.Sprintf("%s\n%s", header, c.Text))
+				}
+				answerText = strings.Join(parts, "\n\n")
+				_ = sendSSE(map[string]any{
+					"type":  "chunk",
+					"delta": answerText,
+				})
+				_ = sendSSE(map[string]any{
+					"type":     "done",
+					"response": answerText,
+				})
+				fmt.Fprintf(w, "data: [DONE]\n\n")
+				flusher.Flush()
+				return
+			}
+			answerText = summary
+			_ = sendSSE(map[string]any{
+				"type":     "done",
+				"response": answerText,
+			})
+			fmt.Fprintf(w, "data: [DONE]\n\n")
+			flusher.Flush()
+			return
 		}
-		userQuestion := req.Messages[len(req.Messages)-1].Content
-		summary, err := summarizeCitationsWithLLM(r.Context(), userQuestion, citations, llmProvider, settings)
+
+		summary, err := summarizeCitationsWithLLM(r.Context(), latestQuestion, citations, llmProvider, settings)
 		if err != nil {
 			log.Printf("[magisteriumChatHandler] Warning: custom LLM summary failed: %v. Falling back to default answer/citations.", err)
 		} else if strings.TrimSpace(summary) != "" {
@@ -259,30 +261,21 @@ func magisteriumChatHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if strings.TrimSpace(answerText) == "" {
-		answerText = string(respBody)
+		answerText = "No response available from Magisterium AI."
 	}
 
-	// Extract rate limit usage headers if provided by Magisterium API
-	limitHeader := resp.Header.Get("X-RateLimit-Limit")
-	if limitHeader == "" {
-		limitHeader = resp.Header.Get("x-ratelimit-limit")
-	}
-	remHeader := resp.Header.Get("X-RateLimit-Remaining")
-	if remHeader == "" {
-		remHeader = resp.Header.Get("x-ratelimit-remaining")
-	}
-	resetHeader := resp.Header.Get("X-RateLimit-Reset")
-	if resetHeader == "" {
-		resetHeader = resp.Header.Get("x-ratelimit-reset")
-	}
-
-	var usageInfo *MagisteriumUsage
-	if limitHeader != "" || remHeader != "" || resetHeader != "" {
-		usageInfo = &MagisteriumUsage{
-			Limit:     limitHeader,
-			Remaining: remHeader,
-			Reset:     resetHeader,
-		}
+	if isStreaming {
+		_ = sendSSE(map[string]any{
+			"type":  "chunk",
+			"delta": answerText,
+		})
+		_ = sendSSE(map[string]any{
+			"type":     "done",
+			"response": answerText,
+		})
+		fmt.Fprintf(w, "data: [DONE]\n\n")
+		flusher.Flush()
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -293,8 +286,16 @@ func magisteriumChatHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// summarizeCitationsWithLLM feeds Magisterium search citations into the selected LLM provider (Ollama or Gemini) to generate a synthesis summary.
-func summarizeCitationsWithLLM(ctx context.Context, userQuestion string, citations []MagisteriumCitation, provider string, settings Settings) (string, error) {
+// streamCitationsSummaryWithLLM feeds Magisterium search citations into the selected LLM provider (Ollama or Gemini)
+// to generate a synthesis summary, streaming chunks via onChunk if provided.
+func streamCitationsSummaryWithLLM(
+	ctx context.Context,
+	userQuestion string,
+	citations []MagisteriumCitation,
+	provider string,
+	settings Settings,
+	onChunk func(delta string) error,
+) (string, error) {
 	var citationText strings.Builder
 	for i, c := range citations {
 		citationText.WriteString(fmt.Sprintf("[%d] %s", i+1, c.DocumentTitle))
@@ -329,6 +330,7 @@ Instructions:
 	}
 
 	var summaryBuilder strings.Builder
+	streamEnabled := onChunk != nil
 
 	if provider == "gemini" {
 		apiKey := settings.GeminiAPIKey
@@ -339,14 +341,14 @@ Instructions:
 		if selectedModel == "" {
 			selectedModel = "gemini-3.1-flash-lite"
 		}
-		log.Printf("[summarizeCitationsWithLLM] Summarizing Magisterium citations with Gemini (%s)...", selectedModel)
+		log.Printf("[streamCitationsSummaryWithLLM] Summarizing Magisterium citations with Gemini (%s) [streaming=%t]...", selectedModel, streamEnabled)
 		gModel, err := geminiModel.NewModel(ctx, selectedModel, &genai.ClientConfig{
 			APIKey: apiKey,
 		})
 		if err != nil {
 			return "", fmt.Errorf("failed to initialize Gemini model: %w", err)
 		}
-		seq := gModel.GenerateContent(ctx, req, false)
+		seq := gModel.GenerateContent(ctx, req, streamEnabled)
 		for resp, err := range seq {
 			if err != nil {
 				return "", fmt.Errorf("error generating summary with Gemini: %w", err)
@@ -355,6 +357,11 @@ Instructions:
 				for _, part := range resp.Content.Parts {
 					if part.Text != "" {
 						summaryBuilder.WriteString(part.Text)
+						if onChunk != nil {
+							if err := onChunk(part.Text); err != nil {
+								return summaryBuilder.String(), err
+							}
+						}
 					}
 				}
 			}
@@ -369,9 +376,9 @@ Instructions:
 		if selectedModel == "" {
 			selectedModel = "gemma4:cloud"
 		}
-		log.Printf("[summarizeCitationsWithLLM] Summarizing Magisterium citations with Ollama (%s)...", selectedModel)
+		log.Printf("[streamCitationsSummaryWithLLM] Summarizing Magisterium citations with Ollama (%s) [streaming=%t]...", selectedModel, streamEnabled)
 		oModel := ollama.NewModel(selectedModel, ollamaURL)
-		seq := oModel.GenerateContent(ctx, req, false)
+		seq := oModel.GenerateContent(ctx, req, streamEnabled)
 		for resp, err := range seq {
 			if err != nil {
 				return "", fmt.Errorf("error generating summary with Ollama: %w", err)
@@ -380,6 +387,11 @@ Instructions:
 				for _, part := range resp.Content.Parts {
 					if part.Text != "" {
 						summaryBuilder.WriteString(part.Text)
+						if onChunk != nil {
+							if err := onChunk(part.Text); err != nil {
+								return summaryBuilder.String(), err
+							}
+						}
 					}
 				}
 			}
@@ -387,6 +399,11 @@ Instructions:
 	}
 
 	return strings.TrimSpace(summaryBuilder.String()), nil
+}
+
+// summarizeCitationsWithLLM feeds Magisterium search citations into the selected LLM provider (Ollama or Gemini) to generate a synthesis summary.
+func summarizeCitationsWithLLM(ctx context.Context, userQuestion string, citations []MagisteriumCitation, provider string, settings Settings) (string, error) {
+	return streamCitationsSummaryWithLLM(ctx, userQuestion, citations, provider, settings, nil)
 }
 
 // generateStandaloneQueryWithLLM uses the configured LLM provider (Ollama or Gemini) to process conversation history
@@ -539,6 +556,10 @@ func publicConversationsSaveHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func publicConversationsListHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodDelete {
+		publicConversationsDeleteHandler(w, r)
+		return
+	}
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -553,5 +574,40 @@ func publicConversationsListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"conversations": list,
+	})
+}
+
+type DeletePublicConversationRequest struct {
+	ID string `json:"id"`
+}
+
+func publicConversationsDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete && r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	id := strings.TrimSpace(r.URL.Query().Get("id"))
+	if id == "" && r.Body != nil {
+		var req DeletePublicConversationRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err == nil {
+			id = strings.TrimSpace(req.ID)
+		}
+	}
+
+	if id == "" {
+		respondWithError(w, http.StatusBadRequest, "Conversation ID is required")
+		return
+	}
+
+	if err := DeletePublicConversation(id); err != nil {
+		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to delete public conversation: %v", err))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Conversation successfully removed from public sanctuary database!",
 	})
 }
