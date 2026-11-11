@@ -6,6 +6,23 @@ export function useDevotionApi() {
   const loading = ref(false);
   const error = ref<string | null>(null);
 
+  const getApiUrl = (endpoint: string): string => {
+    let baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://devotionapi.raenardcruz.com';
+    if (!baseUrl || (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://') && !baseUrl.startsWith('/'))) {
+      baseUrl = 'https://devotionapi.raenardcruz.com';
+    }
+    return endpoint.startsWith('http') ? endpoint : `${baseUrl.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
+  };
+
+  const getAuthHeaders = (customHeaders?: HeadersInit): Headers => {
+    const apiToken = import.meta.env.VITE_API_TOKEN;
+    const headers = new Headers(customHeaders);
+    if (apiToken) {
+      headers.set('Authorization', `Bearer ${apiToken}`);
+    }
+    return headers;
+  };
+
   const fetchWithAuth = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
     let baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://devotionapi.raenardcruz.com';
     const apiToken = import.meta.env.VITE_API_TOKEN;
@@ -84,6 +101,8 @@ export function useDevotionApi() {
     loading,
     error,
     isServerUnreachable,
+    getApiUrl,
+    getAuthHeaders,
     fetchWithAuth,
     getDevotion,
   };

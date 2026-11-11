@@ -14,6 +14,7 @@ interface Settings {
   magisterium_api_key: string;
   bible_api_key: string;
   gemini_model: string;
+  gemini_live_model: string;
   ollama_model: string;
   context_model?: string;
   context_instruction: string;
@@ -38,6 +39,7 @@ const settings = ref<Settings>({
   magisterium_api_key: '',
   bible_api_key: '',
   gemini_model: 'gemini-4-argon',
+  gemini_live_model: 'gemini-3.8-live',
   ollama_model: 'gemma4:cloud',
   context_instruction: '',
   enable_fact_checker: true,
@@ -46,7 +48,15 @@ const settings = ref<Settings>({
 const geminiModelsList = ref<string[]>([
   'gemini-4-argon',
   'gemini-3.8-flash',
-  'gemini-3.5-flash-lite'
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite'
+]);
+const geminiLiveModelsList = ref<string[]>([
+  'gemini-3.8-live',
+  'gemini-3.8-live-extended-thinking',
+  'gemini-2.5-flash-native-audio',
+  'gemini-2.0-flash-exp',
+  'gemini-2.0-flash'
 ]);
 const ollamaModelsList = ref<string[]>([]);
 const loadingOllamaModels = ref(false);
@@ -102,6 +112,7 @@ const loadSettings = async () => {
       settings.value = data;
     }
     fetchGeminiModels();
+    fetchGeminiLiveModels();
     fetchOllamaModels();
   } catch (err: any) {
     console.error('Failed to load settings:', err);
@@ -116,6 +127,17 @@ const fetchGeminiModels = async () => {
     }
   } catch (err) {
     console.error('Failed to fetch gemini models:', err);
+  }
+};
+
+const fetchGeminiLiveModels = async () => {
+  try {
+    const res = await fetchWithAuth<{ models: string[] }>('/api/admin/gemini-live-models');
+    if (res && res.models && res.models.length > 0) {
+      geminiLiveModelsList.value = res.models;
+    }
+  } catch (err) {
+    console.error('Failed to fetch gemini live models:', err);
   }
 };
 
@@ -370,7 +392,7 @@ const saveSettings = async () => {
           <!-- Always Available Gemini Model Selection -->
           <div class="pt-2">
             <label class="block font-serif font-semibold text-amber-950 text-sm mb-1">
-              Gemini Model Selection
+              Gemini Model Selection (Text & Context Generation)
             </label>
             <p class="text-xs text-stone-600 mb-2">
               Select the Gemini model used for the Catholic Assistant agent (main.go) and Gemini context generation.
@@ -380,6 +402,24 @@ const saveSettings = async () => {
               class="w-full px-3 py-2 border border-amber-300 rounded bg-white/80 focus:outline-none focus:ring-2 focus:ring-amber-500 text-stone-800 text-sm font-medium"
             >
               <option v-for="m in geminiModelsList" :key="m" :value="m">
+                {{ m }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Dedicated Gemini Live Model Selection (Real-Time Voice & Live RAG) -->
+          <div class="pt-2">
+            <label class="block font-serif font-semibold text-amber-950 text-sm mb-1">
+              Gemini Live Model Selection (Voice & Real-Time RAG)
+            </label>
+            <p class="text-xs text-stone-600 mb-2">
+              Select the dedicated Gemini Live model used exclusively for real-time voice sessions in Magisterium AI Sanctuary. (Independent of the text generation model). Defaults to <code class="font-mono bg-amber-100 text-amber-900 px-1 py-0.5 rounded">gemini-3.8-live</code>.
+            </p>
+            <select
+              v-model="settings.gemini_live_model"
+              class="w-full px-3 py-2 border border-amber-300 rounded bg-white/80 focus:outline-none focus:ring-2 focus:ring-amber-500 text-stone-800 text-sm font-medium"
+            >
+              <option v-for="m in geminiLiveModelsList" :key="m" :value="m">
                 {{ m }}
               </option>
             </select>

@@ -146,6 +146,13 @@ Retrieves all published community conversations.
 * **Endpoint:** `/magisterium/conversations/public`
 * **Method:** `GET`
 
+#### 7. Delete Public Sanctuary Conversation
+Removes a conversation from the public sanctuary database.
+* **Endpoint:** `/magisterium/conversations/delete` (or `DELETE /magisterium/conversations/public?id=...`)
+* **Method:** `POST` or `DELETE`
+* **Request Body:** `{ "id": "..." }` or query parameter `?id=...`
+* **Success Response:** `200 OK` with `{ "success": true, "message": "Conversation successfully removed from public sanctuary database!" }`
+
 ---
 
 ## Frontend Integration Example (JavaScript Fetch)

@@ -110,11 +110,27 @@ This is a Vue.js application using Vite, TypeScript, and Vue Router, focused on 
 - **Book-Like Page Layout & Typesetting**: Formatted the reader layout to mimic physical books, featuring centered chapter headings (numeral and title) separated by a thin gold divider, a maximum text reading width (`max-w-2xl`), justified alignment, first-line indenting (except for the first paragraph), and blockquotes rendered as centered, borderless epigraphs.
 - **Inline Markdown Parser**: Added safe, lightweight inline markdown styling to convert bold (`**`, `__`), italic (`*`, `_`), and double dashes into proper HTML tags/entities.
 
+### Gemini Live & Magisterium RAG Agent
+- **Gemini Live Multimodal Voice Streaming**:
+  - Implemented low-latency bidirectional real-time audio and text streaming via Google GenAI Live API WebSockets (`google.golang.org/genai`).
+  - Native audio input sampled and downsampled to 16 kHz 16-bit PCM mono; audio output streamed at 24 kHz 16-bit PCM mono with seamless chronological buffer playback.
+  - Barge-in & interruptibility: automatically interrupts current speech playback when the user starts speaking.
+  - Dedicated Live Model selection setting (`gemini_live_model`) in database and Admin Settings, independent of standard text generation model (`gemini_model`), defaulting to `gemini-3.8-live`.
+- **Magisterium RAG Agent & Function Calling**:
+  - Registered `get_magisterium_rag` tool declaration in Gemini Live session setup.
+  - When users ask questions on Catholic doctrine, scripture, morality, or Church fathers, Gemini Live invokes the Magisterium RAG Agent.
+  - The agent queries the Magisterium API (`https://www.magisterium.com/api/v1/search`), extracts citations (document title, author, reference, relevance match, URL, text excerpt), and returns them via `SendToolResponse`.
+  - Gemini Live synthesizes and summarizes the citations faithfully into spoken audio and real-time text.
+- **Real-Time Sanctuary UI Integration**:
+  - Added Gemini Live toggle button in page header and input toolbar in `MagisteriumChat.vue`.
+  - Glassmorphic Apple-style Live HUD displaying dynamic audio volume waveforms, live status badges, agent search progress, retrieved citations cards, and live spoken transcriptions.
+  - Automatically captures completed voice turns with citations into the session chat history for replay and publishing to the Public Sanctuary database.
+
 ---
 
-## Active Plan: Add Sacred Icons to Rosary Mysteries
+## Active Plan: Gemini Live with Magisterium RAG Agent
 - **Status**: Completed.
-- **Goal**: Integrate authentic Catholic and Orthodox icon/painting URLs into the Rosary's 20 mysteries to replace generic Unsplash images.
+- **Goal**: Implement Gemini Live for Magisterium AI Sanctuary, allowing Gemini Live to invoke an agent to fetch RAG results from the Magisterium API and summarize them into spoken and textual synthesis.
 
 
 
