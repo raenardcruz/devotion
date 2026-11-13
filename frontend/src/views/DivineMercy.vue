@@ -6,117 +6,20 @@
     <!-- Main Chaplet Container -->
     <main class="flex-grow max-w-4xl mx-auto px-4 py-8 flex flex-col w-full relative z-10">
 
-        <!-- Sub-header & Toggles -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between border-b border-[#D1C7BD]/60 pb-4 mb-6 gap-4 animate-fade-in-down">
-            <div>
-                <router-link 
-                  to="/devotions" 
-                  class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-[#72383D]/70 hover:text-[#72383D] transition-colors mb-1 group"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:-translate-x-0.5 transition-transform">
-                    <path d="m15 18-6-6 6-6"/>
-                  </svg>
-                  <span>All Devotions</span>
-                </router-link>
-                <h1 class="font-serif text-2xl md:text-3xl bg-gradient-to-r from-[#72383D] via-[#AC9C8D] to-[#322D29] bg-clip-text text-transparent font-bold">
-                    The Divine Mercy Chaplet
-                </h1>
-            </div>
-            
-            <div class="flex flex-wrap items-center gap-2.5 sm:gap-3">
-                <!-- Auto Play Toggle Switch -->
-                <label class="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-wider text-[#322D29]/70 cursor-pointer select-none min-h-[38px] px-2">
-                    <span>Auto-Play</span>
-                    <input type="checkbox" v-model="autoPlay" class="sr-only peer" />
-                    <div class="relative w-8 h-4.5 bg-white/60 border border-[#D1C7BD]/80 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-[#322D29]/40 peer-checked:after:bg-[#72383D] after:border-[#D1C7BD] after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#72383D]/20"></div>
-                </label>
-
-                <!-- Manual Play/Pause Button -->
-                <button 
-                  v-if="currentStep.id && getPrayerAudioUrl(currentStep.id)"
-                  @click="toggleAudio"
-                  class="flex items-center gap-1.5 px-3.5 py-2 min-h-[38px] bg-gradient-to-r from-[#72383D] to-[#322D29] border border-transparent text-white rounded-full hover:from-[#8B464C] hover:to-[#453E38] active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none shadow-xs cursor-pointer"
-                >
-                  <svg v-if="!isPlaying" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
-                    <polygon points="6 3 20 12 6 21 6 3"></polygon>
-                  </svg>
-                  <svg v-else xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" x2="18" y1="4" y2="20"></line>
-                    <line x1="6" x2="6" y1="4" y2="20"></line>
-                  </svg>
-                  <span>{{ isPlaying ? 'Pause' : 'Listen' }}</span>
-                </button>
-
-                <!-- Short/Full Version Toggle -->
-                <div class="flex items-center bg-white/70 border border-[#D1C7BD]/80 p-0.5 rounded-full w-fit backdrop-blur-md">
-                    <button 
-                      @click="isShortVersion = false"
-                      :class="[!isShortVersion ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-bold' : 'text-[#322D29]/70 hover:text-[#72383D]']"
-                      class="px-3.5 py-1.5 min-h-[34px] rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer"
-                    >
-                      Full
-                    </button>
-                    <button 
-                      @click="isShortVersion = true"
-                      :class="[isShortVersion ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-bold' : 'text-[#322D29]/70 hover:text-[#72383D]']"
-                      class="px-3.5 py-1.5 min-h-[34px] rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer"
-                    >
-                      Short
-                    </button>
-                </div>
-
-                <!-- Prayer Intentions Button -->
-                <button 
-                  @click="showIntentionsModal = true"
-                  class="flex items-center gap-1.5 px-3.5 py-2 min-h-[38px] bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
-                >
-                  <span>🙏</span>
-                  <span>Intentions</span>
-                  <span v-if="activeCount > 0" class="w-4 h-4 rounded-full bg-[#72383D] text-white text-[9px] flex items-center justify-center font-bold">
-                    {{ activeCount }}
-                  </span>
-                </button>
-
-                <!-- Fullscreen Presentation Toggle Button -->
-                <button 
-                  @click="toggleFullscreen(cardContainerRef)"
-                  class="flex items-center gap-1.5 px-3 py-2 min-h-[38px] bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
-                  :title="isFullscreen ? 'Exit Fullscreen Card (ESC)' : 'Fullscreen Card Presentation (F)'"
-                >
-                  <svg v-if="!isFullscreen" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="15 3 21 3 21 9"></polyline>
-                    <polyline points="9 21 3 21 3 15"></polyline>
-                    <line x1="21" y1="3" x2="14" y2="10"></line>
-                    <line x1="3" y1="21" x2="10" y2="14"></line>
-                  </svg>
-                  <svg v-else xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="4 14 10 14 10 20"></polyline>
-                    <polyline points="20 10 14 10 14 4"></polyline>
-                    <line x1="14" y1="10" x2="21" y2="3"></line>
-                    <line x1="10" y1="14" x2="3" y2="21"></line>
-                  </svg>
-                  <span class="hidden sm:inline">{{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' }}</span>
-                </button>
-
-                <!-- Latin/English Toggle -->
-                <div class="flex items-center bg-white/70 border border-[#D1C7BD]/80 p-0.5 rounded-full w-fit backdrop-blur-md">
-                    <button 
-                      @click="showLatin = false"
-                      :class="[!showLatin ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-bold' : 'text-[#322D29]/70 hover:text-[#72383D]']"
-                      class="px-3.5 py-1.5 min-h-[34px] rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer"
-                    >
-                      EN
-                    </button>
-                    <button 
-                      @click="showLatin = true"
-                      :class="[showLatin ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-bold' : 'text-[#322D29]/70 hover:text-[#72383D]']"
-                      class="px-3.5 py-1.5 min-h-[34px] rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer"
-                    >
-                      LA
-                    </button>
-                </div>
-            </div>
-        </div>
+        <!-- Clean Unified Devotion Header with Collapsible Settings Menu -->
+        <DevotionHeader
+          title="The Divine Mercy Chaplet"
+          subtitle="Chaplet of Divine Mercy"
+          v-model:showLatin="showLatin"
+          v-model:autoPlay="autoPlay"
+          v-model:isShortVersion="isShortVersion"
+          :hasShortMode="true"
+          :activeIntentionsCount="activeCount"
+          :isFullscreen="isFullscreen"
+          :isFullscreenSupported="isFullscreenSupported"
+          @open-intentions="showIntentionsModal = true"
+          @toggle-fullscreen="toggleFullscreen(cardContainerRef)"
+        />
 
         <!-- Main Prayer Card Area -->
         <section 
@@ -162,15 +65,17 @@
                 </div>
             </transition>
 
-            <!-- Navigation Controls -->
-            <DivineMercyControls 
+            <!-- Navigation & Audio Controls -->
+            <DevotionControls
                 :currentStepIndex="currentStepIndex"
-                :currentStep="currentStep" 
-                :decadeIndex="decadeIndex" 
-                :totalSteps="steps.length" 
-                :isShort="isShortVersion"
-                @next="next" 
-                @prev="prev" 
+                :totalSteps="steps.length"
+                :isLastStep="currentStepIndex === steps.length - 1"
+                :hasAudio="Boolean(currentStep.id && getPrayerAudioUrl(currentStep.id))"
+                :isPlaying="isPlaying"
+                label="Chaplet"
+                @next="next"
+                @prev="prev"
+                @toggle-audio="toggleAudio"
             />
 
             <!-- Fullscreen Keyboard Helper Hint -->
@@ -215,7 +120,8 @@ import DivineMercyBeads from '../components/divinemercy/DivineMercyBeads.vue';
 import PrayerCard from '../components/divinemercy/PrayerCard.vue';
 import PrayerIntentionsCard from '../components/intentions/PrayerIntentionsCard.vue';
 import PrayerIntentionsModal from '../components/intentions/PrayerIntentionsModal.vue';
-import DivineMercyControls from '../components/divinemercy/DivineMercyControls.vue';
+import DevotionHeader from '../components/devotion/DevotionHeader.vue';
+import DevotionControls from '../components/devotion/DevotionControls.vue';
 
 const {
     activeIntentions,

@@ -44,14 +44,18 @@ func main() {
 	}
 
 	http.Handle("/devotion", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(devotionHandler))))
-	http.Handle("/bible", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(biblePassageHandler))))
-	http.Handle("/context", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(bibleContextHandler))))
-	http.Handle("/magisterium/chat", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(magisteriumChatHandler))))
-	http.Handle("/magisterium/rag", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(magisteriumRAGHandler))))
+	http.Handle("/bible", corsMiddleware(apiTokenMiddleware(accessControlMiddleware(false, true, http.HandlerFunc(biblePassageHandler)))))
+	http.Handle("/context", corsMiddleware(apiTokenMiddleware(accessControlMiddleware(true, true, http.HandlerFunc(bibleContextHandler)))))
+	http.Handle("/magisterium/chat", corsMiddleware(apiTokenMiddleware(accessControlMiddleware(true, true, http.HandlerFunc(magisteriumChatHandler)))))
+	http.Handle("/magisterium/rag", corsMiddleware(apiTokenMiddleware(accessControlMiddleware(true, true, http.HandlerFunc(magisteriumRAGHandler)))))
 	http.HandleFunc("/magisterium/live", geminiLiveHandler)
-	http.Handle("/magisterium/conversations/save", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(publicConversationsSaveHandler))))
-	http.Handle("/magisterium/conversations/public", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(publicConversationsListHandler))))
-	http.Handle("/magisterium/conversations/delete", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(publicConversationsDeleteHandler))))
+	http.Handle("/magisterium/conversations/save", corsMiddleware(apiTokenMiddleware(accessControlMiddleware(false, false, http.HandlerFunc(publicConversationsSaveHandler)))))
+	http.Handle("/magisterium/conversations/public", corsMiddleware(apiTokenMiddleware(accessControlMiddleware(false, false, http.HandlerFunc(publicConversationsListHandler)))))
+	http.Handle("/magisterium/conversations/delete", corsMiddleware(apiTokenMiddleware(accessControlMiddleware(false, false, http.HandlerFunc(publicConversationsDeleteHandler)))))
+
+	// Guest Access Code & Request Endpoints
+	http.Handle("/api/access/verify", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(verifyAccessHandler))))
+	http.Handle("/api/access/request", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(requestAccessHandler))))
 
 	// Admin API Endpoints
 	http.Handle("/api/admin/login", corsMiddleware(http.HandlerFunc(adminLoginHandler)))
@@ -59,6 +63,10 @@ func main() {
 	http.Handle("/api/admin/ollama-models", corsMiddleware(http.HandlerFunc(adminOllamaModelsHandler)))
 	http.Handle("/api/admin/gemini-models", corsMiddleware(http.HandlerFunc(adminGeminiModelsHandler)))
 	http.Handle("/api/admin/gemini-live-models", corsMiddleware(http.HandlerFunc(adminGeminiLiveModelsHandler)))
+	http.Handle("/api/admin/access-codes", corsMiddleware(http.HandlerFunc(adminAccessCodesHandler)))
+	http.Handle("/api/admin/access-requests", corsMiddleware(http.HandlerFunc(adminAccessRequestsHandler)))
+	http.Handle("/api/admin/access-requests/approve", corsMiddleware(http.HandlerFunc(adminApproveAccessRequestHandler)))
+	http.Handle("/api/admin/access-requests/reject", corsMiddleware(http.HandlerFunc(adminRejectAccessRequestHandler)))
 
 	// Start Cron Jobs
 	startCronJobs(ctx)
@@ -81,8 +89,9 @@ func corsMiddleware(next http.Handler) http.Handler {
 			allowedOrigin = "*"
 		}
 		w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, X-Access-Code, X-Admin-Token")
+		w.Header().Set("Access-Control-Expose-Headers", "X-Access-Remaining, X-Access-Limit")
 
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)

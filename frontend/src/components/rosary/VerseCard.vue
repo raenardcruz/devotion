@@ -1,10 +1,12 @@
 <template>
     <div :class="[isFullscreen ? 'w-full max-w-4xl mx-auto my-auto flex-grow flex flex-col justify-center items-center px-4' : 'relative max-w-2xl mx-auto w-full']">
-        <!-- Parchment Card Wrapper -->
-        <div :class="[isFullscreen ? 'bg-parchment-neutral-light border border-parchment-border p-8 md:p-12 rounded-[2.5rem] shadow-xl flex flex-col justify-between w-full my-auto' : 'bg-parchment-neutral-light border border-parchment-border p-6 md:p-8 rounded-[2rem] shadow-sm flex flex-col justify-between min-h-[300px]']" class="transition-all duration-300">
+        <!-- Unified Gradient Parchment Card Wrapper -->
+        <div :class="[isFullscreen ? 'devotion-card-surface p-8 md:p-12 rounded-[2.5rem] shadow-xl flex flex-col justify-between w-full my-auto relative overflow-hidden' : 'devotion-card-surface p-6 md:p-8 rounded-[2rem] flex flex-col justify-between min-h-[300px] relative overflow-hidden']" class="transition-all duration-300">
+            <!-- Subtle Top Atmospheric Glow -->
+            <div class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-3/4 h-40 rounded-full bg-radial from-[#72383D]/10 via-[#AC9C8D]/8 to-transparent blur-2xl" />
             
             <transition name="fade-scale" mode="out-in">
-                <div :key="(currentStep.title || currentStep.content) + (showLatin ? '-la' : '-en')" class="space-y-5 w-full">
+                <div :key="(currentStep.title || currentStep.content) + (showLatin ? '-la' : '-en')" class="space-y-5 w-full relative z-10">
                     
                     <!-- Completion Marker Layout -->
                     <div v-if="currentStep.prayerId === 'completion-marker'" class="flex flex-col items-center justify-center text-center py-6 space-y-6">

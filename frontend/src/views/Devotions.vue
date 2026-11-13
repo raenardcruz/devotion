@@ -1,18 +1,18 @@
 <template>
-  <div class="min-h-screen text-[#322D29] flex flex-col pb-28 sm:pb-20 selection:bg-[#72383D]/20 relative z-10">
+  <div class="min-h-screen bg-[#F7F3EE] text-[#322D29] flex flex-col pb-28 lg:pb-16 selection:bg-[#5C282D]/20 relative z-10">
     <!-- Global Header -->
     <TopNav />
 
     <!-- Main Content -->
-    <main class="flex-grow max-w-6xl mx-auto w-full px-4 pt-8 md:pt-12 pb-12 flex flex-col relative z-10">
+    <main class="flex-grow max-w-6xl mx-auto w-full px-4 pt-8 md:pt-11 pb-12 flex flex-col relative z-10">
       <!-- Page Hero Header -->
-      <header class="text-center mb-8 md:mb-10 animate-fade-in-down">
-        <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#72383D]/10 border border-[#72383D]/20 text-[#72383D] text-[11px] font-bold uppercase tracking-[0.2em] mb-3">
+      <header class="text-center mb-7 md:mb-9 animate-fade-in-down">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E9DFD3] text-[#5C282D] text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.18em] mb-3">
           <span>☦</span>
           <span>Sacred Prayer Sanctuary</span>
         </div>
-        <h1 class="font-serif text-3xl md:text-5xl bg-gradient-to-r from-[#72383D] via-[#AC9C8D] to-[#322D29] bg-clip-text text-transparent mb-3 font-bold tracking-tight">
-          Catholic Devotions &amp; Chaplets
+        <h1 class="font-serif text-3xl md:text-5xl text-[#4A2525] mb-2.5 font-semibold tracking-tight">
+          Devotions &amp; Chaplets
         </h1>
         <p class="text-[#322D29]/75 text-sm md:text-base max-w-2xl mx-auto leading-relaxed font-serif">
           Enter into contemplative prayer through the sacred mysteries of Christ and His Sorrowful Mother, accompanied by Sacred Scripture, classical sacred art, and Latin tradition.
@@ -20,28 +20,33 @@
       </header>
 
       <!-- Liturgical Day Recommendation Banner -->
-      <div class="mb-8 animate-fade-in-down">
-        <div class="bg-gradient-to-r from-[#72383D] via-[#54292D] to-[#322D29] text-white rounded-3xl p-5 md:p-6 shadow-md border border-white/15 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div class="flex items-start sm:items-center gap-4">
-            <div class="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center text-white shrink-0 border border-white/20">
+      <div class="mb-7 animate-fade-in-down">
+        <div class="relative overflow-hidden bg-gradient-to-br from-[#5B252A] via-[#4D1E23] to-[#351317] text-white rounded-[1.75rem] p-5 md:p-7 shadow-[0_16px_36px_-12px_rgba(62,24,28,0.45)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <!-- Organic Wave Backdrop -->
+          <svg class="absolute inset-0 w-full h-full opacity-20 pointer-events-none" viewBox="0 0 800 220" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 155 C200 100, 440 205, 800 95 L800 220 L0 220 Z" fill="#8C4047" />
+          </svg>
+
+          <div class="relative z-10 flex items-start sm:items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-white/12 backdrop-blur-md flex items-center justify-center text-[#F6EFE6] shrink-0 border border-white/15">
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
             </div>
             <div>
-              <div class="flex flex-wrap items-center gap-2 mb-1">
-                <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#EFE9E1]/80">
-                  {{ currentDayName }} Devotional Rhythm
+              <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                <span class="text-[10px] font-bold uppercase tracking-[0.18em] text-[#F5EBE0]/80">
+                  {{ currentDayName }} Meditation Edition
                 </span>
-                <span class="px-2.5 py-0.5 rounded-full bg-white/15 text-[10px] font-bold uppercase tracking-wider text-[#EFE9E1]">
+                <span class="px-2.5 py-0.5 rounded-full bg-white/15 text-[10px] font-bold uppercase tracking-wider text-[#F6EFE6]">
                   {{ todayMystery }} Mysteries
                 </span>
               </div>
-              <h2 class="font-serif text-lg md:text-xl font-bold text-white leading-snug">
+              <h2 class="font-serif text-lg md:text-xl font-semibold text-white leading-snug">
                 {{ dailyRecommendation.title }}
               </h2>
-              <p class="text-xs md:text-sm text-[#EFE9E1]/80 mt-0.5 leading-relaxed">
+              <p class="text-xs md:text-sm text-[#F5EBE0]/80 mt-0.5 leading-relaxed">
                 {{ dailyRecommendation.subtitle }}
               </p>
             </div>
@@ -49,27 +54,28 @@
 
           <router-link
             :to="dailyRecommendation.path"
-            class="px-5 py-2.5 rounded-full bg-[#EFE9E1] hover:bg-white text-[#72383D] font-bold text-xs uppercase tracking-wider transition-all shrink-0 text-center shadow-sm active:scale-95 min-h-[44px] inline-flex items-center justify-center gap-1.5"
+            class="relative z-10 px-5 py-2.5 rounded-full bg-[#F6EFE6] hover:bg-white text-[#4E2226] font-bold text-xs uppercase tracking-wider transition-all shrink-0 text-center shadow-sm active:scale-95 min-h-[44px] inline-flex items-center justify-center gap-1.5"
           >
             <span>{{ dailyRecommendation.cta }}</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m9 18 6-6-6-6"/>
+              <path d="M5 12h14"></path>
+              <path d="m12 5 7 7-7 7"></path>
             </svg>
           </router-link>
         </div>
       </div>
 
       <!-- Category Filter Pills -->
-      <div class="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto no-scrollbar pb-2 mb-6">
+      <div class="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto no-scrollbar pb-2 mb-7">
         <button
           v-for="cat in categories"
           :key="cat.id"
           @click="selectedCategory = cat.id"
           :class="[
-            'px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-200 border shrink-0 cursor-pointer min-h-[40px]',
+            'px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all duration-200 border shrink-0 cursor-pointer min-h-[40px]',
             selectedCategory === cat.id
-              ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white border-transparent shadow-xs'
-              : 'bg-white/75 text-[#322D29]/75 border-[#D1C7BD]/80 hover:bg-white hover:text-[#72383D]'
+              ? 'bg-[#5C282D] text-white border-[#5C282D] shadow-xs'
+              : 'bg-[#FAF7F2] text-[#322D29]/75 border-[#E2D6C8] hover:bg-white hover:text-[#5C282D]'
           ]"
         >
           {{ cat.label }}
