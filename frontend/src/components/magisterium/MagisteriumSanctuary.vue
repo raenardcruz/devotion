@@ -297,7 +297,7 @@
     <div class="flex-1 flex flex-col min-w-0 min-h-0 relative z-10">
       <!-- Magisterium Live Synthesizer Workstation -->
       <MagisteriumSynthesizer
-        v-if="isLiveConnected || isLiveConnecting"
+        v-if="isLiveViewOpen"
         :is-live-connected="isLiveConnected"
         :is-connecting="isLiveConnecting"
         :is-muted="isLiveMuted"
@@ -314,7 +314,8 @@
         :session-messages="activeSession?.messages || []"
         :active-session-title="activeSession?.title"
         @toggle-mute="toggleLiveMute"
-        @stop-live="stopLiveSession"
+        @stop-live="closeLiveSession"
+        @reconnect="reconnectLiveSession"
         @send-text="sendLiveTextMessage"
         @interrupt="interruptLivePlayback"
       />
@@ -1471,10 +1472,23 @@ const {
   interruptPlayback: interruptLivePlayback,
 } = useGeminiLive(onLiveTurnComplete);
 
+const isLiveViewOpen = ref(false);
+
+const closeLiveSession = () => {
+  stopLiveSession();
+  isLiveViewOpen.value = false;
+};
+
+const reconnectLiveSession = async () => {
+  chatError.value = null;
+  await startLiveSession();
+};
+
 const toggleLiveSession = async () => {
-  if (isLiveConnected.value || isLiveConnecting.value) {
-    stopLiveSession();
+  if (isLiveViewOpen.value || isLiveConnected.value || isLiveConnecting.value) {
+    closeLiveSession();
   } else {
+    isLiveViewOpen.value = true;
     chatError.value = null;
     await startLiveSession();
   }
@@ -1488,7 +1502,7 @@ watch(liveError, (val) => {
 
 onUnmounted(() => {
   stopGeneration();
-  stopLiveSession();
+  closeLiveSession();
 });
 
 const sendMessage = async () => {
