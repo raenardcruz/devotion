@@ -32,6 +32,7 @@ export function useGeminiLive(onTurnComplete?: (result: LiveTurnResult) => void)
   const audioLevel = ref<number>(0);
 
   let ws: WebSocket | null = null;
+  let pingIntervalId: ReturnType<typeof setInterval> | null = null;
   let audioContext: AudioContext | null = null;
   let micMediaStream: MediaStream | null = null;
   let micSourceNode: MediaStreamAudioSourceNode | null = null;
@@ -39,6 +40,26 @@ export function useGeminiLive(onTurnComplete?: (result: LiveTurnResult) => void)
   let playbackAudioContext: AudioContext | null = null;
   let nextAudioStartTime = 0;
   const activeAudioSources: AudioBufferSourceNode[] = [];
+
+  // Create or resume AudioContexts synchronously during user gesture (required on mobile Safari)
+  const ensureAudioContextsUnlocked = () => {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+
+    if (!playbackAudioContext || playbackAudioContext.state === 'closed') {
+      playbackAudioContext = new AudioCtx({ sampleRate: 24000 });
+    }
+    if (playbackAudioContext.state === 'suspended') {
+      playbackAudioContext.resume().catch(() => {});
+    }
+
+    if (!audioContext || audioContext.state === 'closed') {
+      audioContext = new AudioCtx();
+    }
+    if (audioContext.state === 'suspended') {
+      audioContext.resume().catch(() => {});
+    }
+  };
 
   // Helper to convert base64 to Uint8Array
   const base64ToUint8Array = (base64: string): Uint8Array => {
@@ -171,7 +192,15 @@ export function useGeminiLive(onTurnComplete?: (result: LiveTurnResult) => void)
         },
       });
 
-      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (!isLiveConnected.value) {
+        micMediaStream.getTracks().forEach(t => t.stop());
+        micMediaStream = null;
+        return;
+      }
+
+      if (!audioContext || audioContext.state === 'closed') {
+        audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
       if (audioContext.state === 'suspended') {
         await audioContext.resume();
       }
@@ -252,6 +281,9 @@ export function useGeminiLive(onTurnComplete?: (result: LiveTurnResult) => void)
   const startLiveSession = async () => {
     if (isLiveConnected.value || isConnecting.value) return;
 
+    // Unlock AudioContexts synchronously within user tap gesture for mobile Safari/Chrome
+    ensureAudioContextsUnlocked();
+
     liveError.value = null;
     isConnecting.value = true;
     liveStatus.value = 'Connecting to Gemini Live...';
@@ -299,8 +331,19 @@ export function useGeminiLive(onTurnComplete?: (result: LiveTurnResult) => void)
         isLiveConnected.value = true;
         isConnecting.value = false;
         liveStatus.value = 'Connected. Starting microphone...';
+
+        // Keep mobile/proxied WebSocket alive during mute or idle pauses
+        if (pingIntervalId) clearInterval(pingIntervalId);
+        pingIntervalId = setInterval(() => {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping' }));
+          }
+        }, 20000);
+
         await startMicrophone();
-        liveStatus.value = 'Listening...';
+        if (isLiveConnected.value && !liveError.value) {
+          liveStatus.value = 'Listening...';
+        }
       };
 
       ws.onmessage = (event) => {
@@ -429,6 +472,10 @@ export function useGeminiLive(onTurnComplete?: (result: LiveTurnResult) => void)
   };
 
   const cleanup = () => {
+    if (pingIntervalId) {
+      clearInterval(pingIntervalId);
+      pingIntervalId = null;
+    }
     stopMicrophone();
     interruptPlayback();
     if (playbackAudioContext && playbackAudioContext.state !== 'closed') {
@@ -441,7 +488,7 @@ export function useGeminiLive(onTurnComplete?: (result: LiveTurnResult) => void)
     isConnecting.value = false;
     isGeminiSpeaking.value = false;
     isQueryingRAG.value = false;
-    liveStatus.value = 'Disconnected';
+    liveStatus.value = liveError.value ? 'Connection lost' : 'Disconnected';
   };
 
   return {

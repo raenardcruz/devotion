@@ -41,13 +41,17 @@
       <div class="glass-pill flex items-center gap-2.5 px-3.5 py-1.5 rounded-full">
         <span
           class="w-2 h-2 rounded-full transition-all duration-200"
-          :class="isGeminiSpeaking
-            ? 'bg-[#E4C88B] animate-pulse shadow-[0_0_10px_#E4C88B]'
-            : isQueryingRAG
-              ? 'bg-amber-400 animate-ping shadow-[0_0_10px_#F59E0B]'
-              : isUserSpeaking
-                ? 'bg-[#8B464C] animate-ping shadow-[0_0_10px_#8B464C]'
-                : 'bg-emerald-400 shadow-[0_0_8px_#10B981]'"
+          :class="!isLiveConnected && !isConnecting
+            ? 'bg-red-400 shadow-[0_0_8px_#F87171]'
+            : isConnecting
+              ? 'bg-amber-400 animate-pulse shadow-[0_0_8px_#F59E0B]'
+              : isGeminiSpeaking
+                ? 'bg-[#E4C88B] animate-pulse shadow-[0_0_10px_#E4C88B]'
+                : isQueryingRAG
+                  ? 'bg-amber-400 animate-ping shadow-[0_0_10px_#F59E0B]'
+                  : isUserSpeaking
+                    ? 'bg-[#8B464C] animate-ping shadow-[0_0_10px_#8B464C]'
+                    : 'bg-emerald-400 shadow-[0_0_8px_#10B981]'"
         ></span>
         <span class="font-serif font-medium text-xs tracking-wide text-[#EFE9E1]/90">
           {{ liveStatus }}
@@ -183,6 +187,24 @@
 
     <!-- Bottom Stage: Glass RAG Sources (Below Sphere) + Floating Glass Input Pill -->
     <div class="relative z-20 w-full px-3 sm:px-6 pb-3.5 sm:pb-5 max-w-3xl mx-auto shrink-0 flex flex-col gap-2.5">
+      <!-- Disconnected / Error Banner with Reconnect -->
+      <div
+        v-if="liveError || (!isLiveConnected && !isConnecting)"
+        class="glass-sheet-surface rounded-2xl px-4 py-3 flex items-center justify-between gap-3 border border-red-400/35"
+      >
+        <p class="text-xs sm:text-sm font-sans text-red-200 leading-snug">
+          {{ liveError || 'Live voice session disconnected.' }}
+        </p>
+        <button
+          v-if="!isLiveConnected && !isConnecting"
+          type="button"
+          @click="$emit('reconnect')"
+          class="shrink-0 px-3.5 py-1.5 rounded-full text-xs font-serif font-semibold bg-[#72383D] hover:bg-[#8B464C] text-[#EFE9E1] border border-[#E4C88B]/35 transition-all cursor-pointer active:scale-95"
+        >
+          Reconnect
+        </button>
+      </div>
+
       <!-- RAG Results Glass Drawer (Docked cleanly below the sphere, never covering it) -->
       <div
         v-if="activeCitationsList.length > 0"
@@ -326,8 +348,8 @@
               v-model="draftQuery"
               type="text"
               placeholder="Ask anything..."
-              class="flex-1 bg-transparent border-none outline-none text-sm text-[#EFE9E1] placeholder-[#D1C7BD]/60 font-sans min-w-0"
-              :disabled="!isLiveConnected && isConnecting"
+              class="flex-1 bg-transparent border-none outline-none text-sm text-[#EFE9E1] placeholder-[#D1C7BD]/60 font-sans min-w-0 disabled:opacity-50"
+              :disabled="!isLiveConnected"
             />
             <button
               v-if="draftQuery.trim()"
@@ -393,6 +415,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'toggle-mute'): void;
   (e: 'stop-live'): void;
+  (e: 'reconnect'): void;
   (e: 'send-text', query: string): void;
   (e: 'interrupt'): void;
 }>();
