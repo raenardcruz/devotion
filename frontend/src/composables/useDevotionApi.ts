@@ -20,12 +20,21 @@ export function useDevotionApi() {
     if (apiToken) {
       headers.set('Authorization', `Bearer ${apiToken}`);
     }
+    if (typeof localStorage !== 'undefined') {
+      const adminToken = localStorage.getItem('adminToken');
+      if (adminToken) {
+        headers.set('X-Admin-Token', adminToken);
+      }
+      const accessCode = localStorage.getItem('guestAccessCode');
+      if (accessCode) {
+        headers.set('X-Access-Code', accessCode);
+      }
+    }
     return headers;
   };
 
   const fetchWithAuth = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
     let baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://devotionapi.raenardcruz.com';
-    const apiToken = import.meta.env.VITE_API_TOKEN;
 
     // Validate and fall back if VITE_API_BASE_URL is invalid (e.g. set to the API token value)
     if (!baseUrl || (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://') && !baseUrl.startsWith('/'))) {
@@ -36,10 +45,7 @@ export function useDevotionApi() {
     // Build absolute URL
     const url = endpoint.startsWith('http') ? endpoint : `${baseUrl.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
 
-    const headers = new Headers(options.headers);
-    if (apiToken) {
-      headers.set('Authorization', `Bearer ${apiToken}`);
-    }
+    const headers = getAuthHeaders(options.headers);
     headers.set('Accept', 'application/json');
 
     loading.value = true;

@@ -95,6 +95,23 @@ func geminiLiveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !isAdminRequest(r) {
+		code := getAccessCodeFromRequest(r)
+		if code == "" {
+			http.Error(w, "Access code required for Magisterium Live", http.StatusForbidden)
+			return
+		}
+		ac, allowed, err := ConsumeAccessCodeQuota(code)
+		if err != nil {
+			http.Error(w, "Invalid or inactive access code", http.StatusForbidden)
+			return
+		}
+		if !allowed {
+			http.Error(w, fmt.Sprintf("Daily limit of %d requests reached for this access code", ac.DailyLimit), http.StatusTooManyRequests)
+			return
+		}
+	}
+
 	settings := GetSettings()
 	geminiKey := settings.GeminiAPIKey
 	if geminiKey == "" {

@@ -272,8 +272,23 @@ export function useGeminiLive(onTurnComplete?: (result: LiveTurnResult) => void)
       wsUrl += '/magisterium/live';
 
       const apiToken = import.meta.env.VITE_API_TOKEN;
+      const params = new URLSearchParams();
       if (apiToken) {
-        wsUrl += `?token=${encodeURIComponent(apiToken)}`;
+        params.set('token', apiToken);
+      }
+      if (typeof localStorage !== 'undefined') {
+        const adminToken = localStorage.getItem('adminToken');
+        if (adminToken) {
+          params.set('admin_token', adminToken);
+        }
+        const accessCode = localStorage.getItem('guestAccessCode');
+        if (accessCode) {
+          params.set('access_code', accessCode);
+        }
+      }
+      const queryStr = params.toString();
+      if (queryStr) {
+        wsUrl += `?${queryStr}`;
       }
 
       console.log('[useGeminiLive] Connecting to Live WebSocket:', wsUrl.replace(/\?token=.*/, '?token=***'));

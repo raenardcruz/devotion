@@ -5,113 +5,21 @@
 
     <!-- Main Content -->
     <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-6 md:py-8 flex flex-col relative z-10">
-      <!-- Breadcrumb & Sub-header Controls Row -->
-      <div class="flex flex-col border-b border-[#D1C7BD]/60 pb-4 mb-4 gap-3 animate-fade-in-down">
-        <div class="flex items-center justify-between">
-          <router-link
-            to="/devotions"
-            class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#72383D]/80 hover:text-[#72383D] transition-colors group"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:-translate-x-0.5 transition-transform">
-              <path d="m15 18-6-6 6-6"/>
-            </svg>
-            <span>All Devotions</span>
-          </router-link>
-
-          <span class="text-[11px] font-bold tracking-[0.2em] text-[#72383D] uppercase hidden sm:inline">
-            Mater Dolorosa &bull; Servite Chaplet
-          </span>
-        </div>
-
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3.5">
-          <div>
-            <h1 class="font-serif text-2xl md:text-3xl bg-gradient-to-r from-[#72383D] via-[#AC9C8D] to-[#322D29] bg-clip-text text-transparent font-bold">
-              {{ showLatin ? 'Corolla Septem Dolorum Beatae Mariae Virginis' : 'Chaplet of the Seven Sorrows of Mary' }}
-            </h1>
-          </div>
-
-          <!-- Audio Controls & Language Toggle -->
-          <div class="flex flex-wrap items-center justify-start lg:justify-end gap-2 sm:gap-2.5">
-            <!-- Auto Play Toggle Switch -->
-            <label class="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-[#322D29]/80 cursor-pointer select-none bg-white/70 border border-[#D1C7BD]/80 px-3 py-2 rounded-full min-h-[44px]">
-              <span>Auto-Play</span>
-              <input type="checkbox" v-model="autoPlay" class="sr-only peer" />
-              <div class="relative w-8 h-4.5 bg-white/60 border border-[#D1C7BD]/80 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-[#322D29]/40 peer-checked:after:bg-[#72383D] after:border-[#D1C7BD] after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#72383D]/20"></div>
-            </label>
-
-            <!-- Manual Play/Pause Button -->
-            <button
-              v-if="currentStep.prayerId && getPrayerAudioUrl(currentStep.prayerId)"
-              @click="toggleAudio"
-              class="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-[#72383D] to-[#322D29] border border-transparent text-white rounded-full hover:from-[#8B464C] hover:to-[#453E38] active:scale-95 transition-all text-xs font-bold uppercase tracking-wider outline-none shadow-xs cursor-pointer min-h-[44px]"
-            >
-              <svg v-if="!isPlaying" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
-                <polygon points="6 3 20 12 6 21 6 3"></polygon>
-              </svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" x2="18" y1="4" y2="20"></line>
-                <line x1="6" x2="6" y1="4" y2="20"></line>
-              </svg>
-              <span>{{ isPlaying ? 'Pause' : 'Listen' }}</span>
-            </button>
-
-            <!-- Prayer Intentions Button -->
-            <button
-              @click="showIntentionsModal = true"
-              class="flex items-center gap-1.5 px-3.5 py-2 bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-xs font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer min-h-[44px]"
-            >
-              <span>🙏</span>
-              <span>Intentions</span>
-              <span v-if="activeCount > 0" class="w-4 h-4 rounded-full bg-[#72383D] text-white text-[9px] flex items-center justify-center font-bold">
-                {{ activeCount }}
-              </span>
-            </button>
-
-            <!-- Fullscreen Toggle Button -->
-            <button
-              v-if="isFullscreenSupported"
-              @click="toggleFullscreen(cardContainerRef)"
-              class="flex items-center gap-1.5 px-3.5 py-2 bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-xs font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer min-h-[44px]"
-              :title="isFullscreen ? 'Exit Fullscreen Card (ESC)' : 'Fullscreen Card Presentation (F)'"
-            >
-              <svg v-if="!isFullscreen" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <polyline points="9 21 3 21 3 15"></polyline>
-                <line x1="21" y1="3" x2="14" y2="10"></line>
-                <line x1="3" y1="21" x2="10" y2="14"></line>
-              </svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="4 14 10 14 10 20"></polyline>
-                <polyline points="20 10 14 10 14 4"></polyline>
-                <line x1="14" y1="10" x2="21" y2="3"></line>
-                <line x1="10" y1="14" x2="3" y2="21"></line>
-              </svg>
-              <span>{{ isFullscreen ? 'Exit' : 'Fullscreen' }}</span>
-            </button>
-
-            <!-- Latin/English Toggle -->
-            <div class="flex items-center bg-white/70 border border-[#D1C7BD]/80 p-0.5 rounded-full backdrop-blur-md min-h-[44px]">
-              <button
-                @click="showLatin = false"
-                :class="[!showLatin ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-bold' : 'text-[#322D29]/70 hover:text-[#72383D]']"
-                class="px-3.5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer min-h-[38px]"
-              >
-                EN
-              </button>
-              <button
-                @click="showLatin = true"
-                :class="[showLatin ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-bold' : 'text-[#322D29]/70 hover:text-[#72383D]']"
-                class="px-3.5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none hover:bg-transparent hover:translate-y-0 cursor-pointer min-h-[38px]"
-              >
-                LA
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- Clean Unified Devotion Header with Collapsible Settings Menu -->
+      <DevotionHeader
+        :title="showLatin ? 'Corolla Septem Dolorum Beatae Mariae Virginis' : 'Chaplet of the Seven Sorrows of Mary'"
+        subtitle="Mater Dolorosa • Servite Chaplet"
+        v-model:showLatin="showLatin"
+        v-model:autoPlay="autoPlay"
+        :activeIntentionsCount="activeCount"
+        :isFullscreen="isFullscreen"
+        :isFullscreenSupported="isFullscreenSupported"
+        @open-intentions="showIntentionsModal = true"
+        @toggle-fullscreen="toggleFullscreen(cardContainerRef)"
+      />
 
       <!-- Quick Sorrow Jump Bar (7 Sorrows + Intro + Closing) -->
-      <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1.5 mb-4 scroll-smooth animate-fade-in-down">
+      <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1.5 px-2 mb-4 scroll-smooth devotion-scroll-fade-x animate-fade-in-down">
         <button
           @click="jumpToSection('intro')"
           :class="[
@@ -214,11 +122,13 @@
                 v-else
                 :class="[
                   isFullscreen
-                    ? 'bg-parchment-neutral-light border border-parchment-border p-8 md:p-12 rounded-[2.5rem] shadow-xl flex flex-col justify-between w-full my-auto'
-                    : 'bg-parchment-neutral-light border border-parchment-border p-6 md:p-8 rounded-[2rem] shadow-sm flex flex-col justify-between min-h-[360px]'
+                    ? 'devotion-card-surface p-8 md:p-12 rounded-[2.5rem] shadow-xl flex flex-col justify-between w-full my-auto relative overflow-hidden'
+                    : 'devotion-card-surface p-6 md:p-8 rounded-[2rem] flex flex-col justify-between min-h-[360px] relative overflow-hidden'
                 ]"
               >
-                <div class="space-y-4">
+                <!-- Subtle Top Atmospheric Glow -->
+                <div class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-3/4 h-40 rounded-full bg-radial from-[#72383D]/10 via-[#AC9C8D]/8 to-transparent blur-2xl" />
+                <div class="space-y-4 relative z-10">
                   <!-- Card Header Bar -->
                   <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[#D1C7BD]/60 pb-3">
                     <div>
@@ -378,13 +288,17 @@
             </div>
           </transition>
 
-          <!-- Step Navigation Controls -->
-          <RosaryControls
+          <!-- Step Navigation & Audio Controls -->
+          <DevotionControls
             :totalSteps="steps.length"
             :currentStepIndex="currentIndex"
             :isLastStep="currentIndex === steps.length - 1"
+            :hasAudio="Boolean(currentStep.prayerId && getPrayerAudioUrl(currentStep.prayerId))"
+            :isPlaying="isPlaying"
+            label="Chaplet"
             @next="nextStep"
             @prev="prevStep"
+            @toggle-audio="toggleAudio"
           />
 
           <!-- Fullscreen Keyboard Helper Hint -->
@@ -393,43 +307,41 @@
           </div>
         </div>
 
-        <!-- Right Column: Classical Painting, Meditation & Promises (2/5 width) -->
+        <!-- Right Column: Seamless Gradient-Fade Artwork, Meditation & Promises (2/5 width) -->
         <div class="lg:col-span-2 flex flex-col gap-5">
-          <!-- Classical Artwork Card -->
-          <div class="w-full rounded-[2rem] overflow-hidden border border-[#D1C7BD] shadow-md bg-[#221D1A] relative group">
-            <div class="aspect-[4/3] sm:aspect-[16/11] lg:aspect-[4/3] w-full overflow-hidden relative">
+          <!-- Unified Artwork & Contemplative Reflection Card -->
+          <div class="devotion-card-surface rounded-[2rem] overflow-hidden flex flex-col relative group">
+            <div class="aspect-[4/3] sm:aspect-[16/11] lg:aspect-[4/3] w-full overflow-hidden relative bg-[#221D1A]">
               <transition name="fade-slide" mode="out-in">
                 <img
                   :key="currentVisual.image"
                   :src="currentVisual.image"
                   :alt="currentVisual.title"
-                  class="w-full h-full object-cover object-top transition-transform duration-1000 group-hover:scale-105"
+                  class="w-full h-full object-cover object-top devotion-artwork-fade transition-transform duration-1000 group-hover:scale-105"
                 />
               </transition>
-              <div class="absolute inset-0 bg-gradient-to-t from-[#221D1A]/90 via-[#221D1A]/20 to-transparent flex flex-col justify-end p-5">
-                <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#EFE9E1]/80">
+              <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#EFE9E1] via-[#EFE9E1]/35 to-transparent" />
+            </div>
+
+            <div class="relative z-10 -mt-12 px-6 pb-6 pt-2 space-y-3">
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#72383D]">
                   {{ currentVisual.badge }}
                 </span>
-                <h3 class="font-serif text-lg md:text-xl font-bold text-white leading-snug">
+                <h3 class="font-serif text-lg md:text-xl font-bold text-[#322D29] leading-snug">
                   {{ currentVisual.title }}
                 </h3>
-                <p class="text-[11px] text-[#D1C7BD] italic mt-0.5">
+                <p class="text-[11px] text-[#322D29]/60 italic mt-0.5">
                   {{ currentVisual.artist }}
                 </p>
               </div>
-            </div>
-          </div>
 
-          <!-- Meditative Reflection Quote Card -->
-          <div class="bg-white/75 border border-[#D1C7BD] border-l-4 border-l-[#72383D] rounded-3xl p-5 shadow-xs backdrop-blur-md">
-            <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#72383D] block mb-1.5">
-              Contemplative Reflection
-            </span>
-            <transition name="fade-slide" mode="out-in">
-              <p :key="currentVisual.meditation" class="font-serif text-sm md:text-base text-[#322D29]/85 leading-relaxed">
-                {{ currentVisual.meditation }}
-              </p>
-            </transition>
+              <transition name="fade-slide" mode="out-in">
+                <p :key="currentVisual.meditation" class="font-serif text-sm md:text-base text-[#322D29]/85 leading-relaxed border-l-2 border-[#72383D]/60 pl-3.5">
+                  {{ currentVisual.meditation }}
+                </p>
+              </transition>
+            </div>
           </div>
 
           <!-- Promises of Our Lady of Sorrows Card -->
@@ -481,7 +393,8 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import TopNav from '../components/common/TopNav.vue';
 import BottomNav from '../components/common/BottomNav.vue';
-import RosaryControls from '../components/rosary/RosaryControls.vue';
+import DevotionHeader from '../components/devotion/DevotionHeader.vue';
+import DevotionControls from '../components/devotion/DevotionControls.vue';
 import SevenSorrowsBeads from '../components/sevensorrows/SevenSorrowsBeads.vue';
 import InterlinearText from '../components/common/InterlinearText.vue';
 import PrayerIntentionsCard from '../components/intentions/PrayerIntentionsCard.vue';

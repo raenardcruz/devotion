@@ -1,10 +1,12 @@
 <template>
     <div :class="[isFullscreen ? 'w-full max-w-4xl mx-auto my-auto flex-grow flex flex-col justify-center items-center px-4' : 'relative max-w-2xl mx-auto w-full']">
-        <!-- Parchment Card Container -->
-        <div :class="[isFullscreen ? 'bg-parchment-neutral-light border border-parchment-border p-8 md:p-12 rounded-[2.5rem] shadow-xl text-center w-full my-auto flex flex-col justify-center items-center' : 'bg-parchment-neutral-light border border-parchment-border p-6 md:p-8 rounded-[2rem] shadow-sm text-center min-h-[280px] flex flex-col justify-center']" class="transition-all duration-300">
+        <!-- Unified Gradient Parchment Card Container -->
+        <div :class="[isFullscreen ? 'devotion-card-surface p-8 md:p-12 rounded-[2.5rem] shadow-xl text-center w-full my-auto flex flex-col justify-center items-center relative overflow-hidden' : 'devotion-card-surface p-6 md:p-8 rounded-[2rem] text-center min-h-[280px] flex flex-col justify-center relative overflow-hidden']" class="transition-all duration-300">
+            <!-- Subtle Top Atmospheric Glow -->
+            <div class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-3/4 h-40 rounded-full bg-radial from-[#72383D]/10 via-[#AC9C8D]/8 to-transparent blur-2xl" />
             
             <transition name="fade-scale" mode="out-in">
-                <div :key="(currentStep.id || currentStep.title || currentStep.content) + (showLatin ? '-la' : '-en')" class="space-y-6 w-full">
+                <div :key="(currentStep.id || currentStep.title || currentStep.content) + (showLatin ? '-la' : '-en')" class="space-y-6 w-full relative z-10">
                     <div class="flex items-center justify-between border-b border-parchment-border/40 pb-3 mb-4">
                         <h3 v-if="currentStep.title" :class="[isFullscreen ? 'text-xs md:text-sm tracking-[0.2em]' : 'text-xs tracking-[0.2em]']" class="text-parchment-secondary font-bold uppercase">
                             {{ displayTitle }}

@@ -7,27 +7,47 @@
       @click="isOpen = false"
     ></div>
 
-    <!-- Floating Chat Bubble Button -->
-    <button 
-      @click="toggleOpen"
-      class="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-50 w-14 h-14 bg-parchment-primary-dark hover:bg-[#4a3c1d] text-white rounded-full flex items-center justify-center shadow-xl hover:shadow-[0_0_20px_rgba(197,160,89,0.4)] hover:-translate-y-1 transform active:scale-95 transition-all duration-300 group border border-parchment-primary/30"
-      :aria-label="isOpen ? 'Close Catechism Lookup' : 'Open Catechism Lookup'"
-      :title="isOpen ? 'Close Catechism Lookup' : 'Quick Catechism Lookup'"
+    <!-- Floating Chat Bubble Button (Aligned above Magisterium AI Bubble) -->
+    <div
+      class="fixed bottom-[10rem] right-4 sm:bottom-[10.625rem] sm:right-6 lg:bottom-[7.125rem] lg:right-7 z-40 flex items-center gap-3 group"
     >
-      <!-- Chat Bubble / Book Icon -->
-      <span class="relative">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300" :class="{ 'rotate-90 scale-90': isOpen }">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-        </svg>
-        <span class="absolute -top-1 -right-1.5 bg-parchment-primary text-[9px] font-bold px-1 rounded-md scale-90 select-none group-hover:bg-white group-hover:text-parchment-primary-dark transition-colors duration-200">CCC</span>
-      </span>
-    </button>
+      <!-- Hover Prompt Pill (Desktop) -->
+      <div
+        v-if="!isOpen"
+        class="hidden md:flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-[#FAF7F2]/95 border border-[#D1C7BD] shadow-lg backdrop-blur-md text-[#322D29] pointer-events-none opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-out"
+      >
+        <span class="w-2 h-2 rounded-full bg-[#B5935A] animate-pulse"></span>
+        <span class="font-serif text-xs font-semibold tracking-wide text-[#4A2525] whitespace-nowrap">
+          Quick Catechism
+        </span>
+      </div>
+
+      <button 
+        @click="toggleOpen"
+        class="relative mr-1 sm:mr-[9px] w-14 h-14 bg-parchment-primary-dark hover:bg-[#4a3c1d] text-white rounded-full flex items-center justify-center shadow-xl border border-parchment-primary/30 cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-[#B5935A]/50 animate-avatar-float transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-110 active:scale-95"
+        :aria-label="isOpen ? 'Close Catechism Lookup' : 'Open Catechism Lookup'"
+        :title="isOpen ? 'Close Catechism Lookup' : 'Quick Catechism Lookup'"
+      >
+        <!-- Outer Breathing Sacred Aura -->
+        <span
+          class="absolute -inset-1 rounded-full bg-gradient-to-tr from-[#6B2D33]/35 via-[#DFB878]/35 to-[#6B2D33]/35 blur-md animate-aura-pulse pointer-events-none"
+        ></span>
+
+        <!-- Chat Bubble / Book Icon -->
+        <span class="relative z-10">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300" :class="{ 'rotate-90 scale-90': isOpen }">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span class="absolute -top-1 -right-1.5 bg-parchment-primary text-[9px] font-bold px-1 rounded-md scale-90 select-none group-hover:bg-white group-hover:text-parchment-primary-dark transition-colors duration-200">CCC</span>
+        </span>
+      </button>
+    </div>
 
     <!-- Popover Menu -->
     <transition name="popover-fade">
       <div 
         v-if="isOpen"
-        class="fixed bottom-36 right-4 sm:bottom-40 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-[380px] max-w-[380px] bg-parchment-neutral-light border border-parchment-border rounded-3xl shadow-[0_20px_50px_rgba(92,75,37,0.15)] overflow-hidden flex flex-col max-h-[460px] animate-fade-in"
+        class="fixed bottom-[14.25rem] right-4 sm:bottom-[14.875rem] sm:right-6 lg:bottom-[11.375rem] lg:right-7 z-50 w-[calc(100vw-2rem)] sm:w-[380px] max-w-[380px] bg-parchment-neutral-light border border-parchment-border rounded-3xl shadow-[0_20px_50px_rgba(92,75,37,0.15)] overflow-hidden flex flex-col max-h-[min(460px,calc(100vh-15.5rem))] lg:max-h-[460px] animate-fade-in"
       >
         <!-- Popover Header -->
         <header class="px-5 py-4 border-b border-parchment-border/40 flex justify-between items-center bg-white/50 backdrop-blur-sm">
@@ -296,6 +316,40 @@ watch(searchQuery, (newVal) => {
 </script>
 
 <style scoped>
+/* Floating levitation (matches Magisterium bubble) */
+@keyframes avatarFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-avatar-float {
+  animation: avatarFloat 4s ease-in-out infinite;
+}
+
+.animate-avatar-float:hover {
+  animation-play-state: paused;
+}
+
+/* Outer breathing aura (matches Magisterium bubble) */
+@keyframes auraPulse {
+  0%, 100% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.08);
+  }
+}
+
+.animate-aura-pulse {
+  animation: auraPulse 3.2s ease-in-out infinite;
+}
+
 .animate-fade-in {
   animation: fadeIn 0.25s ease-out forwards;
 }

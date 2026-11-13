@@ -6,150 +6,21 @@
     <!-- Main Content -->
     <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-6 md:py-8 flex flex-col relative z-10">
       
-      <!-- Sub-header & Controls Row -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#D1C7BD]/60 pb-4 mb-4 gap-3.5 animate-fade-in-down">
-          <div>
-            <router-link 
-              to="/devotions" 
-              class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-[#72383D]/70 hover:text-[#72383D] transition-colors mb-1 group"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:-translate-x-0.5 transition-transform">
-                <path d="m15 18-6-6 6-6"/>
-              </svg>
-              <span>All Devotions</span>
-            </router-link>
-            <h1 class="font-serif text-2xl md:text-3xl bg-gradient-to-r from-[#72383D] via-[#AC9C8D] to-[#322D29] bg-clip-text text-transparent font-bold">
-                Chaplet of St. Michael the Archangel
-            </h1>
-          </div>
-          
-          <!-- Controls -->
-          <div class="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 sm:gap-3">
-              <!-- Audio Toggle & Audio Player Button -->
-              <button 
-                v-if="currentStep.prayerId && getPrayerAudioUrl(currentStep.prayerId)"
-                @click="toggleAudio"
-                class="flex items-center gap-1.5 px-3.5 py-2 min-h-[38px] bg-gradient-to-r from-[#72383D] to-[#322D29] border border-transparent text-white rounded-full hover:from-[#8B464C] hover:to-[#453E38] active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none shadow-xs cursor-pointer"
-              >
-                <svg v-if="!isPlaying" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
-                  <polygon points="6 3 20 12 6 21 6 3"></polygon>
-                </svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="18" x2="18" y1="4" y2="20"></line>
-                  <line x1="6" x2="6" y1="4" y2="20"></line>
-                </svg>
-                <span>{{ isPlaying ? 'Pause' : 'Listen' }}</span>
-              </button>
-
-              <!-- Prayer Intentions Button -->
-              <button 
-                @click="showIntentionsModal = true"
-                class="flex items-center gap-1.5 px-3.5 py-2 min-h-[38px] bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
-              >
-                <span>🙏</span>
-                <span>Intentions</span>
-                <span v-if="activeCount > 0" class="w-4 h-4 rounded-full bg-[#72383D] text-white text-[9px] flex items-center justify-center font-bold">
-                  {{ activeCount }}
-                </span>
-              </button>
-
-              <!-- Fullscreen Card Toggle Button -->
-              <button 
-                v-if="isFullscreenSupported"
-                @click="toggleFullscreen(cardContainerRef)"
-                class="flex items-center gap-1.5 px-3 py-2 min-h-[38px] bg-white/70 border border-[#D1C7BD]/80 text-[#72383D] rounded-full hover:bg-white active:scale-95 transition-all text-[10px] font-bold uppercase tracking-wider outline-none backdrop-blur-md cursor-pointer"
-                :title="isFullscreen ? 'Exit Fullscreen Card (ESC)' : 'Fullscreen Card Presentation (F)'"
-              >
-                <svg v-if="!isFullscreen" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="15 3 21 3 21 9"></polyline>
-                  <polyline points="9 21 3 21 3 15"></polyline>
-                  <line x1="21" y1="3" x2="14" y2="10"></line>
-                  <line x1="3" y1="21" x2="10" y2="14"></line>
-                </svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="4 14 10 14 10 20"></polyline>
-                  <polyline points="20 10 14 10 14 4"></polyline>
-                  <line x1="14" y1="10" x2="21" y2="3"></line>
-                  <line x1="10" y1="14" x2="3" y2="21"></line>
-                </svg>
-                <span class="hidden sm:inline">{{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' }}</span>
-              </button>
-
-              <!-- Latin/English Language Toggle -->
-              <div class="flex items-center bg-white/70 border border-[#D1C7BD]/80 p-0.5 rounded-full backdrop-blur-md">
-                  <button 
-                    @click="showLatin = false"
-                    :class="[!showLatin ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-bold' : 'text-[#322D29]/70 hover:text-[#72383D]']"
-                    class="px-3.5 py-1.5 min-h-[34px] rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none cursor-pointer"
-                  >
-                    EN
-                  </button>
-                  <button 
-                    @click="showLatin = true"
-                    :class="[showLatin ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white font-bold' : 'text-[#322D29]/70 hover:text-[#72383D]']"
-                    class="px-3.5 py-1.5 min-h-[34px] rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-none outline-none shadow-none cursor-pointer"
-                  >
-                    LA
-                  </button>
-              </div>
-          </div>
-      </div>
-
-      <!-- Hero Banner & Visual Artwork -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 items-center bg-gradient-to-r from-white/80 via-[#EFE9E1]/80 to-[#D9D9D9]/30 border border-[#D1C7BD]/80 p-5 rounded-3xl backdrop-blur-md shadow-sm">
-        <div class="relative rounded-2xl overflow-hidden shadow-md aspect-square max-w-[280px] mx-auto md:max-w-none w-full">
-          <transition name="fade-slide" mode="out-in">
-            <img 
-              :key="currentStep.choirIndex ? 'choir-' + currentStep.choirIndex : 'st-michael'"
-              :src="currentStep.choirIndex ? '/nine_angelic_choirs.jpg' : '/st_michael_archangel.jpg'" 
-              alt="St. Michael the Archangel" 
-              class="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
-            />
-          </transition>
-          <div class="absolute inset-0 bg-gradient-to-t from-[#322D29]/70 via-transparent to-transparent flex items-end p-3">
-            <span class="text-white text-xs font-semibold tracking-wide">
-              {{ currentStep.choirName || 'St. Michael the Archangel' }}
-            </span>
-          </div>
-        </div>
-
-        <div class="md:col-span-2 flex flex-col justify-center space-y-3">
-          <span class="text-[11px] font-bold tracking-widest text-[#72383D] uppercase">
-            Devotion of the Nine Angelic Choirs
-          </span>
-          <h2 class="font-serif text-xl md:text-2xl font-bold text-[#322D29]">
-            Invocation to the Archangel & Angelic Hosts
-          </h2>
-          <p class="text-xs md:text-sm text-[#322D29]/80 leading-relaxed">
-            The Chaplet of St. Michael is a powerful prayer revealed by St. Michael the Archangel to Antonia d'Astonac. St. Michael promised that whoever honors him with these 9 salutations before Holy Communion will be escorted by an angel from each of the 9 celestial choirs.
-          </p>
-          <div class="pt-2 border-t border-[#D1C7BD]/40 space-y-2">
-            <div class="flex items-center gap-1.5 text-xs text-[#72383D] font-bold uppercase tracking-wider">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-              </svg>
-              <span>Promises of St. Michael</span>
-            </div>
-            <ul class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-[#322D29]/85">
-              <li class="flex items-start gap-2 bg-white/60 p-2.5 rounded-xl border border-[#D1C7BD]/50">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#72383D] mt-1.5 shrink-0"></span>
-                <span><strong>Angelic Escort:</strong> Escorted to Holy Communion by an angel from each of the 9 celestial choirs.</span>
-              </li>
-              <li class="flex items-start gap-2 bg-white/60 p-2.5 rounded-xl border border-[#D1C7BD]/50">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#72383D] mt-1.5 shrink-0"></span>
-                <span><strong>Life Protection:</strong> Continual angelic assistance, guidance, and spiritual defense throughout life.</span>
-              </li>
-              <li class="flex items-start gap-2 bg-white/60 p-2.5 rounded-xl border border-[#D1C7BD]/50">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#72383D] mt-1.5 shrink-0"></span>
-                <span><strong>Deliverance:</strong> Speedy deliverance from Purgatory after death for the devotee and their relatives.</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
+      <!-- Clean Unified Devotion Header with Collapsible Settings Menu -->
+      <DevotionHeader
+        title="Chaplet of St. Michael the Archangel"
+        subtitle="Nine Angelic Choirs"
+        v-model:showLatin="showLatin"
+        :supportsAutoPlay="false"
+        :activeIntentionsCount="activeCount"
+        :isFullscreen="isFullscreen"
+        :isFullscreenSupported="isFullscreenSupported"
+        @open-intentions="showIntentionsModal = true"
+        @toggle-fullscreen="toggleFullscreen(cardContainerRef)"
+      />
 
       <!-- Main Step View & Controls -->
-      <div ref="swipeContainer" class="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start touch-pan-y">
+      <div ref="swipeContainer" class="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start touch-pan-y animate-fade-in-up delay-150">
         
         <!-- Left: Current Prayer Card & Controls (3/5 width) -->
         <div 
@@ -171,9 +42,19 @@
                 @open-intentions-modal="showIntentionsModal = true"
               />
 
-              <!-- Standard Prayer Card -->
-              <ParchmentCard v-else class="!p-6 md:!p-8 relative min-h-[380px] flex flex-col justify-between shadow-lg border-[#D1C7BD]">
-                <div>
+              <!-- Standard Prayer Card (Unified Gradient & Fade Surface) -->
+              <div
+                v-else
+                :class="[
+                  isFullscreen
+                    ? 'devotion-card-surface p-8 md:p-12 rounded-[2.5rem] shadow-xl flex flex-col justify-between w-full my-auto relative overflow-hidden'
+                    : 'devotion-card-surface p-6 md:p-8 rounded-[2rem] min-h-[380px] flex flex-col justify-between relative overflow-hidden'
+                ]"
+              >
+                <!-- Subtle Top Atmospheric Glow -->
+                <div class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-3/4 h-40 rounded-full bg-radial from-[#72383D]/10 via-[#AC9C8D]/8 to-transparent blur-2xl" />
+
+                <div class="relative z-10">
                   <div class="flex items-center justify-between border-b border-[#D1C7BD]/60 pb-3 mb-4">
                     <div>
                       <span class="text-xs font-bold text-[#72383D] uppercase tracking-wider block">
@@ -200,39 +81,28 @@
                 </div>
 
                 <!-- Interactive Bead Indicator -->
-                <div class="mt-4">
+                <div class="mt-4 relative z-10">
                   <StMichaelBeads 
                     :currentStep="currentStep" 
                     :activeBeadIndex="activeBeadIndex"
                     @selectBead="onSelectBead"
                   />
                 </div>
-              </ParchmentCard>
-
-              <!-- Card Bottom Navigation Controls -->
-              <div class="flex items-center justify-between pt-2 px-1">
-                <button 
-                  @click="prevStep" 
-                  :disabled="currentIndex === 0"
-                  class="px-4 py-2 rounded-xl bg-white border border-[#D1C7BD] text-[#322D29] font-semibold text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#D1C7BD]/20 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                  Previous
-                </button>
-
-                <div class="text-xs font-bold text-[#72383D]">
-                  {{ currentIndex + 1 }} / {{ steps.length }}
-                </div>
-
-                <button 
-                  @click="nextStep" 
-                  :disabled="currentIndex === steps.length - 1"
-                  class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#72383D] to-[#322D29] border border-transparent text-white font-semibold text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:from-[#8B464C] hover:to-[#453E38] active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
-                >
-                  Next
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                </button>
               </div>
+
+              <!-- Card Bottom Navigation & Audio Controls -->
+              <DevotionControls
+                :currentStepIndex="currentIndex"
+                :totalSteps="steps.length"
+                :isLastStep="currentIndex === steps.length - 1"
+                :disableNextWhenLast="true"
+                :hasAudio="Boolean(currentStep.prayerId && getPrayerAudioUrl(currentStep.prayerId))"
+                :isPlaying="isPlaying"
+                label="Chaplet"
+                @next="nextStep"
+                @prev="prevStep"
+                @toggle-audio="toggleAudio"
+              />
             </div>
           </transition>
 
@@ -242,9 +112,38 @@
           </div>
         </div>
 
-        <!-- Right: Accordion Collapsible Sequence List (2/5 width) -->
-        <div class="lg:col-span-2 space-y-3">
-          <div class="bg-white/80 border border-[#D1C7BD]/80 p-4 rounded-2xl backdrop-blur-md">
+        <!-- Right: Seamless Gradient-Fade Artwork & Chaplet Sections (2/5 width) -->
+        <div class="lg:col-span-2 space-y-5">
+          <!-- Unified Artwork & Promises Card -->
+          <div class="devotion-card-surface rounded-[2rem] overflow-hidden flex flex-col relative group">
+            <div class="aspect-[4/3] w-full overflow-hidden relative bg-[#221D1A]">
+              <transition name="fade-slide" mode="out-in">
+                <img
+                  :key="currentStep.choirIndex ? 'choir-' + currentStep.choirIndex : 'st-michael'"
+                  :src="currentStep.choirIndex ? '/nine_angelic_choirs.jpg' : '/st_michael_archangel.jpg'"
+                  alt="St. Michael the Archangel"
+                  class="w-full h-full object-cover object-top devotion-artwork-fade transition-transform duration-1000 group-hover:scale-105"
+                />
+              </transition>
+              <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#EFE9E1] via-[#EFE9E1]/35 to-transparent" />
+            </div>
+
+            <div class="relative z-10 -mt-10 px-6 pb-5 pt-2 space-y-2.5">
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#72383D]">
+                  Nine Angelic Choirs
+                </span>
+                <h3 class="font-serif text-lg md:text-xl font-bold text-[#322D29] leading-snug">
+                  {{ currentStep.choirName || 'St. Michael the Archangel' }}
+                </h3>
+              </div>
+              <p class="font-serif text-xs md:text-sm text-[#322D29]/80 leading-relaxed border-l-2 border-[#72383D]/60 pl-3">
+                Whoever honors St. Michael with these nine salutations before Holy Communion will be escorted by an angel from each of the nine celestial choirs.
+              </p>
+            </div>
+          </div>
+
+          <div class="devotion-card-surface p-4 rounded-[2rem]">
             <div class="flex items-center justify-between mb-3 border-b border-[#D1C7BD]/60 pb-2">
               <h4 class="font-serif font-bold text-base text-[#322D29]">
                 Chaplet Sections
@@ -416,7 +315,8 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import TopNav from '../components/common/TopNav.vue';
 import BottomNav from '../components/common/BottomNav.vue';
-import ParchmentCard from '../components/common/ParchmentCard.vue';
+import DevotionHeader from '../components/devotion/DevotionHeader.vue';
+import DevotionControls from '../components/devotion/DevotionControls.vue';
 import StMichaelBeads from '../components/stmichael/StMichaelBeads.vue';
 import PrayerIntentionsCard from '../components/intentions/PrayerIntentionsCard.vue';
 import PrayerIntentionsModal from '../components/intentions/PrayerIntentionsModal.vue';

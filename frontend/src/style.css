@@ -459,3 +459,52 @@ button.btn-primary {
   color: rgb(221, 40, 40) !important;
   margin-right: 4px;
 }
+
+/* Unified Devotion Prayer Surface & Fade Effects */
+.devotion-card-surface {
+  background: linear-gradient(165deg, rgba(250, 247, 238, 0.96) 0%, rgba(239, 233, 225, 0.92) 55%, rgba(228, 219, 208, 0.88) 100%);
+  border: 1px solid rgba(209, 199, 189, 0.72);
+  box-shadow:
+    0 20px 48px -18px rgba(50, 45, 41, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.devotion-glass-panel {
+  background: linear-gradient(180deg, rgba(250, 247, 238, 0.94) 0%, rgba(239, 233, 225, 0.92) 100%);
+  border: 1px solid rgba(209, 199, 189, 0.78);
+  box-shadow:
+    0 24px 48px -16px rgba(50, 45, 41, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+}
+
+.devotion-artwork-fade {
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 48%, rgba(0, 0, 0, 0.55) 76%, rgba(0, 0, 0, 0) 100%);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 48%, rgba(0, 0, 0, 0.55) 76%, rgba(0, 0, 0, 0) 100%);
+}
+
+.devotion-scroll-fade-x {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
+}
+
+.devotion-text-fade-y {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 4%, black 92%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 4%, black 92%, transparent 100%);
+}
+
+/* Settings Popover Spring Transition */
+.settings-pop-enter-active,
+.settings-pop-leave-active {
+  transition: opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top right;
+}
+
+.settings-pop-enter-from,
+.settings-pop-leave-to {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.95);
+}

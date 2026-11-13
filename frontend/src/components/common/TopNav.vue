@@ -1,13 +1,13 @@
 <template>
-  <header class="sticky top-0 z-40 w-full bg-[#EFE9E1]/90 via-white/95 to-[#EFE9E1]/90 backdrop-blur-xl border-b border-white/60 py-3.5 px-4 md:px-12 flex items-center justify-between shadow-2xs">
+  <header class="sticky top-0 z-40 w-full bg-[#F7F3EE]/90 backdrop-blur-xl border-b border-[#E6DDD2]/80 py-3.5 px-4 md:px-10 flex items-center justify-between">
     <!-- Left Menu Icon -->
     <button 
       @click="toggleSidebar"
-      class="text-[#72383D] hover:text-[#322D29] transition-colors p-2.5 rounded-full hover:bg-[#D1C7BD]/30 outline-none border border-transparent shadow-none min-w-[44px] min-h-[44px] flex items-center justify-center active:scale-95 cursor-pointer"
+      class="text-[#5C282D] hover:text-[#322D29] transition-colors p-2.5 rounded-full hover:bg-[#E6DDD2]/50 outline-none border border-transparent shadow-none min-w-[44px] min-h-[44px] flex items-center justify-center active:scale-95 cursor-pointer"
       id="top-nav-menu-btn"
       aria-label="Open Navigation Menu"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <line x1="4" x2="20" y1="12" y2="12"></line>
         <line x1="4" x2="20" y1="6" y2="6"></line>
         <line x1="4" x2="20" y1="18" y2="18"></line>
@@ -16,50 +16,55 @@
 
     <!-- Center Title -->
     <router-link to="/" class="absolute left-1/2 -translate-x-1/2 flex items-center min-h-[44px] justify-center">
-      <span class="font-serif text-lg md:text-xl font-bold tracking-[0.08em] bg-gradient-to-r from-[#72383D] via-[#AC9C8D] to-[#322D29] bg-clip-text text-transparent hover:opacity-80 transition-opacity">
+      <span class="font-serif text-lg md:text-xl font-bold tracking-[0.04em] text-[#4A2525] hover:opacity-80 transition-opacity whitespace-nowrap">
         Faith and Devotion
       </span>
     </router-link>
 
-    <!-- Right Navigation (Desktop) -->
-    <div class="flex items-center space-x-6 md:space-x-8">
+    <!-- Right Navigation (Desktop) & Quick Action (Mobile) -->
+    <div class="flex items-center space-x-4 md:space-x-7">
       <nav class="hidden lg:flex items-center space-x-6">
         <router-link 
           to="/" 
-          class="text-xs font-semibold tracking-wider uppercase transition-colors py-1"
-          :class="[isHomeActive ? 'text-[#72383D] font-bold border-b-2 border-[#72383D]' : 'text-[#322D29]/70 hover:text-[#72383D]']"
+          class="text-[11px] font-semibold tracking-[0.12em] uppercase transition-colors py-1"
+          :class="[isHomeActive ? 'text-[#5C282D] font-bold border-b-2 border-[#5C282D]' : 'text-[#322D29]/65 hover:text-[#5C282D]']"
         >
           Home
         </router-link>
         <router-link 
           to="/daily-readings" 
-          class="text-xs font-semibold tracking-wider uppercase transition-colors py-1"
-          :class="[isReadingsActive ? 'text-[#72383D] font-bold border-b-2 border-[#72383D]' : 'text-[#322D29]/70 hover:text-[#72383D]']"
+          class="text-[11px] font-semibold tracking-[0.12em] uppercase transition-colors py-1"
+          :class="[isReadingsActive ? 'text-[#5C282D] font-bold border-b-2 border-[#5C282D]' : 'text-[#322D29]/65 hover:text-[#5C282D]']"
         >
           Readings
         </router-link>
         <router-link 
           to="/devotions" 
-          class="text-xs font-semibold tracking-wider uppercase transition-colors py-1"
-          :class="[isDevotionsActive ? 'text-[#72383D] font-bold border-b-2 border-[#72383D]' : 'text-[#322D29]/70 hover:text-[#72383D]']"
+          class="text-[11px] font-semibold tracking-[0.12em] uppercase transition-colors py-1"
+          :class="[isDevotionsActive ? 'text-[#5C282D] font-bold border-b-2 border-[#5C282D]' : 'text-[#322D29]/65 hover:text-[#5C282D]']"
         >
           Devotions
         </router-link>
         <router-link 
           to="/bible-study" 
-          class="text-xs font-semibold tracking-wider uppercase transition-colors py-1"
-          :class="[isBibleStudyActive ? 'text-[#72383D] font-bold border-b-2 border-[#72383D]' : 'text-[#322D29]/70 hover:text-[#72383D]']"
+          class="text-[11px] font-semibold tracking-[0.12em] uppercase transition-colors py-1"
+          :class="[isBibleStudyActive ? 'text-[#5C282D] font-bold border-b-2 border-[#5C282D]' : 'text-[#322D29]/65 hover:text-[#5C282D]']"
         >
           Bible Study
         </router-link>
-        <router-link 
-          to="/magisterium-chat" 
-          class="text-xs font-semibold tracking-wider uppercase transition-colors py-1"
-          :class="[isMagisteriumActive ? 'text-[#72383D] font-bold border-b-2 border-[#72383D]' : 'text-[#322D29]/70 hover:text-[#72383D]']"
-        >
-          Magisterium
-        </router-link>
       </nav>
+
+      <!-- Mobile Quick Link to Magisterium / Search -->
+      <router-link
+        to="/catechism"
+        class="lg:hidden text-[#5C282D] hover:text-[#322D29] p-2 rounded-full hover:bg-[#E6DDD2]/50 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+        aria-label="Search Catechism"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.3-4.3"></path>
+        </svg>
+      </router-link>
     </div>
   </header>
 
@@ -115,14 +120,14 @@
               class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 shadow-2xs shrink-0"
               :class="[isNavItemActive(item.path) ? 'bg-gradient-to-r from-[#72383D] to-[#322D29] text-white' : 'bg-[#D1C7BD]/40 text-[#72383D] group-hover:bg-gradient-to-r group-hover:from-[#72383D] group-hover:to-[#322D29] group-hover:text-white']"
             >
-              <!-- Inline SVGs -->
+              <!-- Icons matching Home page illustrations -->
               <svg v-if="item.icon === 'home'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-              <svg v-else-if="item.icon === 'book'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path><path d="M6 6h10"></path><path d="M6 10h10"></path></svg>
-              <svg v-else-if="item.icon === 'rosary'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-11-7-11S5 10.7 5 15a7 7 0 0 0 7 7z"></path><circle cx="12" cy="15" r="2"></circle></svg>
-              <svg v-else-if="item.icon === 'shield'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"></path><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path></svg>
-              <svg v-else-if="item.icon === 'scroll'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-              <svg v-else-if="item.icon === 'context'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-              <svg v-else-if="item.icon === 'chat'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+              <RosaryIllustration v-else-if="item.icon === 'rosary'" class="w-8 h-8" />
+              <MassReadingsIllustration v-else-if="item.icon === 'book'" class="w-8 h-8" />
+              <OpenLectionaryHeroIcon v-else-if="item.icon === 'kindle'" class="w-8 h-8" />
+              <CatechismIllustration v-else-if="item.icon === 'shield'" class="w-8 h-8" />
+              <EarlyChurchIllustration v-else-if="item.icon === 'scroll'" class="w-8 h-8" />
+              <BibleStudyIllustration v-else-if="item.icon === 'context'" class="w-8 h-8" />
             </div>
             <div class="text-left flex-1 min-w-0">
               <div class="text-sm font-semibold tracking-wide leading-none mb-1">{{ item.label }}</div>
@@ -145,6 +150,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
+import RosaryIllustration from '../icons/RosaryIllustration.vue';
+import MassReadingsIllustration from '../icons/MassReadingsIllustration.vue';
+import OpenLectionaryHeroIcon from '../icons/OpenLectionaryHeroIcon.vue';
+import CatechismIllustration from '../icons/CatechismIllustration.vue';
+import EarlyChurchIllustration from '../icons/EarlyChurchIllustration.vue';
+import BibleStudyIllustration from '../icons/BibleStudyIllustration.vue';
 
 const route = useRoute();
 const isSidebarOpen = ref(false);
@@ -194,7 +205,6 @@ const isHomeActive = computed(() => route.path === '/');
 const isReadingsActive = computed(() => route.path.startsWith('/daily-readings'));
 const isDevotionsActive = computed(() => devotionChildRoutes.some(path => route.path.startsWith(path)));
 const isBibleStudyActive = computed(() => route.path.startsWith('/bible-study'));
-const isMagisteriumActive = computed(() => route.path.startsWith('/magisterium-chat'));
 
 const isNavItemActive = (itemPath: string) => {
   if (itemPath === '/') return route.path === '/';
@@ -225,7 +235,7 @@ const navItems = [
     path: '/kindle',
     label: 'Kindle Readings',
     desc: 'E-Ink friendly daily readings without animations',
-    icon: 'book'
+    icon: 'kindle'
   },
   {
     path: '/catechism',
@@ -244,12 +254,6 @@ const navItems = [
     label: 'Bible Study',
     desc: 'Retrieve scripture and commentary',
     icon: 'context'
-  },
-  {
-    path: '/magisterium-chat',
-    label: 'Magisterium AI Chat',
-    desc: 'Ask questions on Church doctrine & teachings',
-    icon: 'chat'
   }
 ];
 </script>

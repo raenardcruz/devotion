@@ -222,6 +222,33 @@ func InitDB() {
 		title VARCHAR(200) NOT NULL,
 		messages JSONB NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS access_codes (
+		id SERIAL PRIMARY KEY,
+		code VARCHAR(64) UNIQUE NOT NULL,
+		label VARCHAR(200) NOT NULL DEFAULT '',
+		is_active BOOLEAN NOT NULL DEFAULT true,
+		daily_limit INT NOT NULL DEFAULT 10,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS access_code_usage (
+		code_id INT NOT NULL REFERENCES access_codes(id) ON DELETE CASCADE,
+		usage_date DATE NOT NULL DEFAULT CURRENT_DATE,
+		request_count INT NOT NULL DEFAULT 0,
+		PRIMARY KEY (code_id, usage_date)
+	);
+
+	CREATE TABLE IF NOT EXISTS access_requests (
+		id SERIAL PRIMARY KEY,
+		name VARCHAR(150) NOT NULL,
+		email VARCHAR(200) NOT NULL DEFAULT '',
+		reason TEXT NOT NULL DEFAULT '',
+		status VARCHAR(20) NOT NULL DEFAULT 'pending',
+		generated_code VARCHAR(64) NOT NULL DEFAULT '',
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`
 
 	if _, err := db.Exec(createTableQuery); err != nil {

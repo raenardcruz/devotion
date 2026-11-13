@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useDevotionApi } from '../composables/useDevotionApi';
+import { useAccessControl } from '../composables/useAccessControl';
 import { renderMarkdown } from '../utils/markdown';
 import TopNav from '../components/common/TopNav.vue';
 import BottomNav from '../components/common/BottomNav.vue';
@@ -32,6 +33,16 @@ interface ContextResponse {
 }
 
 const { fetchWithAuth } = useDevotionApi();
+const {
+  hasAccess,
+  isAdmin,
+  dailyLimit,
+  remainingToday,
+  ensureAccess,
+  refreshUsage,
+  clearAccessCode,
+  openAccessModal,
+} = useAccessControl();
 const route = useRoute();
 
 // Form input state
@@ -123,6 +134,19 @@ onMounted(async () => {
   if (queryParam) {
     activeTab.value = 'search';
     manualQuery.value = String(queryParam);
+  }
+
+  const allowed = await ensureAccess();
+  if (!allowed) {
+    openAccessModal(async () => {
+      if (queryParam) {
+        await getContext();
+      }
+    });
+    return;
+  }
+
+  if (queryParam) {
     await getContext();
   } else {
     // Auto-expand the first item if there is any history
@@ -178,6 +202,12 @@ const selectBook = (book: string) => {
 // Main fetch logic
 const getContext = async () => {
   error.value = null;
+
+  if (!hasAccess.value) {
+    openAccessModal(() => getContext());
+    return;
+  }
+
   let passage = '';
 
   if (activeTab.value === 'selector') {
@@ -242,9 +272,18 @@ const getContext = async () => {
       manualQuery.value = '';
     }
 
+    await refreshUsage();
+
   } catch (err: any) {
     console.error('Error fetching context:', err);
-    error.value = err.message || 'An error occurred while fetching context. Please check the spelling or format.';
+    const msg = err.message || 'An error occurred while fetching context. Please check the spelling or format.';
+    error.value = msg;
+    if (msg.toLowerCase().includes('access code')) {
+      clearAccessCode();
+      openAccessModal(() => getContext());
+    } else if (msg.toLowerCase().includes('daily limit')) {
+      await refreshUsage();
+    }
   } finally {
     loading.value = false;
   }
@@ -285,7 +324,15 @@ const getSnippet = (text: string) => {
         <p class="text-[#322D29]/70 text-sm max-w-md mx-auto leading-relaxed">
           Unveil the historical context, theological layers, and original scriptures of any biblical passage.
         </p>
+        <div v-if="!isAdmin && hasAccess" class="mt-3 flex justify-center">
+          <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-[#FAF7F2] border border-[#D1C7BD] text-[#5C282D] shadow-xs">
+            <span class="w-1.5 h-1.5 rounded-full" :class="remainingToday > 0 ? 'bg-emerald-600' : 'bg-[#9B2C2C]'"></span>
+            Guest Access: {{ remainingToday }} / {{ dailyLimit }} requests left today
+          </span>
+        </div>
       </header>
+
+      <template v-if="hasAccess">
 
       <!-- Mobile Navigation Trigger Button -->
       <div class="lg:hidden mb-4 flex items-center justify-between bg-white/60 border border-[#D1C7BD]/60 rounded-2xl p-3 shadow-sm backdrop-blur-md">
@@ -606,6 +653,28 @@ const getSnippet = (text: string) => {
       </div>
         </div>
       </main>
+      </template>
+
+      <template v-else>
+        <div class="max-w-md mx-auto w-full my-8">
+          <ParchmentCard class="p-8 text-center space-y-4">
+            <div class="w-12 h-12 rounded-2xl bg-[#72383D]/10 text-[#72383D] mx-auto flex items-center justify-center">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <h2 class="font-serif text-xl font-bold text-[#322D29]">Bible Study Access Required</h2>
+            <p class="text-sm text-[#6B5F56] leading-relaxed">
+              Enter your guest access code or request access from the administrator to unlock Bible Study.
+            </p>
+            <div class="pt-2">
+              <AppButton @click="openAccessModal()">
+                Enter Access Code / Request Access
+              </AppButton>
+            </div>
+          </ParchmentCard>
+        </div>
+      </template>
     </div>
 
     <!-- Global Footer -->
