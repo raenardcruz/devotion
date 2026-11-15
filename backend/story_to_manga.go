@@ -5,8 +5,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -51,7 +53,8 @@ type MangaStoryAnalysis struct {
 
 type MangaCharacterReference struct {
 	Name        string `json:"name"`
-	Image       string `json:"image"` // base64 data URL
+	Image       string `json:"image"` // base64 data URL or R2/asset URL
+	R2Key       string `json:"r2Key,omitempty"`
 	Description string `json:"description"`
 }
 
@@ -60,6 +63,7 @@ type MangaPanelPlan struct {
 	Characters       []string `json:"characters"`
 	SceneDescription string   `json:"sceneDescription"`
 	Dialogue         string   `json:"dialogue,omitempty"`
+	Narrative        string   `json:"narrative"`
 	CameraAngle      string   `json:"cameraAngle"`
 	VisualMood       string   `json:"visualMood"`
 }
@@ -70,7 +74,8 @@ type MangaStoryBreakdown struct {
 
 type MangaGeneratedPanel struct {
 	PanelNumber int    `json:"panelNumber"`
-	Image       string `json:"image"` // base64 data URL
+	Image       string `json:"image"` // base64 data URL or R2/asset URL
+	R2Key       string `json:"r2Key,omitempty"`
 }
 
 type MangaUploadedReference struct {
@@ -141,6 +146,10 @@ func mangaConfigHandler(w http.ResponseWriter, r *http.Request) {
 		})
 
 	case http.MethodPost, http.MethodPut:
+		if !isAdminRequest(r) {
+			respondWithError(w, http.StatusUnauthorized, "Admin authentication required")
+			return
+		}
 		var req struct {
 			ImageModel string `json:"imageModel"`
 		}
@@ -174,6 +183,10 @@ func mangaConfigHandler(w http.ResponseWriter, r *http.Request) {
 func mangaAnalyzeStoryHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if !isAdminRequest(r) {
+		respondWithError(w, http.StatusUnauthorized, "Admin authentication required")
 		return
 	}
 
@@ -282,11 +295,34 @@ Please provide:
 		return
 	}
 
-	// Otherwise: 1-Click Custom Story Generation from the day's readings and lessons!
+	analysis, wordCount, err := generateStoryFromReadingsInternal(ctx, req)
+	if err != nil {
+		log.Printf("[mangaAnalyzeStoryHandler] Error generating story from readings: %v", err)
+		status := http.StatusInternalServerError
+		if strings.Contains(err.Error(), "readings or valid date are required") {
+			status = http.StatusBadRequest
+		}
+		respondWithError(w, status, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":     true,
+		"story":       analysis.Story,
+		"moralLesson": analysis.MoralLesson,
+		"analysis":    analysis,
+		"wordCount":   wordCount,
+	})
+}
+
+func generateStoryFromReadingsInternal(ctx context.Context, req MangaAnalyzeStoryRequest) (*MangaStoryAnalysis, int, error) {
+	if req.Style == "" {
+		req.Style = "manga"
+	}
 	readingsSummary := buildReadingsSummary(ctx, req.Date, req.Readings)
 	if strings.TrimSpace(readingsSummary) == "" {
-		respondWithError(w, http.StatusBadRequest, "Readings or valid date are required to generate a story from the day's readings")
-		return
+		return nil, 0, fmt.Errorf("readings or valid date are required to generate a story from the day's readings")
 	}
 
 	protagonistDirection := strings.TrimSpace(req.ProtagonistHint)
@@ -352,33 +388,26 @@ Also extract the Story-to-Manga analysis:
 
 	rawJSON, err := generateStructuredJSON(ctx, prompt, schema)
 	if err != nil {
-		log.Printf("[mangaAnalyzeStoryHandler] Error generating story from readings: %v", err)
-		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to generate story from readings: %v", err))
-		return
+		return nil, 0, fmt.Errorf("failed to generate story from readings: %w", err)
 	}
 
 	var analysis MangaStoryAnalysis
 	if err := parseMangaJSON(rawJSON, &analysis); err != nil {
 		log.Printf("[mangaAnalyzeStoryHandler] Error parsing generated story JSON: %v (raw: %.300s)", err, rawJSON)
-		respondWithError(w, http.StatusInternalServerError, "Failed to parse generated story and character analysis")
-		return
+		return nil, 0, fmt.Errorf("failed to parse generated story and character analysis")
 	}
 
 	wordCount := len(strings.Fields(analysis.Story))
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"success":     true,
-		"story":       analysis.Story,
-		"moralLesson": analysis.MoralLesson,
-		"analysis":    analysis,
-		"wordCount":   wordCount,
-	})
+	return &analysis, wordCount, nil
 }
 
 func mangaGenerateCharacterRefsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if !isAdminRequest(r) {
+		respondWithError(w, http.StatusUnauthorized, "Admin authentication required")
 		return
 	}
 
@@ -394,6 +423,22 @@ func mangaGenerateCharacterRefsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
+	characterReferences, imageModel, err := generateCharacterRefsInternal(ctx, req)
+	if err != nil {
+		log.Printf("[mangaGenerateCharacterRefsHandler] %v", err)
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":             true,
+		"characterReferences": characterReferences,
+		"imageModel":          imageModel,
+	})
+}
+
+func generateCharacterRefsInternal(ctx context.Context, req MangaGenerateCharacterRefsRequest) ([]MangaCharacterReference, string, error) {
 	imageModel := resolveGeminiImageModel(req.ImageModel)
 
 	stylePrefix := "American comic book style, colorful superhero art with bold colors and clean line art"
@@ -438,9 +483,7 @@ Full body character design showing front view of %s:
 
 		dataURL, usedModel, err := generateGeminiImage(ctx, imageModel, prompt, refImages)
 		if err != nil {
-			log.Printf("[mangaGenerateCharacterRefsHandler] Failed to generate character reference for %s: %v", character.Name, err)
-			respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to generate reference for %s: %v", character.Name, err))
-			return
+			return nil, imageModel, fmt.Errorf("failed to generate reference for %s: %w", character.Name, err)
 		}
 		imageModel = usedModel
 
@@ -451,17 +494,16 @@ Full body character design showing front view of %s:
 		})
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"success":             true,
-		"characterReferences": characterReferences,
-		"imageModel":          imageModel,
-	})
+	return characterReferences, imageModel, nil
 }
 
 func mangaChunkStoryHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if !isAdminRequest(r) {
+		respondWithError(w, http.StatusUnauthorized, "Admin authentication required")
 		return
 	}
 
@@ -476,6 +518,22 @@ func mangaChunkStoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := r.Context()
+	storyBreakdown, err := chunkStoryInternal(ctx, req)
+	if err != nil {
+		log.Printf("[mangaChunkStoryHandler] %v", err)
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":        true,
+		"storyBreakdown": storyBreakdown,
+	})
+}
+
+func chunkStoryInternal(ctx context.Context, req MangaChunkStoryRequest) (*MangaStoryBreakdown, error) {
 	var charNames []string
 	for _, c := range req.Characters {
 		charNames = append(charNames, c.Name)
@@ -500,13 +558,13 @@ func mangaChunkStoryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	noDialogueNotice := ""
-	actionDetail := "\n- Dialogue (if any)"
+	actionDetail := "\n- Dialogue (if any, brief spoken lines for speech bubbles)"
 	if req.NoDialogue {
-		noDialogueNotice = "IMPORTANT: This is NO DIALOGUE MODE - do not include any dialogue, speech bubbles, or spoken words. Focus purely on visual storytelling through actions, expressions, and scene composition."
+		noDialogueNotice = "IMPORTANT: This is NO DIALOGUE MODE - do not include any dialogue, speech bubbles, or spoken words inside the artwork. Focus the visual scene purely on actions, expressions, and scene composition (while still writing the full prose narrative for each panel)."
 		actionDetail = " (emphasize visual storytelling without dialogue)"
 	}
 
-	prompt := fmt.Sprintf(`Break down this story into individual comic panels with detailed descriptions.
+	prompt := fmt.Sprintf(`Break down this story into a cohesive mix of narrative prose and illustrated comic/manga panels so that reading the panels together with each panel's accompanying narrative tells the ENTIRE story from beginning to end.
 
 Story: "%s"
 Characters: %s
@@ -515,13 +573,14 @@ Style: %s
 
 %s
 
-Create 4-6 panels to tell this story effectively from the opening problem, listening to the day's Scripture readings, applying the lesson, to the final resolution.
+Create 4-6 panels (prefer 5-6 panels when needed) to carry the full narrative arc from the opening problem, listening to the day's Scripture readings, applying the lesson, to the final resolution.
 
 %s
 
-For each panel, describe:
+Because comic panels and speech bubbles alone are too brief to carry all the story's depth, EVERY panel must combine visual illustration direction with a rich literary narrative passage:
 - Characters present
-- Action/scene description%s
+- Action/scene description (concrete visual directions for the illustrator: composition, poses, facial expressions, environment)%s
+- Narrative (2-4 vivid sentences of storytelling prose, ~40-80 words, that supplements this panel—bridging from the previous beat, revealing inner thoughts, feelings, context, and the spiritual lesson from the readings—so that all panel narratives together tell the complete story seamlessly without repeating the scene directions verbatim)
 - Camera angle (close-up, medium shot, wide shot, etc.)
 - Visual mood/atmosphere
 
@@ -549,6 +608,7 @@ Return as a flat array of panels with sequential panel numbers.`,
 						"characters":       {Type: genai.TypeArray, Items: &genai.Schema{Type: genai.TypeString}},
 						"sceneDescription": {Type: genai.TypeString},
 						"dialogue":         {Type: genai.TypeString},
+						"narrative":        {Type: genai.TypeString},
 						"cameraAngle":      {Type: genai.TypeString},
 						"visualMood":       {Type: genai.TypeString},
 					},
@@ -557,10 +617,11 @@ Return as a flat array of panels with sequential panel numbers.`,
 						"characters",
 						"sceneDescription",
 						"dialogue",
+						"narrative",
 						"cameraAngle",
 						"visualMood",
 					},
-					Required: []string{"panelNumber", "characters", "sceneDescription", "cameraAngle", "visualMood"},
+					Required: []string{"panelNumber", "characters", "sceneDescription", "narrative", "cameraAngle", "visualMood"},
 				},
 			},
 		},
@@ -568,37 +629,43 @@ Return as a flat array of panels with sequential panel numbers.`,
 		Required:         []string{"panels"},
 	}
 
-	ctx := r.Context()
 	rawJSON, err := generateStructuredJSON(ctx, prompt, schema)
 	if err != nil {
-		log.Printf("[mangaChunkStoryHandler] Error chunking story: %v", err)
-		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to chunk story: %v", err))
-		return
+		return nil, fmt.Errorf("failed to chunk story: %w", err)
 	}
 
 	var storyBreakdown MangaStoryBreakdown
 	if err := parseMangaJSON(rawJSON, &storyBreakdown); err != nil {
 		log.Printf("[mangaChunkStoryHandler] Error parsing story breakdown JSON: %v (raw: %.300s)", err, rawJSON)
-		respondWithError(w, http.StatusInternalServerError, "Failed to parse story breakdown")
+		return nil, fmt.Errorf("failed to parse story breakdown")
+	}
+
+	normalizeStoryBreakdown(&storyBreakdown)
+	return &storyBreakdown, nil
+}
+
+func normalizeStoryBreakdown(breakdown *MangaStoryBreakdown) {
+	if breakdown == nil {
 		return
 	}
-
-	for i := range storyBreakdown.Panels {
-		if storyBreakdown.Panels[i].PanelNumber <= 0 {
-			storyBreakdown.Panels[i].PanelNumber = i + 1
+	for i := range breakdown.Panels {
+		if breakdown.Panels[i].PanelNumber <= 0 {
+			breakdown.Panels[i].PanelNumber = i + 1
+		}
+		breakdown.Panels[i].Narrative = strings.TrimSpace(breakdown.Panels[i].Narrative)
+		if breakdown.Panels[i].Narrative == "" {
+			breakdown.Panels[i].Narrative = strings.TrimSpace(breakdown.Panels[i].SceneDescription)
 		}
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"success":        true,
-		"storyBreakdown": storyBreakdown,
-	})
 }
 
 func mangaGeneratePanelHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if !isAdminRequest(r) {
+		respondWithError(w, http.StatusUnauthorized, "Admin authentication required")
 		return
 	}
 
@@ -614,6 +681,22 @@ func mangaGeneratePanelHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
+	generatedPanel, usedModel, err := generatePanelInternal(ctx, req)
+	if err != nil {
+		log.Printf("[mangaGeneratePanelHandler] Failed to generate panel %d: %v", req.Panel.PanelNumber, err)
+		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to generate panel %d: %v", req.Panel.PanelNumber, err))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":        true,
+		"generatedPanel": generatedPanel,
+		"imageModel":     usedModel,
+	})
+}
+
+func generatePanelInternal(ctx context.Context, req MangaGeneratePanelRequest) (*MangaGeneratedPanel, string, error) {
 	imageModel := resolveGeminiImageModel(req.ImageModel)
 
 	stylePrefix := "American comic book style, full color, clean line art"
@@ -625,7 +708,7 @@ func mangaGeneratePanelHandler(w http.ResponseWriter, r *http.Request) {
 	for _, charName := range req.Panel.Characters {
 		matched := false
 		for _, ref := range req.CharacterReferences {
-			if strings.EqualFold(ref.Name, charName) && ref.Image != "" {
+			if strings.EqualFold(ref.Name, charName) && (ref.Image != "" || ref.R2Key != "") {
 				matched = true
 				break
 			}
@@ -702,7 +785,9 @@ Generate a single comic panel image with proper framing and composition.
 
 	var refImages []string
 	for _, charRef := range req.CharacterReferences {
-		if charRef.Image != "" {
+		if charRef.R2Key != "" {
+			refImages = append(refImages, "r2://"+charRef.R2Key)
+		} else if charRef.Image != "" {
 			refImages = append(refImages, charRef.Image)
 		}
 	}
@@ -714,20 +799,13 @@ Generate a single comic panel image with proper framing and composition.
 
 	dataURL, usedModel, err := generateGeminiImage(ctx, imageModel, prompt, refImages)
 	if err != nil {
-		log.Printf("[mangaGeneratePanelHandler] Failed to generate panel %d: %v", req.Panel.PanelNumber, err)
-		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to generate panel %d: %v", req.Panel.PanelNumber, err))
-		return
+		return nil, usedModel, err
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"success": true,
-		"generatedPanel": MangaGeneratedPanel{
-			PanelNumber: req.Panel.PanelNumber,
-			Image:       dataURL,
-		},
-		"imageModel": usedModel,
-	})
+	return &MangaGeneratedPanel{
+		PanelNumber: req.Panel.PanelNumber,
+		Image:       dataURL,
+	}, usedModel, nil
 }
 
 // === Helpers ===
@@ -930,6 +1008,53 @@ func decodeDataURL(dataURL string) ([]byte, string, error) {
 	return rawBytes, mimeType, nil
 }
 
+func resolveReferenceImageBytes(ctx context.Context, ref string) ([]byte, string, error) {
+	trimmed := strings.TrimSpace(ref)
+	if trimmed == "" {
+		return nil, "", fmt.Errorf("empty image reference")
+	}
+
+	if strings.HasPrefix(trimmed, "r2://") {
+		key := strings.TrimPrefix(trimmed, "r2://")
+		return ResolveR2Config(nil).GetObject(ctx, key)
+	}
+
+	if strings.Contains(trimmed, "/api/manga/asset") {
+		if u, err := url.Parse(trimmed); err == nil {
+			if key := u.Query().Get("key"); key != "" {
+				return ResolveR2Config(nil).GetObject(ctx, key)
+			}
+		}
+	}
+
+	if strings.HasPrefix(trimmed, "http://") || strings.HasPrefix(trimmed, "https://") {
+		httpClient := &http.Client{Timeout: 20 * time.Second}
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, trimmed, nil)
+		if err != nil {
+			return nil, "", err
+		}
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			return nil, "", err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			return nil, "", fmt.Errorf("reference image fetch failed with status %d", resp.StatusCode)
+		}
+		data, err := io.ReadAll(io.LimitReader(resp.Body, 15<<20))
+		if err != nil {
+			return nil, "", err
+		}
+		ct := resp.Header.Get("Content-Type")
+		if ct == "" {
+			ct = "image/jpeg"
+		}
+		return data, ct, nil
+	}
+
+	return decodeDataURL(trimmed)
+}
+
 func generateGeminiImage(ctx context.Context, requestedModel string, prompt string, referenceDataURLs []string) (string, string, error) {
 	apiKey := resolveGeminiAPIKey()
 	if apiKey == "" {
@@ -947,7 +1072,7 @@ func generateGeminiImage(ctx context.Context, requestedModel string, prompt stri
 	parts = append(parts, genai.NewPartFromText(prompt))
 
 	for _, refURL := range referenceDataURLs {
-		imgBytes, mimeType, decErr := decodeDataURL(refURL)
+		imgBytes, mimeType, decErr := resolveReferenceImageBytes(ctx, refURL)
 		if decErr == nil && len(imgBytes) > 0 {
 			parts = append(parts, genai.NewPartFromBytes(imgBytes, mimeType))
 		}

@@ -4,7 +4,9 @@ import {
   useStoryToManga,
   type ReadingsPayload,
   type ComicStyle,
+  type MangaPanelPlan,
 } from '../../composables/useStoryToManga';
+import { useAccessControl } from '../../composables/useAccessControl';
 
 const props = defineProps<{
   isOpen: boolean;
@@ -17,6 +19,8 @@ const emit = defineEmits<{
   (e: 'close'): void;
 }>();
 
+const { isAdmin, syncAdminState } = useAccessControl();
+
 const {
   style,
   imageModel,
@@ -27,6 +31,7 @@ const {
   characterReferences,
   storyBreakdown,
   generatedPanels,
+  r2Stored,
   isGenerating,
   isAnalyzing,
   isGeneratingCharacters,
@@ -39,25 +44,32 @@ const {
   loadConfig,
   updateImageModel,
   updateStyle,
+  getProxyAssetUrl,
   generateStoryAndManga,
   regenerateCharacter,
   regeneratePanel,
 } = useStoryToManga();
 
 const showSettingsBar = ref(false);
+const layoutMode = ref<'storybook' | 'grid'>('storybook');
 const lightboxImage = ref<{ url: string; caption: string } | null>(null);
 const isDownloadingComposite = ref(false);
 
 onMounted(() => {
+  syncAdminState();
   loadConfig();
 });
 
-// One-click automatic trigger when opened
+// Automatic load or one-click generation when opened
 watch(
   () => props.isOpen,
   async (open) => {
     if (open && props.readings) {
+      syncAdminState();
       await loadConfig();
+      if (!isAdmin.value) {
+        showSettingsBar.value = false;
+      }
       if (!isGenerating.value) {
         await generateStoryAndManga(props.date, props.readings, false);
       }
@@ -66,6 +78,7 @@ watch(
 );
 
 const handleModelChange = async (event: Event) => {
+  if (!isAdmin.value) return;
   const target = event.target as HTMLSelectElement;
   if (target?.value) {
     await updateImageModel(target.value);
@@ -73,16 +86,21 @@ const handleModelChange = async (event: Event) => {
 };
 
 const handleStyleChange = (newStyle: ComicStyle) => {
+  if (!isAdmin.value) return;
   updateStyle(newStyle);
 };
 
 const handleRerunAll = async () => {
-  if (!props.readings || isGenerating.value) return;
+  if (!isAdmin.value || !props.readings || isGenerating.value) return;
   await generateStoryAndManga(props.date, props.readings, true);
 };
 
+const getGeneratedPanel = (panelNumber: number) => {
+  return generatedPanels.value.find((p) => p.panelNumber === panelNumber);
+};
+
 const getGeneratedPanelImage = (panelNumber: number): string | undefined => {
-  return generatedPanels.value.find((p) => p.panelNumber === panelNumber)?.image;
+  return getGeneratedPanel(panelNumber)?.image;
 };
 
 const openLightbox = (url: string, caption: string) => {
@@ -93,40 +111,148 @@ const closeLightbox = () => {
   lightboxImage.value = null;
 };
 
-const downloadDataUrl = (dataUrl: string, filename: string) => {
-  const link = document.createElement('a');
-  link.href = dataUrl;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+const downloadDataUrl = async (imageUrl: string, filename: string, r2Key?: string) => {
+  if (!imageUrl) return;
+  if (imageUrl.startsWith('data:') || imageUrl.startsWith('blob:')) {
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    return;
+  }
+
+  const tryFetchBlob = async (url: string) => {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    return await resp.blob();
+  };
+
+  try {
+    let blob: Blob;
+    try {
+      blob = await tryFetchBlob(imageUrl);
+    } catch {
+      const proxyUrl = getProxyAssetUrl(r2Key);
+      if (!proxyUrl || proxyUrl === imageUrl) throw new Error('Download failed');
+      blob = await tryFetchBlob(proxyUrl);
+    }
+    const objUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
+  } catch {
+    window.open(imageUrl, '_blank', 'noopener,noreferrer');
+  }
 };
 
-const loadImageElement = (src: string): Promise<HTMLImageElement> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = (err) => reject(err);
-    img.src = src;
+const loadImageElement = (src: string, r2Key?: string): Promise<HTMLImageElement> => {
+  const attemptLoad = (url: string) =>
+    new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = (err) => reject(err);
+      img.src = url;
+    });
+
+  return attemptLoad(src).catch((err) => {
+    const proxyUrl = getProxyAssetUrl(r2Key);
+    if (proxyUrl && proxyUrl !== src) {
+      return attemptLoad(proxyUrl);
+    }
+    throw err;
   });
 };
 
-// Shareable composite comic page download (ported from ShareableComicLayout in victorhuangwq/story-to-manga)
+const getPanelPlan = (panelNumber: number): MangaPanelPlan | undefined => {
+  return storyBreakdown.value?.panels.find((p) => p.panelNumber === panelNumber);
+};
+
+const getPanelNarrative = (panel: MangaPanelPlan): string => {
+  return (panel.narrative || panel.sceneDescription || '').trim();
+};
+
+const getPanelLightboxCaption = (panel: MangaPanelPlan): string => {
+  const narrative = getPanelNarrative(panel);
+  return narrative ? `Panel ${panel.panelNumber} — ${narrative}` : `Panel ${panel.panelNumber}`;
+};
+
+const wrapCanvasText = (
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number
+): string[] => {
+  const trimmed = text.trim();
+  if (!trimmed) return [];
+  const words = trimmed.split(/\s+/);
+  const lines: string[] = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    if (ctx.measureText(testLine).width <= maxWidth) {
+      currentLine = testLine;
+    } else {
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+      currentLine = word;
+    }
+  }
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+  return lines;
+};
+
+// Shareable composite comic page download with per-panel narrative captions
 const downloadCompositeComicPage = async () => {
   if (generatedPanels.value.length === 0) return;
   isDownloadingComposite.value = true;
   try {
     const panels = [...generatedPanels.value].sort((a, b) => a.panelNumber - b.panelNumber);
     const cols = panels.length <= 2 ? 1 : 2;
-    const rows = Math.ceil(panels.length / cols);
     const cellW = cols === 1 ? 1040 : 510;
-    const cellH = 440;
+    const artH = 420;
     const pad = 40;
+    const colGap = 20;
+    const rowGap = 28;
     const headerH = 150;
     const footerH = 60;
+    const lineHeight = 22;
     const canvasW = 1120;
-    const canvasH = headerH + rows * (cellH + 24) + footerH;
+
+    const measureCanvas = document.createElement('canvas');
+    const measureCtx = measureCanvas.getContext('2d');
+    if (!measureCtx) return;
+    measureCtx.font = '15px Georgia, serif';
+
+    const panelEntries = panels.map((p) => {
+      const plan = getPanelPlan(p.panelNumber);
+      const narrative = plan ? getPanelNarrative(plan) : '';
+      const lines = wrapCanvasText(measureCtx, narrative, cellW - 32);
+      return { panel: p, lines };
+    });
+
+    const rowCount = Math.ceil(panelEntries.length / cols);
+    const rowHeights: number[] = [];
+    const rowCaptionHeights: number[] = [];
+    for (let r = 0; r < rowCount; r++) {
+      const slice = panelEntries.slice(r * cols, (r + 1) * cols);
+      const maxLines = Math.max(...slice.map((entry) => entry.lines.length), 0);
+      const captionH = maxLines > 0 ? maxLines * lineHeight + 28 : 0;
+      rowCaptionHeights.push(captionH);
+      rowHeights.push(artH + captionH);
+    }
+
+    const totalRowsH = rowHeights.reduce((sum, h) => sum + h, 0) + Math.max(0, rowCount - 1) * rowGap;
+    const canvasH = headerH + totalRowsH + footerH;
 
     const canvas = document.createElement('canvas');
     canvas.width = canvasW;
@@ -156,40 +282,69 @@ const downloadCompositeComicPage = async () => {
       ctx.fillText(`Lesson: "${maxLesson}"`, canvasW / 2, 118);
     }
 
-    // Draw panels
-    for (let i = 0; i < panels.length; i++) {
-      const p = panels[i];
-      if (!p || !p.image) continue;
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const x = pad + col * (cellW + 20);
-      const y = headerH + row * (cellH + 24);
+    // Draw panels with narrative captions
+    let currentY = headerH;
+    for (let r = 0; r < rowCount; r++) {
+      const rowH = rowHeights[r] ?? artH;
+      const captionH = rowCaptionHeights[r] ?? 0;
 
-      ctx.fillStyle = '#FFFFFF';
-      ctx.strokeStyle = '#322D29';
-      ctx.lineWidth = 3;
-      ctx.fillRect(x, y, cellW, cellH);
-      ctx.strokeRect(x, y, cellW, cellH);
+      for (let c = 0; c < cols; c++) {
+        const idx = r * cols + c;
+        const entry = panelEntries[idx];
+        if (!entry || !entry.panel.image) continue;
 
-      try {
-        const img = await loadImageElement(p.image);
-        const scale = Math.min((cellW - 12) / img.width, (cellH - 12) / img.height);
-        const drawW = img.width * scale;
-        const drawH = img.height * scale;
-        const drawX = x + (cellW - drawW) / 2;
-        const drawY = y + (cellH - drawH) / 2;
-        ctx.drawImage(img, drawX, drawY, drawW, drawH);
-      } catch {
-        // Skip broken image
+        const p = entry.panel;
+        const x = pad + c * (cellW + colGap);
+        const y = currentY;
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.strokeStyle = '#322D29';
+        ctx.lineWidth = 3;
+        ctx.fillRect(x, y, cellW, rowH);
+        ctx.strokeRect(x, y, cellW, rowH);
+
+        try {
+          const img = await loadImageElement(p.image, p.r2Key);
+          const scale = Math.min((cellW - 12) / img.width, (artH - 12) / img.height);
+          const drawW = img.width * scale;
+          const drawH = img.height * scale;
+          const drawX = x + (cellW - drawW) / 2;
+          const drawY = y + (artH - drawH) / 2;
+          ctx.drawImage(img, drawX, drawY, drawW, drawH);
+        } catch {
+          // Skip broken image
+        }
+
+        // Panel badge
+        ctx.fillStyle = '#322D29';
+        ctx.fillRect(x + 10, y + 10, 82, 26);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Panel ${p.panelNumber}`, x + 51, y + 28);
+
+        // Narrative prose caption box below artwork
+        if (captionH > 0) {
+          ctx.fillStyle = '#FAF6EE';
+          ctx.fillRect(x + 2, y + artH, cellW - 4, captionH - 2);
+
+          ctx.strokeStyle = '#D1C7BD';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(x + 2, y + artH);
+          ctx.lineTo(x + cellW - 2, y + artH);
+          ctx.stroke();
+
+          ctx.fillStyle = '#322D29';
+          ctx.font = '15px Georgia, serif';
+          ctx.textAlign = 'left';
+          entry.lines.forEach((line, lineIdx) => {
+            ctx.fillText(line, x + 16, y + artH + 26 + lineIdx * lineHeight);
+          });
+        }
       }
 
-      // Panel badge
-      ctx.fillStyle = '#322D29';
-      ctx.fillRect(x + 10, y + 10, 82, 26);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'bold 13px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(`Panel ${p.panelNumber}`, x + 51, y + 28);
+      currentY += rowH + rowGap;
     }
 
     // Footer
@@ -267,6 +422,13 @@ const stepStates = computed(() => {
                   <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-white/15 border border-white/25">
                     {{ imageModel }}
                   </span>
+                  <span
+                    v-if="r2Stored"
+                    class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-100 border border-emerald-300/35"
+                    title="Stored in Cloudflare R2 & PostgreSQL"
+                  >
+                    R2 Stored
+                  </span>
                 </div>
                 <p class="text-xs text-white/80">
                   {{ formattedDate }} · Problem → Listening to Readings → Applying Lesson → Resolution
@@ -275,8 +437,9 @@ const stepStates = computed(() => {
             </div>
 
             <div class="flex items-center gap-2 flex-wrap">
-              <!-- Toggle Model & Style Settings -->
+              <!-- Toggle Model & Style Settings (Admin Only) -->
               <button
+                v-if="isAdmin"
                 type="button"
                 @click="showSettingsBar = !showSettingsBar"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
@@ -289,8 +452,9 @@ const stepStates = computed(() => {
                 <span>Model Settings</span>
               </button>
 
-              <!-- One-Click Regenerate -->
+              <!-- One-Click Regenerate (Admin Only) -->
               <button
+                v-if="isAdmin"
                 type="button"
                 @click="handleRerunAll"
                 :disabled="isGenerating"
@@ -465,10 +629,24 @@ const stepStates = computed(() => {
                 <p class="font-serif italic">{{ moralLesson }}</p>
               </div>
 
-              <!-- Narrative Text -->
-              <div class="prose max-w-none text-sm sm:text-base font-serif leading-relaxed text-[#322D29] whitespace-pre-line">
+              <!-- Unabridged Narrative Text (shown directly while planning panels, collapsible once Story + Panels flow is ready) -->
+              <div
+                v-if="!storyBreakdown?.panels?.length"
+                class="prose max-w-none text-sm sm:text-base font-serif leading-relaxed text-[#322D29] whitespace-pre-line"
+              >
                 {{ generatedStory }}
               </div>
+              <details
+                v-else-if="generatedStory"
+                class="rounded-xl border border-[#D1C7BD]/80 bg-[#FAF6EE]/70 px-4 py-2.5"
+              >
+                <summary class="cursor-pointer text-xs font-bold uppercase tracking-wider text-[#72383D] select-none">
+                  Read Full Unabridged Story Text
+                </summary>
+                <div class="prose max-w-none text-sm font-serif leading-relaxed text-[#322D29] whitespace-pre-line mt-3 pt-3 border-t border-[#D1C7BD]/60">
+                  {{ generatedStory }}
+                </div>
+              </details>
             </section>
 
             <!-- Stage 2: Character Reference Sheets -->
@@ -535,7 +713,7 @@ const stepStates = computed(() => {
                   <div v-if="characterReferences[idx]?.image" class="flex items-center gap-2 mt-3 pt-2.5 border-t border-[#D1C7BD]/50">
                     <button
                       type="button"
-                      @click="downloadDataUrl(characterReferences[idx].image, `${char.name}_reference.jpg`)"
+                      @click="downloadDataUrl(characterReferences[idx].image, `${char.name}_reference.jpg`, characterReferences[idx].r2Key)"
                       class="flex-1 px-2.5 py-1.5 rounded-lg border border-[#D1C7BD] bg-[#FAF6EE] hover:bg-[#EFE9E1] text-[11px] font-bold text-[#322D29] transition-colors cursor-pointer"
                     >
                       Download
@@ -553,31 +731,174 @@ const stepStates = computed(() => {
               </div>
             </section>
 
-            <!-- Stage 3 & 4: Sequential Manga / Comic Panels -->
+            <!-- Stage 3 & 4: Mixed Narrative & Manga / Comic Panels -->
             <section v-if="storyBreakdown?.panels?.length" class="space-y-4">
-              <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 class="text-base sm:text-lg font-serif font-bold text-[#72383D]">
-                    Illustrated {{ style === 'manga' ? 'Manga' : 'Comic' }} Panels ({{ generatedPanels.length }}/{{ storyBreakdown.panels.length }})
+                    Illustrated Story &amp; {{ style === 'manga' ? 'Manga' : 'Comic' }} Panels ({{ generatedPanels.length }}/{{ storyBreakdown.panels.length }})
                   </h3>
                   <p class="text-xs text-[#322D29]/65">
-                    Click any panel image to view full size, download, or regenerate
+                    Narrative prose paired with each panel to tell the complete story. Click any panel to enlarge, download, or regenerate.
                   </p>
                 </div>
 
-                <button
-                  v-if="generatedPanels.length > 0"
-                  type="button"
-                  @click="downloadCompositeComicPage"
-                  :disabled="isDownloadingComposite"
-                  class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#72383D] to-[#542529] hover:from-[#8B444A] hover:to-[#72383D] text-white text-xs font-bold uppercase tracking-wider shadow-xs cursor-pointer disabled:opacity-50"
-                >
-                  <span>📥</span>
-                  <span>{{ isDownloadingComposite ? 'Creating Page...' : 'Download Full Comic Page' }}</span>
-                </button>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <!-- Layout Mode Switcher -->
+                  <div class="inline-flex rounded-xl border border-[#D1C7BD] bg-white p-0.5">
+                    <button
+                      type="button"
+                      @click="layoutMode = 'storybook'"
+                      class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                      :class="layoutMode === 'storybook' ? 'bg-[#72383D] text-white' : 'text-[#322D29]/75 hover:text-[#72383D]'"
+                    >
+                      📖 Story + Panels
+                    </button>
+                    <button
+                      type="button"
+                      @click="layoutMode = 'grid'"
+                      class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                      :class="layoutMode === 'grid' ? 'bg-[#72383D] text-white' : 'text-[#322D29]/75 hover:text-[#72383D]'"
+                    >
+                      🎞️ Comic Grid
+                    </button>
+                  </div>
+
+                  <button
+                    v-if="generatedPanels.length > 0"
+                    type="button"
+                    @click="downloadCompositeComicPage"
+                    :disabled="isDownloadingComposite"
+                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#72383D] to-[#542529] hover:from-[#8B444A] hover:to-[#72383D] text-white text-xs font-bold uppercase tracking-wider shadow-xs cursor-pointer disabled:opacity-50"
+                  >
+                    <span>📥</span>
+                    <span>{{ isDownloadingComposite ? 'Creating Page...' : 'Download Full Comic Page' }}</span>
+                  </button>
+                </div>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <!-- Mixed Narrative & Manga Flow (Default Storybook Layout) -->
+              <div v-if="layoutMode === 'storybook'" class="space-y-5">
+                <article
+                  v-for="(panel, idx) in storyBreakdown.panels"
+                  :key="panel.panelNumber"
+                  class="bg-white border-2 border-[#322D29] rounded-2xl overflow-hidden shadow-sm grid grid-cols-1 md:grid-cols-12"
+                >
+                  <!-- Panel Artwork Column (alternates left/right on desktop for graphic-novel rhythm) -->
+                  <div
+                    class="md:col-span-6 flex flex-col border-b md:border-b-0 border-[#D1C7BD]"
+                    :class="idx % 2 === 1 ? 'md:order-2 md:border-l' : 'md:order-1 md:border-r'"
+                  >
+                    <div class="px-4 py-2 bg-[#322D29] text-white flex items-center justify-between text-xs">
+                      <span class="font-bold uppercase tracking-wider">Panel {{ panel.panelNumber }}</span>
+                      <span class="text-white/75 text-[11px]">{{ panel.cameraAngle }} · {{ panel.visualMood }}</span>
+                    </div>
+
+                    <div class="relative aspect-square w-full bg-[#F5F0E6] flex items-center justify-center overflow-hidden flex-1">
+                      <img
+                        v-if="getGeneratedPanelImage(panel.panelNumber)"
+                        :src="getGeneratedPanelImage(panel.panelNumber)"
+                        :alt="`Panel ${panel.panelNumber}`"
+                        class="w-full h-full object-contain cursor-pointer hover:scale-[1.01] transition-transform"
+                        @click="openLightbox(getGeneratedPanelImage(panel.panelNumber)!, getPanelLightboxCaption(panel))"
+                      />
+                      <div
+                        v-else
+                        class="p-6 text-center space-y-3 max-w-sm"
+                      >
+                        <div
+                          v-if="isGeneratingPanels"
+                          class="w-10 h-10 mx-auto border-3 border-[#D1C7BD] border-t-[#72383D] rounded-full animate-spin"
+                        ></div>
+                        <p class="text-xs font-semibold text-[#72383D] uppercase tracking-wider">
+                          {{ isGeneratingPanels ? `Illustrating Panel ${panel.panelNumber}...` : 'Storyboard Layout' }}
+                        </p>
+                        <p class="text-xs text-[#322D29]/80 leading-relaxed">
+                          {{ panel.sceneDescription }}
+                        </p>
+                      </div>
+
+                      <!-- Regenerating Overlay -->
+                      <div
+                        v-if="regeneratingPanels.has(panel.panelNumber)"
+                        class="absolute inset-0 bg-black/55 flex flex-col items-center justify-center text-white space-y-2"
+                      >
+                        <div class="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span class="text-xs font-semibold">Regenerating Panel {{ panel.panelNumber }}...</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Supplementing Story Narrative Column -->
+                  <div
+                    class="md:col-span-6 p-5 sm:p-6 bg-[#FBF8F3] flex flex-col justify-between gap-4"
+                    :class="idx % 2 === 1 ? 'md:order-1' : 'md:order-2'"
+                  >
+                    <div class="space-y-3.5">
+                      <div class="flex items-center justify-between gap-2">
+                        <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#72383D]">
+                          Part {{ panel.panelNumber }} of {{ storyBreakdown.panels.length }} · Story Narrative
+                        </span>
+                        <span
+                          v-if="panel.characters?.length"
+                          class="text-[11px] text-[#322D29]/60 truncate max-w-[180px]"
+                          :title="panel.characters.join(', ')"
+                        >
+                          {{ panel.characters.join(', ') }}
+                        </span>
+                      </div>
+
+                      <p class="font-serif text-[15px] sm:text-base leading-relaxed text-[#322D29] border-l-3 border-[#72383D]/50 pl-3.5">
+                        {{ getPanelNarrative(panel) }}
+                      </p>
+
+                      <div
+                        v-if="panel.dialogue"
+                        class="p-3 rounded-xl bg-white border-2 border-[#322D29] text-xs sm:text-sm font-serif text-[#322D29] shadow-2xs"
+                      >
+                        💬 "{{ panel.dialogue }}"
+                      </div>
+
+                      <details
+                        v-if="panel.narrative && panel.sceneDescription"
+                        class="text-[11px] text-[#322D29]/65"
+                      >
+                        <summary class="cursor-pointer font-semibold hover:text-[#72383D] select-none">
+                          Visual scene direction
+                        </summary>
+                        <p class="mt-1.5 leading-relaxed pl-2 border-l border-[#D1C7BD]">
+                          {{ panel.sceneDescription }}
+                        </p>
+                      </details>
+                    </div>
+
+                    <!-- Panel Actions -->
+                    <div
+                      v-if="getGeneratedPanelImage(panel.panelNumber)"
+                      class="pt-3 border-t border-[#D1C7BD]/70 flex items-center justify-end gap-2"
+                    >
+                      <button
+                        type="button"
+                        @click="downloadDataUrl(getGeneratedPanelImage(panel.panelNumber)!, `panel_${panel.panelNumber}_${date}.jpg`, getGeneratedPanel(panel.panelNumber)?.r2Key)"
+                        class="px-3 py-1.5 rounded-lg border border-[#D1C7BD] bg-white hover:bg-[#EFE9E1] text-xs font-bold text-[#322D29] transition-colors cursor-pointer"
+                      >
+                        Download Panel
+                      </button>
+                      <button
+                        type="button"
+                        @click="regeneratePanel(panel.panelNumber, date)"
+                        :disabled="regeneratingPanels.has(panel.panelNumber) || isGenerating"
+                        class="px-3 py-1.5 rounded-lg bg-[#72383D] hover:bg-[#542529] text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
+                      >
+                        Regenerate
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              </div>
+
+              <!-- 2-Column Comic Grid Layout -->
+              <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div
                   v-for="panel in storyBreakdown.panels"
                   :key="panel.panelNumber"
@@ -597,7 +918,7 @@ const stepStates = computed(() => {
                         :src="getGeneratedPanelImage(panel.panelNumber)"
                         :alt="`Panel ${panel.panelNumber}`"
                         class="w-full h-full object-contain cursor-pointer hover:scale-[1.01] transition-transform"
-                        @click="openLightbox(getGeneratedPanelImage(panel.panelNumber)!, `Panel ${panel.panelNumber}: ${panel.sceneDescription}`)"
+                        @click="openLightbox(getGeneratedPanelImage(panel.panelNumber)!, getPanelLightboxCaption(panel))"
                       />
                       <div
                         v-else
@@ -625,17 +946,28 @@ const stepStates = computed(() => {
                       </div>
                     </div>
 
-                    <!-- Scene & Speech Bubble Caption -->
+                    <!-- Panel Narrative & Speech Bubble Caption -->
                     <div class="p-4 space-y-2.5 bg-[#FBF8F3] border-t border-[#D1C7BD]">
+                      <p class="text-sm font-serif text-[#322D29] leading-relaxed border-l-3 border-[#72383D]/50 pl-3">
+                        {{ getPanelNarrative(panel) }}
+                      </p>
                       <div
                         v-if="panel.dialogue"
                         class="p-3 rounded-xl bg-white border-2 border-[#322D29] text-xs sm:text-sm font-serif text-[#322D29] shadow-2xs"
                       >
                         💬 "{{ panel.dialogue }}"
                       </div>
-                      <p class="text-xs text-[#322D29]/75 leading-relaxed">
-                        {{ panel.sceneDescription }}
-                      </p>
+                      <details
+                        v-if="panel.narrative && panel.sceneDescription"
+                        class="text-[11px] text-[#322D29]/65"
+                      >
+                        <summary class="cursor-pointer font-semibold hover:text-[#72383D] select-none">
+                          Visual scene direction
+                        </summary>
+                        <p class="mt-1 leading-relaxed pl-2 border-l border-[#D1C7BD]">
+                          {{ panel.sceneDescription }}
+                        </p>
+                      </details>
                     </div>
                   </div>
 
@@ -646,7 +978,7 @@ const stepStates = computed(() => {
                   >
                     <button
                       type="button"
-                      @click="downloadDataUrl(getGeneratedPanelImage(panel.panelNumber)!, `panel_${panel.panelNumber}_${date}.jpg`)"
+                      @click="downloadDataUrl(getGeneratedPanelImage(panel.panelNumber)!, `panel_${panel.panelNumber}_${date}.jpg`, getGeneratedPanel(panel.panelNumber)?.r2Key)"
                       class="px-3 py-1.5 rounded-lg border border-[#D1C7BD] bg-white hover:bg-[#EFE9E1] text-xs font-bold text-[#322D29] transition-colors cursor-pointer"
                     >
                       Download Panel
@@ -678,7 +1010,7 @@ const stepStates = computed(() => {
             class="max-w-full max-h-[82vh] rounded-xl border-2 border-white/20 shadow-2xl object-contain"
             @click.stop
           />
-          <p class="text-white text-sm font-serif mt-3 text-center max-w-xl">
+          <p class="text-white text-sm font-serif mt-3 text-center max-w-2xl leading-relaxed">
             {{ lightboxImage.caption }}
           </p>
         </div>

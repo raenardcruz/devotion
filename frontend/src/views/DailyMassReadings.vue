@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from 'vue';
 import { useDate } from '../composables/useDate';
 import { useDevotionApi } from '../composables/useDevotionApi';
+import { useAccessControl } from '../composables/useAccessControl';
+import { useStoryToManga } from '../composables/useStoryToManga';
 import { renderMarkdown } from '../utils/markdown';
 import TopNav from '../components/common/TopNav.vue';
 import BottomNav from '../components/common/BottomNav.vue';
@@ -38,12 +40,24 @@ const activeTab = ref('first_reading');
 
 const { getLocalISOString } = useDate();
 const { getDevotion, loading, error } = useDevotionApi();
+const { isAdmin, syncAdminState } = useAccessControl();
+const { checkStoryExists } = useStoryToManga();
 const selectedDate = ref(getLocalISOString());
 const modalDate = ref(getLocalISOString());
 const isModalOpen = ref(false);
 const isStoryMangaModalOpen = ref(false);
+const hasMangaStory = ref(false);
+
+const refreshMangaAvailability = async () => {
+  syncAdminState();
+  hasMangaStory.value = await checkStoryExists(selectedDate.value);
+};
 
 const openStoryMangaModal = () => {
+  syncAdminState();
+  if (!isAdmin.value && !hasMangaStory.value) {
+    return;
+  }
   isStoryMangaModalOpen.value = true;
 };
 
@@ -145,7 +159,10 @@ loading.value = true;
 
 const fetchReadings = async () => {
   try {
-    const data = await getDevotion<MassReadings>(selectedDate.value);
+    const [data] = await Promise.all([
+      getDevotion<MassReadings>(selectedDate.value),
+      refreshMangaAvailability(),
+    ]);
     readings.value = data;
     
     // Set default active tab based on what's available
@@ -162,6 +179,7 @@ const fetchReadings = async () => {
 const selectedDateValue = computed(() => new Date(`${selectedDate.value}T12:00:00`));
 
 onMounted(() => {
+  syncAdminState();
   fetchReadings();
 });
 
@@ -247,13 +265,13 @@ const availableTabs = computed(() => {
             </button>
 
             <button
-              v-if="readings"
+              v-if="readings && (isAdmin || hasMangaStory)"
               @click="openStoryMangaModal"
               class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#322D29] via-[#72383D] to-[#542529] hover:from-[#72383D] hover:to-[#322D29] text-white border border-[#72383D] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#72383D]/40 active:scale-95 cursor-pointer"
-              title="One-click generate a custom story & manga based on today's readings and lessons (powered by story-to-manga & gemini-nano-banana-2.1)"
+              :title="isAdmin ? 'One-click generate or view a custom story & manga based on today\'s readings' : 'Read today\'s illustrated story & manga'"
             >
-              <span>🎨</span>
-              <span>Generate Story &amp; Manga</span>
+              <span>{{ isAdmin ? '🎨' : '📖' }}</span>
+              <span>{{ isAdmin ? 'Generate Story & Manga' : 'Read Story & Manga' }}</span>
             </button>
 
             <a

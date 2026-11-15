@@ -29,6 +29,23 @@ interface AccessRequestItem {
   updated_at: string;
 }
 
+interface MangaSummaryItem {
+  id: number;
+  date: string;
+  style: string;
+  title: string;
+  moralLesson: string;
+  imageModel: string;
+  panelCount: number;
+  characterCount: number;
+  r2Prefix: string;
+  r2Keys: string[];
+  r2Stored: boolean;
+  previewImage?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface Settings {
   context_provider: string;
   fact_checker_provider: string;
@@ -43,19 +60,26 @@ interface Settings {
   context_model?: string;
   context_instruction: string;
   enable_fact_checker: boolean;
+  r2_account_id: string;
+  r2_endpoint: string;
+  r2_bucket: string;
+  r2_access_key_id: string;
+  r2_secret_access_key: string;
+  r2_public_url: string;
 }
 
-type AdminTabId = 'pipeline' | 'models' | 'keys' | 'prompts' | 'access';
+type AdminTabId = 'pipeline' | 'models' | 'keys' | 'r2' | 'prompts' | 'access';
 
 const tabs: { id: AdminTabId; label: string; description: string }[] = [
   { id: 'pipeline', label: 'AI Pipeline', description: 'Providers & verification' },
   { id: 'models', label: 'Models', description: 'Gemini & local Ollama' },
   { id: 'keys', label: 'API Keys', description: 'Database credentials' },
+  { id: 'r2', label: 'R2 & Manga', description: 'Storage & generated stories' },
   { id: 'prompts', label: 'Prompts', description: 'Context instructions' },
   { id: 'access', label: 'Access Codes', description: 'Guest requests & invites' },
 ];
 
-const { fetchWithAuth, isServerUnreachable } = useDevotionApi();
+const { fetchWithAuth, getApiUrl, isServerUnreachable } = useDevotionApi();
 const { syncAdminState } = useAccessControl();
 
 // Navigation & UI State
@@ -65,6 +89,7 @@ const showKeys = ref({
   gemini: false,
   magisterium: false,
   bible: false,
+  r2Secret: false,
 });
 const promptTextareaRef = ref<HTMLTextAreaElement | null>(null);
 
@@ -89,6 +114,12 @@ const defaultSettings = (): Settings => ({
   ollama_model: 'gemma4:cloud',
   context_instruction: '',
   enable_fact_checker: true,
+  r2_account_id: '',
+  r2_endpoint: '',
+  r2_bucket: '',
+  r2_access_key_id: '',
+  r2_secret_access_key: '',
+  r2_public_url: '',
 });
 
 const settings = ref<Settings>(defaultSettings());
@@ -130,6 +161,38 @@ const creatingCode = ref(false);
 const copiedKey = ref<string | null>(null);
 const accessMessage = ref<{ type: 'success' | 'error'; text: string } | null>(null);
 
+// R2 Storage & Generated Manga Management State
+const testingR2 = ref(false);
+const r2TestMessage = ref<{ type: 'success' | 'error'; text: string } | null>(null);
+const generatedMangaList = ref<MangaSummaryItem[]>([]);
+const loadingMangaList = ref(false);
+const r2BackendConfigured = ref(false);
+const regeneratingMangaIds = ref<Set<number>>(new Set());
+const deletingMangaIds = ref<Set<number>>(new Set());
+const confirmDeleteMangaId = ref<number | null>(null);
+const mangaActionMessage = ref<{ type: 'success' | 'error'; text: string } | null>(null);
+
+const isR2FormConfigured = computed(() => {
+  const s = settings.value;
+  return Boolean(
+    (s.r2_account_id?.trim() || s.r2_endpoint?.trim()) &&
+      s.r2_bucket?.trim() &&
+      s.r2_access_key_id?.trim() &&
+      s.r2_secret_access_key?.trim()
+  );
+});
+
+const resolveMangaPreviewUrl = (url?: string): string => {
+  if (!url) return '';
+  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  if (url.startsWith('/')) {
+    return getApiUrl(url);
+  }
+  return url;
+};
+
 const hasUnsavedChanges = computed(() => {
   if (!savedSnapshot.value) return false;
   return JSON.stringify(settings.value) !== savedSnapshot.value;
@@ -168,6 +231,7 @@ onMounted(() => {
     syncAdminState();
     loadSettings();
     loadAccessData();
+    loadMangaList();
   }
 });
 
@@ -190,6 +254,7 @@ const handleLogin = async () => {
       isAuthenticated.value = true;
       loadSettings();
       loadAccessData();
+      loadMangaList();
     } else {
       authError.value = res.message || 'Invalid admin credentials.';
     }
@@ -422,17 +487,149 @@ const saveSettings = async () => {
   saveLoading.value = true;
   message.value = null;
   try {
-    await fetchWithAuth('/api/admin/settings', {
+    const res = await fetchWithAuth<{ success?: boolean; settings?: Settings }>('/api/admin/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(settings.value),
     });
+    if (res?.settings) {
+      settings.value = { ...defaultSettings(), ...res.settings };
+    }
     savedSnapshot.value = JSON.stringify(settings.value);
+    r2BackendConfigured.value = isR2FormConfigured.value;
     message.value = { type: 'success', text: 'Settings successfully saved to PostgreSQL database.' };
   } catch (err: any) {
     message.value = { type: 'error', text: err.message || 'Failed to save settings to backend.' };
   } finally {
     saveLoading.value = false;
+  }
+};
+
+const loadMangaList = async () => {
+  loadingMangaList.value = true;
+  try {
+    const res = await fetchWithAuth<{
+      success: boolean;
+      r2Configured: boolean;
+      stories: MangaSummaryItem[];
+    }>('/api/admin/manga');
+    generatedMangaList.value = res?.stories || [];
+    r2BackendConfigured.value = Boolean(res?.r2Configured);
+  } catch (err: any) {
+    console.error('Failed to load generated manga list:', err);
+  } finally {
+    loadingMangaList.value = false;
+  }
+};
+
+const testR2Connection = async () => {
+  testingR2.value = true;
+  r2TestMessage.value = null;
+  try {
+    const res = await fetchWithAuth<{
+      success: boolean;
+      message?: string;
+    }>('/api/admin/r2/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        r2_account_id: settings.value.r2_account_id,
+        r2_endpoint: settings.value.r2_endpoint,
+        r2_bucket: settings.value.r2_bucket,
+        r2_access_key_id: settings.value.r2_access_key_id,
+        r2_secret_access_key: settings.value.r2_secret_access_key,
+        r2_public_url: settings.value.r2_public_url,
+      }),
+    });
+    r2TestMessage.value = {
+      type: 'success',
+      text: res?.message || 'R2 connection verified successfully.',
+    };
+  } catch (err: any) {
+    r2TestMessage.value = {
+      type: 'error',
+      text: err?.message || 'Failed to connect to R2 bucket.',
+    };
+  } finally {
+    testingR2.value = false;
+  }
+};
+
+const regenerateMangaItem = async (item: MangaSummaryItem) => {
+  const next = new Set(regeneratingMangaIds.value);
+  next.add(item.id);
+  regeneratingMangaIds.value = next;
+  mangaActionMessage.value = null;
+  confirmDeleteMangaId.value = null;
+
+  try {
+    const res = await fetchWithAuth<{
+      success: boolean;
+      summary?: MangaSummaryItem;
+    }>('/api/admin/manga/regenerate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: item.id,
+        date: item.date,
+        style: item.style,
+        imageModel: item.imageModel,
+      }),
+    });
+    if (res?.summary) {
+      const idx = generatedMangaList.value.findIndex((s) => s.id === item.id);
+      if (idx !== -1) {
+        generatedMangaList.value[idx] = res.summary;
+      } else {
+        await loadMangaList();
+      }
+    } else {
+      await loadMangaList();
+    }
+    mangaActionMessage.value = {
+      type: 'success',
+      text: `Regenerated "${item.title || item.date}" and updated database & R2.`,
+    };
+  } catch (err: any) {
+    mangaActionMessage.value = {
+      type: 'error',
+      text: err?.message || `Failed to regenerate manga for ${item.date}.`,
+    };
+  } finally {
+    const done = new Set(regeneratingMangaIds.value);
+    done.delete(item.id);
+    regeneratingMangaIds.value = done;
+  }
+};
+
+const deleteMangaItem = async (item: MangaSummaryItem) => {
+  const next = new Set(deletingMangaIds.value);
+  next.add(item.id);
+  deletingMangaIds.value = next;
+  mangaActionMessage.value = null;
+  confirmDeleteMangaId.value = null;
+
+  try {
+    await fetchWithAuth(`/api/admin/manga?id=${item.id}`, {
+      method: 'DELETE',
+    });
+    generatedMangaList.value = generatedMangaList.value.filter((s) => s.id !== item.id);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(`devotion_manga_state_${item.date}`);
+    }
+    mangaActionMessage.value = {
+      type: 'success',
+      text: `Deleted "${item.title || item.date}" from database and R2.`,
+    };
+  } catch (err: any) {
+    mangaActionMessage.value = {
+      type: 'error',
+      text: err?.message || `Failed to delete manga for ${item.date}.`,
+    };
+  } finally {
+    const done = new Set(deletingMangaIds.value);
+    done.delete(item.id);
+    deletingMangaIds.value = done;
   }
 };
 
@@ -629,6 +826,9 @@ const formatProviderLabel = (provider: string) => {
               <svg v-else-if="tab.id === 'keys'" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
               </svg>
+              <svg v-else-if="tab.id === 'r2'" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+              </svg>
               <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
@@ -643,6 +843,13 @@ const formatProviderLabel = (provider: string) => {
                   :class="activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-[#EFE9E1] text-[#72383D]'"
                 >
                   {{ configuredKeysCount }}/3
+                </span>
+                <span
+                  v-else-if="tab.id === 'r2' && generatedMangaList.length > 0"
+                  class="text-[10px] px-1.5 py-0.2 rounded-full font-semibold"
+                  :class="activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-[#EFE9E1] text-[#72383D]'"
+                >
+                  {{ generatedMangaList.length }}
                 </span>
               </div>
               <div
@@ -1127,7 +1334,279 @@ const formatProviderLabel = (provider: string) => {
               </div>
             </section>
 
-            <!-- TAB 4: PROMPTS -->
+            <!-- TAB 4: R2 STORAGE & GENERATED MANGA -->
+            <section
+              v-else-if="activeTab === 'r2'"
+              key="r2"
+              id="panel-r2"
+              role="tabpanel"
+              class="space-y-6"
+            >
+              <!-- R2 Connection Config -->
+              <div class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h2 class="font-serif text-lg sm:text-xl font-bold text-[#322D29]">
+                      Cloudflare R2 Connection Config
+                    </h2>
+                    <p class="text-xs sm:text-sm text-[#322D29]/65 mt-0.5">
+                      Store generated manga character sheets, panels, and story manifests in R2. Save settings below to persist changes.
+                    </p>
+                  </div>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <span
+                      class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
+                      :class="isR2FormConfigured ? 'bg-emerald-100 text-emerald-800' : 'bg-[#EFE9E1] text-[#322D29]/65 border border-[#D1C7BD]'"
+                    >
+                      {{ isR2FormConfigured ? 'R2 Configured' : 'Not Configured' }}
+                    </span>
+                    <button
+                      type="button"
+                      @click="testR2Connection"
+                      :disabled="testingR2"
+                      class="px-3 py-1.5 rounded-xl bg-[#FAF7EE] hover:bg-[#EFE9E1] border border-[#D1C7BD] text-xs font-bold text-[#72383D] transition-colors disabled:opacity-50 cursor-pointer"
+                    >
+                      {{ testingR2 ? 'Testing...' : 'Test R2 Connection' }}
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  v-if="r2TestMessage"
+                  class="p-3 rounded-xl text-xs font-medium border"
+                  :class="r2TestMessage.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'"
+                >
+                  {{ r2TestMessage.text }}
+                </div>
+
+                <div class="p-4 sm:p-5 rounded-2xl border border-[#D1C7BD]/80 bg-white/60 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label for="r2-account-id" class="block text-xs font-bold uppercase tracking-wider text-[#72383D] mb-1">
+                      Cloudflare Account ID
+                    </label>
+                    <input
+                      id="r2-account-id"
+                      v-model="settings.r2_account_id"
+                      type="text"
+                      placeholder="e.g. 9f1c2d3e4a5b6c7d8e9f0a1b2c3d4e5f"
+                      class="w-full px-3.5 py-2 border border-[#D1C7BD] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#72383D]/25 focus:border-[#72383D] text-[#322D29] font-mono text-xs sm:text-sm min-h-[42px]"
+                    />
+                  </div>
+
+                  <div>
+                    <label for="r2-bucket" class="block text-xs font-bold uppercase tracking-wider text-[#72383D] mb-1">
+                      R2 Bucket Name
+                    </label>
+                    <input
+                      id="r2-bucket"
+                      v-model="settings.r2_bucket"
+                      type="text"
+                      placeholder="e.g. devotion-manga"
+                      class="w-full px-3.5 py-2 border border-[#D1C7BD] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#72383D]/25 focus:border-[#72383D] text-[#322D29] font-mono text-xs sm:text-sm min-h-[42px]"
+                    />
+                  </div>
+
+                  <div>
+                    <label for="r2-access-key-id" class="block text-xs font-bold uppercase tracking-wider text-[#72383D] mb-1">
+                      R2 Access Key ID
+                    </label>
+                    <input
+                      id="r2-access-key-id"
+                      v-model="settings.r2_access_key_id"
+                      type="text"
+                      placeholder="R2 S3 Access Key ID"
+                      class="w-full px-3.5 py-2 border border-[#D1C7BD] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#72383D]/25 focus:border-[#72383D] text-[#322D29] font-mono text-xs sm:text-sm min-h-[42px]"
+                    />
+                  </div>
+
+                  <div>
+                    <label for="r2-secret-access-key" class="block text-xs font-bold uppercase tracking-wider text-[#72383D] mb-1">
+                      R2 Secret Access Key
+                    </label>
+                    <div class="relative flex items-center">
+                      <input
+                        id="r2-secret-access-key"
+                        v-model="settings.r2_secret_access_key"
+                        :type="showKeys.r2Secret ? 'text' : 'password'"
+                        placeholder="R2 S3 Secret Access Key"
+                        class="w-full px-3.5 py-2 pr-16 border border-[#D1C7BD] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#72383D]/25 focus:border-[#72383D] text-[#322D29] font-mono text-xs sm:text-sm min-h-[42px]"
+                      />
+                      <button
+                        type="button"
+                        @click="showKeys.r2Secret = !showKeys.r2Secret"
+                        class="absolute right-2 px-2 py-1 text-xs font-semibold text-[#72383D] hover:bg-[#EFE9E1] rounded-lg transition-colors cursor-pointer"
+                      >
+                        {{ showKeys.r2Secret ? 'Hide' : 'Show' }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label for="r2-endpoint" class="block text-xs font-bold uppercase tracking-wider text-[#72383D] mb-1">
+                      Custom S3 Endpoint <span class="font-normal text-[#322D29]/55">(Optional)</span>
+                    </label>
+                    <input
+                      id="r2-endpoint"
+                      v-model="settings.r2_endpoint"
+                      type="text"
+                      placeholder="https://<account_id>.r2.cloudflarestorage.com"
+                      class="w-full px-3.5 py-2 border border-[#D1C7BD] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#72383D]/25 focus:border-[#72383D] text-[#322D29] font-mono text-xs sm:text-sm min-h-[42px]"
+                    />
+                  </div>
+
+                  <div>
+                    <label for="r2-public-url" class="block text-xs font-bold uppercase tracking-wider text-[#72383D] mb-1">
+                      Public Base URL <span class="font-normal text-[#322D29]/55">(Optional)</span>
+                    </label>
+                    <input
+                      id="r2-public-url"
+                      v-model="settings.r2_public_url"
+                      type="text"
+                      placeholder="https://pub-xxx.r2.dev or leave blank to proxy"
+                      class="w-full px-3.5 py-2 border border-[#D1C7BD] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#72383D]/25 focus:border-[#72383D] text-[#322D29] font-mono text-xs sm:text-sm min-h-[42px]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Generated Manga Management List -->
+              <div class="space-y-3 pt-2 border-t border-[#D1C7BD]/70">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h3 class="font-serif text-base sm:text-lg font-bold text-[#322D29]">
+                      Generated Manga Library
+                    </h3>
+                    <p class="text-xs text-[#322D29]/65">
+                      Manage stored daily stories &amp; manga panels. Regenerate fresh editions or delete them from both PostgreSQL and R2.
+                    </p>
+                  </div>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs text-[#7B6E65]">{{ generatedMangaList.length }} total</span>
+                    <button
+                      type="button"
+                      @click="loadMangaList"
+                      :disabled="loadingMangaList"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FAF7EE] hover:bg-[#EFE9E1] border border-[#D1C7BD] text-xs font-semibold text-[#5C282D] transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      {{ loadingMangaList ? 'Refreshing...' : 'Refresh List' }}
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  v-if="mangaActionMessage"
+                  class="p-3 rounded-xl text-xs font-medium border"
+                  :class="mangaActionMessage.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'"
+                >
+                  {{ mangaActionMessage.text }}
+                </div>
+
+                <div
+                  v-if="loadingMangaList && generatedMangaList.length === 0"
+                  class="p-6 rounded-2xl bg-white/60 border border-[#D1C7BD]/60 text-xs text-[#7B6E65] text-center"
+                >
+                  Loading generated manga stories...
+                </div>
+
+                <div
+                  v-else-if="generatedMangaList.length === 0"
+                  class="p-6 rounded-2xl bg-white/60 border border-[#D1C7BD]/60 text-xs text-[#7B6E65] text-center"
+                >
+                  No generated manga stories saved yet. Generate one from Daily Mass Readings or configure R2 above.
+                </div>
+
+                <div v-else class="space-y-3">
+                  <div
+                    v-for="item in generatedMangaList"
+                    :key="item.id"
+                    class="p-4 rounded-2xl bg-white/85 border border-[#D1C7BD]/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  >
+                    <div class="flex items-start gap-3.5 min-w-0 flex-1">
+                      <!-- Thumbnail Preview -->
+                      <div class="w-16 h-16 rounded-xl bg-[#EFE9E1] border border-[#D1C7BD] overflow-hidden shrink-0 flex items-center justify-center">
+                        <img
+                          v-if="item.previewImage"
+                          :src="resolveMangaPreviewUrl(item.previewImage)"
+                          :alt="item.title"
+                          class="w-full h-full object-cover"
+                        />
+                        <span v-else class="text-xl">🎨</span>
+                      </div>
+
+                      <div class="space-y-1 min-w-0 flex-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                          <span class="font-serif font-bold text-sm sm:text-base text-[#322D29] truncate">
+                            {{ item.title || `Daily Story (${item.date})` }}
+                          </span>
+                          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#EFE9E1] text-[#72383D]">
+                            {{ item.style }}
+                          </span>
+                          <span
+                            class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                            :class="item.r2Stored ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-200 text-stone-700'"
+                          >
+                            {{ item.r2Stored ? `R2 (${item.r2Keys?.length || 0} objs)` : 'DB Only' }}
+                          </span>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#5C5149]">
+                          <span class="font-mono font-semibold text-[#72383D]">{{ item.date }}</span>
+                          <span>·</span>
+                          <span>{{ item.panelCount }} panels · {{ item.characterCount }} characters</span>
+                          <span v-if="item.imageModel">·</span>
+                          <span v-if="item.imageModel" class="font-mono text-[11px]">{{ item.imageModel }}</span>
+                        </div>
+
+                        <p v-if="item.moralLesson" class="text-xs text-[#6B5F56] line-clamp-2 font-serif italic">
+                          {{ item.moralLesson }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex flex-wrap items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        @click="regenerateMangaItem(item)"
+                        :disabled="regeneratingMangaIds.has(item.id) || deletingMangaIds.has(item.id)"
+                        class="px-3 py-1.5 rounded-xl bg-[#72383D] hover:bg-[#5C282D] text-[#FAF7F2] text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+                      >
+                        {{ regeneratingMangaIds.has(item.id) ? 'Regenerating...' : 'Regenerate' }}
+                      </button>
+
+                      <template v-if="confirmDeleteMangaId === item.id">
+                        <button
+                          type="button"
+                          @click="deleteMangaItem(item)"
+                          :disabled="deletingMangaIds.has(item.id)"
+                          class="px-3 py-1.5 rounded-xl bg-red-700 hover:bg-red-800 text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
+                        >
+                          {{ deletingMangaIds.has(item.id) ? 'Deleting...' : 'Confirm Delete' }}
+                        </button>
+                        <button
+                          type="button"
+                          @click="confirmDeleteMangaId = null"
+                          class="px-2.5 py-1.5 rounded-xl bg-[#EFE9E1] hover:bg-[#E2D8CC] text-xs font-semibold text-[#322D29] transition-colors cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      </template>
+                      <button
+                        v-else
+                        type="button"
+                        @click="confirmDeleteMangaId = item.id"
+                        :disabled="regeneratingMangaIds.has(item.id) || deletingMangaIds.has(item.id)"
+                        class="px-3 py-1.5 rounded-xl border border-red-200 text-red-700 hover:bg-red-50 text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- TAB 5: PROMPTS -->
             <section
               v-else-if="activeTab === 'prompts'"
               key="prompts"

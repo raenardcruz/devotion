@@ -78,6 +78,7 @@ func adminSettingsHandler(w http.ResponseWriter, r *http.Request) {
 		settings.GeminiAPIKey = maskAPIKey(settings.GeminiAPIKey)
 		settings.MagisteriumAPIKey = maskAPIKey(settings.MagisteriumAPIKey)
 		settings.BibleAPIKey = maskAPIKey(settings.BibleAPIKey)
+		settings.R2SecretAccessKey = maskAPIKey(settings.R2SecretAccessKey)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(settings)
 
@@ -98,6 +99,9 @@ func adminSettingsHandler(w http.ResponseWriter, r *http.Request) {
 		if isMaskedKey(settings.BibleAPIKey) {
 			settings.BibleAPIKey = current.BibleAPIKey
 		}
+		if isMaskedKey(settings.R2SecretAccessKey) {
+			settings.R2SecretAccessKey = current.R2SecretAccessKey
+		}
 
 		if err := SaveSettings(settings); err != nil {
 			respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to save settings: %v", err))
@@ -108,6 +112,7 @@ func adminSettingsHandler(w http.ResponseWriter, r *http.Request) {
 		respSettings.GeminiAPIKey = maskAPIKey(settings.GeminiAPIKey)
 		respSettings.MagisteriumAPIKey = maskAPIKey(settings.MagisteriumAPIKey)
 		respSettings.BibleAPIKey = maskAPIKey(settings.BibleAPIKey)
+		respSettings.R2SecretAccessKey = maskAPIKey(settings.R2SecretAccessKey)
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{

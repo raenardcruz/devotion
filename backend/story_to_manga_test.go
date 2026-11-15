@@ -61,11 +61,12 @@ func TestMangaConfigHandler(t *testing.T) {
 		t.Fatalf("expected default imageModel 'gemini-nano-banana-2.1', got %q", getResp.ImageModel)
 	}
 
-	// POST updated image model
+	// POST updated image model (requires admin)
 	postBody, _ := json.Marshal(map[string]string{
 		"imageModel": "gemini-2.5-flash-image-preview",
 	})
 	postReq := httptest.NewRequest(http.MethodPost, "/api/manga/config", bytes.NewReader(postBody))
+	postReq.Header.Set("X-Admin-Token", adminSessionToken)
 	postRec := httptest.NewRecorder()
 	mangaConfigHandler(postRec, postReq)
 
@@ -121,10 +122,124 @@ func TestMangaAnalyzeStoryWordLimit(t *testing.T) {
 		Style: "manga",
 	})
 	req := httptest.NewRequest(http.MethodPost, "/api/manga/analyze-story", bytes.NewReader(payload))
+	req.Header.Set("X-Admin-Token", adminSessionToken)
 	rec := httptest.NewRecorder()
 
 	mangaAnalyzeStoryHandler(rec, req)
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400 Bad Request for >500 words, got %d", rec.Code)
+	}
+}
+
+func TestParseMangaStoryBreakdownWithNarrative(t *testing.T) {
+	raw := `{"panels":[{"panelNumber":0,"characters":["Leo"],"sceneDescription":"Leo stares at a torn drawing on his desk.","dialogue":"Why did he do that?","narrative":"All afternoon, anger burned quietly in Leo's chest as he stared at the crumpled sketch his classmate had ruined.","cameraAngle":"Close-up","visualMood":"Tense"},{"panelNumber":2,"characters":["Leo"],"sceneDescription":"Leo sits in the parish pew listening.","narrative":"At evening Mass, the words of Sirach cut through his resentment: forgive your neighbor's injustice, and God will forgive yours.","cameraAngle":"Medium shot","visualMood":"Reflective"}]}`
+
+	var breakdown MangaStoryBreakdown
+	if err := parseMangaJSON(raw, &breakdown); err != nil {
+		t.Fatalf("expected parseMangaJSON to succeed, got error: %v", err)
+	}
+	normalizeStoryBreakdown(&breakdown)
+
+	if len(breakdown.Panels) != 2 {
+		t.Fatalf("expected 2 panels, got %d", len(breakdown.Panels))
+	}
+	if breakdown.Panels[0].PanelNumber != 1 {
+		t.Fatalf("expected panelNumber 0 to normalize to 1, got %d", breakdown.Panels[0].PanelNumber)
+	}
+	if !strings.Contains(breakdown.Panels[0].Narrative, "All afternoon, anger burned quietly") {
+		t.Fatalf("expected first panel narrative to be preserved, got %q", breakdown.Panels[0].Narrative)
+	}
+	if !strings.Contains(breakdown.Panels[1].Narrative, "words of Sirach") {
+		t.Fatalf("expected second panel narrative to be preserved, got %q", breakdown.Panels[1].Narrative)
+	}
+}
+
+func TestNormalizeStoryBreakdownFallbackNarrative(t *testing.T) {
+	breakdown := MangaStoryBreakdown{
+		Panels: []MangaPanelPlan{
+			{
+				PanelNumber:      0,
+				SceneDescription: "  Leo extends his hand in reconciliation after Mass.  ",
+				Narrative:        "   ",
+			},
+		},
+	}
+
+	normalizeStoryBreakdown(&breakdown)
+
+	if breakdown.Panels[0].PanelNumber != 1 {
+		t.Fatalf("expected PanelNumber 1, got %d", breakdown.Panels[0].PanelNumber)
+	}
+	if breakdown.Panels[0].Narrative != "Leo extends his hand in reconciliation after Mass." {
+		t.Fatalf("expected fallback narrative from trimmed SceneDescription, got %q", breakdown.Panels[0].Narrative)
+	}
+}
+
+func TestMangaGenerationRequiresAdmin(t *testing.T) {
+	endpoints := []struct {
+		name    string
+		method  string
+		target  string
+		body    string
+		handler http.HandlerFunc
+	}{
+		{
+			name:    "POST /api/manga/config",
+			method:  http.MethodPost,
+			target:  "/api/manga/config",
+			body:    `{"imageModel":"gemini-nano-banana-2.1"}`,
+			handler: mangaConfigHandler,
+		},
+		{
+			name:    "POST /api/manga/analyze-story",
+			method:  http.MethodPost,
+			target:  "/api/manga/analyze-story",
+			body:    `{"story":"test"}`,
+			handler: mangaAnalyzeStoryHandler,
+		},
+		{
+			name:    "POST /api/manga/generate-character-refs",
+			method:  http.MethodPost,
+			target:  "/api/manga/generate-character-refs",
+			body:    `{"characters":[]}`,
+			handler: mangaGenerateCharacterRefsHandler,
+		},
+		{
+			name:    "POST /api/manga/chunk-story",
+			method:  http.MethodPost,
+			target:  "/api/manga/chunk-story",
+			body:    `{"story":"test"}`,
+			handler: mangaChunkStoryHandler,
+		},
+		{
+			name:    "POST /api/manga/generate-panel",
+			method:  http.MethodPost,
+			target:  "/api/manga/generate-panel",
+			body:    `{"panel":{"panelNumber":1}}`,
+			handler: mangaGeneratePanelHandler,
+		},
+		{
+			name:    "POST /api/manga/story",
+			method:  http.MethodPost,
+			target:  "/api/manga/story",
+			body:    `{"date":"2026-11-16"}`,
+			handler: mangaStoryHandler,
+		},
+		{
+			name:    "DELETE /api/manga/story",
+			method:  http.MethodDelete,
+			target:  "/api/manga/story?id=1",
+			body:    "",
+			handler: mangaStoryHandler,
+		},
+	}
+
+	for _, tc := range endpoints {
+		req := httptest.NewRequest(tc.method, tc.target, strings.NewReader(tc.body))
+		rec := httptest.NewRecorder()
+		tc.handler(rec, req)
+		if rec.Code != http.StatusUnauthorized {
+			t.Fatalf("%s without admin token expected 401 Unauthorized, got %d", tc.name, rec.Code)
+		}
 	}
 }

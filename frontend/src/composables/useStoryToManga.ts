@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import { useDevotionApi } from './useDevotionApi';
+import { useAccessControl } from './useAccessControl';
 
 export type ComicStyle = 'manga' | 'comic';
 
@@ -26,7 +27,8 @@ export interface MangaStoryAnalysis {
 
 export interface MangaCharacterReference {
   name: string;
-  image: string; // base64 data URL
+  image: string; // base64 data URL or asset/R2 URL
+  r2Key?: string;
   description: string;
 }
 
@@ -35,6 +37,7 @@ export interface MangaPanelPlan {
   characters: string[];
   sceneDescription: string;
   dialogue?: string;
+  narrative?: string;
   cameraAngle: string;
   visualMood: string;
 }
@@ -45,7 +48,27 @@ export interface MangaStoryBreakdown {
 
 export interface MangaGeneratedPanel {
   panelNumber: number;
-  image: string; // base64 data URL
+  image: string; // base64 data URL or asset/R2 URL
+  r2Key?: string;
+}
+
+export interface MangaStoryRecord {
+  id: number;
+  date: string;
+  style: ComicStyle;
+  title: string;
+  moralLesson: string;
+  story: string;
+  imageModel: string;
+  storyAnalysis: MangaStoryAnalysis;
+  characterReferences: MangaCharacterReference[];
+  storyBreakdown: MangaStoryBreakdown;
+  generatedPanels: MangaGeneratedPanel[];
+  r2Prefix?: string;
+  r2Keys?: string[];
+  r2Stored?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ReadingsPayload {
@@ -132,7 +155,8 @@ class MangaImageStorage {
 const imageStorage = new MangaImageStorage();
 
 export function useStoryToManga() {
-  const { fetchWithAuth } = useDevotionApi();
+  const { fetchWithAuth, getApiUrl } = useDevotionApi();
+  const { isAdmin, syncAdminState } = useAccessControl();
 
   const style = ref<ComicStyle>(
     (typeof localStorage !== 'undefined' && (localStorage.getItem(STYLE_STORAGE_KEY) as ComicStyle)) || 'manga'
@@ -148,6 +172,7 @@ export function useStoryToManga() {
   const characterReferences = ref<MangaCharacterReference[]>([]);
   const storyBreakdown = ref<MangaStoryBreakdown | null>(null);
   const generatedPanels = ref<MangaGeneratedPanel[]>([]);
+  const r2Stored = ref<boolean>(false);
 
   const isGenerating = ref(false);
   const isAnalyzing = ref(false);
@@ -179,6 +204,11 @@ export function useStoryToManga() {
   };
 
   const updateImageModel = async (newModel: string) => {
+    syncAdminState();
+    if (!isAdmin.value) {
+      error.value = 'Story & manga generation settings are restricted to administrators.';
+      return;
+    }
     const trimmed = newModel.trim() || DEFAULT_IMAGE_MODEL;
     imageModel.value = trimmed;
     if (typeof localStorage !== 'undefined') {
@@ -199,6 +229,110 @@ export function useStoryToManga() {
     style.value = newStyle;
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(STYLE_STORAGE_KEY, newStyle);
+    }
+  };
+
+  const checkStoryExists = async (date: string): Promise<boolean> => {
+    try {
+      const res = await fetchWithAuth<{
+        success: boolean;
+        found: boolean;
+        story?: MangaStoryRecord;
+      }>(`/api/manga/story?date=${encodeURIComponent(date)}&style=${encodeURIComponent(style.value)}`);
+      return Boolean(res?.found && res.story);
+    } catch {
+      return false;
+    }
+  };
+
+  const resolveAssetImageUrl = (img: string): string => {
+    const trimmed = (img || '').trim();
+    if (!trimmed) return '';
+    if (trimmed.startsWith('data:') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    if (trimmed.startsWith('/')) {
+      return getApiUrl(trimmed);
+    }
+    return trimmed;
+  };
+
+  const getProxyAssetUrl = (r2Key?: string): string => {
+    if (!r2Key) return '';
+    return getApiUrl(`/api/manga/asset?key=${encodeURIComponent(r2Key)}`);
+  };
+
+  const applyServerStoryRecord = (rec: MangaStoryRecord) => {
+    generatedStory.value = rec.story || rec.storyAnalysis?.story || '';
+    moralLesson.value = rec.moralLesson || rec.storyAnalysis?.moralLesson || '';
+    storyAnalysis.value = rec.storyAnalysis || null;
+    storyBreakdown.value = rec.storyBreakdown || null;
+    r2Stored.value = Boolean(rec.r2Stored);
+
+    if (Array.isArray(rec.characterReferences)) {
+      characterReferences.value = rec.characterReferences.map((c) => ({
+        ...c,
+        image: resolveAssetImageUrl(c.image),
+      }));
+    }
+    if (Array.isArray(rec.generatedPanels)) {
+      generatedPanels.value = rec.generatedPanels.map((p) => ({
+        ...p,
+        image: resolveAssetImageUrl(p.image),
+      }));
+    }
+  };
+
+  const loadStateFromServer = async (date: string): Promise<boolean> => {
+    try {
+      const res = await fetchWithAuth<{
+        success: boolean;
+        found: boolean;
+        story?: MangaStoryRecord;
+      }>(`/api/manga/story?date=${encodeURIComponent(date)}&style=${encodeURIComponent(style.value)}`);
+
+      if (res?.found && res.story) {
+        applyServerStoryRecord(res.story);
+        return (
+          Boolean(storyAnalysis.value) &&
+          characterReferences.value.length > 0 &&
+          generatedPanels.value.length > 0
+        );
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const saveStateToServer = async (date: string): Promise<boolean> => {
+    if (!storyAnalysis.value) return false;
+    try {
+      const res = await fetchWithAuth<{
+        success: boolean;
+        story?: MangaStoryRecord;
+      }>('/api/manga/story', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date,
+          style: style.value,
+          imageModel: imageModel.value,
+          generatedStory: generatedStory.value,
+          moralLesson: moralLesson.value,
+          storyAnalysis: storyAnalysis.value,
+          characterReferences: characterReferences.value,
+          storyBreakdown: storyBreakdown.value || { panels: [] },
+          generatedPanels: generatedPanels.value,
+        }),
+      });
+      if (res?.story) {
+        applyServerStoryRecord(res.story);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
     }
   };
 
@@ -328,11 +462,32 @@ export function useStoryToManga() {
 
   // One-click end-to-end generation pipeline (story from readings -> character sheets -> panel layout -> panel images)
   const generateStoryAndManga = async (date: string, readings: ReadingsPayload, forceRegenerate = false) => {
+    syncAdminState();
+    error.value = null;
+
     if (!forceRegenerate) {
-      const hasCached = await loadStateForDate(date);
-      if (hasCached) {
+      const hasServer = await loadStateFromServer(date);
+      if (hasServer) {
         return;
       }
+      if (isAdmin.value) {
+        const hasCached = await loadStateForDate(date);
+        if (hasCached) {
+          return;
+        }
+      }
+    }
+
+    if (!isAdmin.value) {
+      generatedStory.value = '';
+      moralLesson.value = '';
+      storyAnalysis.value = null;
+      characterReferences.value = [];
+      storyBreakdown.value = null;
+      generatedPanels.value = [];
+      r2Stored.value = false;
+      error.value = 'Story & manga generation is restricted to administrators. Log in as admin to generate new manga.';
+      return;
     }
 
     isGenerating.value = true;
@@ -344,6 +499,7 @@ export function useStoryToManga() {
     characterReferences.value = [];
     storyBreakdown.value = null;
     generatedPanels.value = [];
+    r2Stored.value = false;
 
     try {
       // Step 1: Generate custom story from the day's readings & lessons + analyze characters/setting
@@ -390,9 +546,9 @@ export function useStoryToManga() {
       }
       isGeneratingCharacters.value = false;
 
-      // Step 3: Plan Comic Layout / Chunk Story into Sequential Panels
+      // Step 3: Plan Comic Layout / Chunk Story into Sequential Panels + Narratives
       isChunking.value = true;
-      currentStepText.value = 'Step 3/4: Planning manga/comic panel breakdown & dialogue...';
+      currentStepText.value = 'Step 3/4: Planning manga/comic panels, dialogue & panel narratives...';
 
       const chunkRes = await fetchWithAuth<{
         success: boolean;
@@ -434,8 +590,12 @@ export function useStoryToManga() {
       }
       isGeneratingPanels.value = false;
 
+      currentStepText.value = 'Story & Manga generation complete! Saving to storage...';
+      const savedOnServer = await saveStateToServer(date);
+      if (!savedOnServer) {
+        await saveStateForDate(date);
+      }
       currentStepText.value = 'Story & Manga generation complete!';
-      await saveStateForDate(date);
     } catch (err: any) {
       if (isAnalyzing.value) failedStep.value = 'analysis';
       else if (isGeneratingCharacters.value) failedStep.value = 'characters';
@@ -454,6 +614,11 @@ export function useStoryToManga() {
   };
 
   const regenerateCharacter = async (index: number, date?: string) => {
+    syncAdminState();
+    if (!isAdmin.value) {
+      error.value = 'Story & manga generation is restricted to administrators.';
+      return;
+    }
     if (!storyAnalysis.value) return;
     const charData = storyAnalysis.value.characters[index];
     if (!charData) return;
@@ -468,7 +633,12 @@ export function useStoryToManga() {
       const updatedList = [...characterReferences.value];
       updatedList[index] = updatedRef;
       characterReferences.value = updatedList;
-      if (date) await saveStateForDate(date);
+      if (date) {
+        const savedOnServer = await saveStateToServer(date);
+        if (!savedOnServer) {
+          await saveStateForDate(date);
+        }
+      }
     } catch (err: any) {
       error.value = err?.message || `Failed to regenerate character ${charData.name}`;
     } finally {
@@ -479,6 +649,11 @@ export function useStoryToManga() {
   };
 
   const regeneratePanel = async (panelNumber: number, date?: string) => {
+    syncAdminState();
+    if (!isAdmin.value) {
+      error.value = 'Story & manga generation is restricted to administrators.';
+      return;
+    }
     if (!storyAnalysis.value || !storyBreakdown.value) return;
     const panelPlan = storyBreakdown.value.panels.find((p) => p.panelNumber === panelNumber);
     if (!panelPlan) return;
@@ -502,7 +677,12 @@ export function useStoryToManga() {
         updatedList.push(updatedPanel);
       }
       generatedPanels.value = updatedList;
-      if (date) await saveStateForDate(date);
+      if (date) {
+        const savedOnServer = await saveStateToServer(date);
+        if (!savedOnServer) {
+          await saveStateForDate(date);
+        }
+      }
     } catch (err: any) {
       error.value = err?.message || `Failed to regenerate panel ${panelNumber}`;
     } finally {
@@ -522,6 +702,7 @@ export function useStoryToManga() {
     characterReferences,
     storyBreakdown,
     generatedPanels,
+    r2Stored,
     isGenerating,
     isAnalyzing,
     isGeneratingCharacters,
@@ -535,6 +716,9 @@ export function useStoryToManga() {
     loadConfig,
     updateImageModel,
     updateStyle,
+    getProxyAssetUrl,
+    checkStoryExists,
+    loadStateFromServer,
     generateStoryAndManga,
     regenerateCharacter,
     regeneratePanel,
