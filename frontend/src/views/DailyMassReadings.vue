@@ -63,6 +63,7 @@ const openStoryMangaModal = () => {
 
 const closeStoryMangaModal = () => {
   isStoryMangaModalOpen.value = false;
+  refreshMangaAvailability();
 };
 
 const openModal = () => {

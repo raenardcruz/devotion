@@ -479,9 +479,9 @@ const stepStates = computed(() => {
             </div>
           </div>
 
-          <!-- Collapsible Image Generation Model & Style Settings Bar -->
+          <!-- Collapsible Image Generation Model & Style Settings Bar (Admin Only) -->
           <div
-            v-if="showSettingsBar"
+            v-if="isAdmin && showSettingsBar"
             class="px-5 py-3.5 bg-[#EFE9E1] border-b border-[#D1C7BD] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0"
           >
             <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-1">
@@ -535,7 +535,10 @@ const stepStates = computed(() => {
           </div>
 
           <!-- 4-Step Pipeline Progress Bar -->
-          <div class="px-5 py-3 bg-[#FAF6EE] border-b border-[#D1C7BD]/70 shrink-0">
+          <div
+            v-if="isAdmin || isGenerating || storyAnalysis"
+            class="px-5 py-3 bg-[#FAF6EE] border-b border-[#D1C7BD]/70 shrink-0"
+          >
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <div
                 v-for="step in stepStates"
@@ -575,12 +578,21 @@ const stepStates = computed(() => {
                 <p class="text-xs text-red-700 mt-0.5">{{ error }}</p>
               </div>
               <button
+                v-if="isAdmin"
                 type="button"
                 @click="handleRerunAll"
                 class="px-4 py-2 rounded-xl bg-red-800 hover:bg-red-900 text-white text-xs font-bold uppercase tracking-wider shrink-0 cursor-pointer"
               >
                 Retry Generation
               </button>
+              <router-link
+                v-else
+                to="/admin"
+                @click="emit('close')"
+                class="px-4 py-2 rounded-xl bg-[#72383D] hover:bg-[#542529] text-white text-xs font-bold uppercase tracking-wider shrink-0"
+              >
+                Admin Login
+              </router-link>
             </div>
 
             <!-- Initial Loading State before Step 1 completes -->
@@ -719,6 +731,7 @@ const stepStates = computed(() => {
                       Download
                     </button>
                     <button
+                      v-if="isAdmin"
                       type="button"
                       @click="regenerateCharacter(idx, date)"
                       :disabled="regeneratingCharacters.has(idx) || isGenerating"
@@ -739,7 +752,7 @@ const stepStates = computed(() => {
                     Illustrated Story &amp; {{ style === 'manga' ? 'Manga' : 'Comic' }} Panels ({{ generatedPanels.length }}/{{ storyBreakdown.panels.length }})
                   </h3>
                   <p class="text-xs text-[#322D29]/65">
-                    Narrative prose paired with each panel to tell the complete story. Click any panel to enlarge, download, or regenerate.
+                    Narrative prose paired with each panel to tell the complete story. Click any panel to enlarge{{ isAdmin ? ', download, or regenerate' : ' or download' }}.
                   </p>
                 </div>
 
@@ -885,6 +898,7 @@ const stepStates = computed(() => {
                         Download Panel
                       </button>
                       <button
+                        v-if="isAdmin"
                         type="button"
                         @click="regeneratePanel(panel.panelNumber, date)"
                         :disabled="regeneratingPanels.has(panel.panelNumber) || isGenerating"
@@ -984,6 +998,7 @@ const stepStates = computed(() => {
                       Download Panel
                     </button>
                     <button
+                      v-if="isAdmin"
                       type="button"
                       @click="regeneratePanel(panel.panelNumber, date)"
                       :disabled="regeneratingPanels.has(panel.panelNumber) || isGenerating"
