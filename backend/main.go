@@ -53,6 +53,15 @@ func main() {
 	http.Handle("/magisterium/conversations/public", corsMiddleware(apiTokenMiddleware(accessControlMiddleware(false, false, http.HandlerFunc(publicConversationsListHandler)))))
 	http.Handle("/magisterium/conversations/delete", corsMiddleware(apiTokenMiddleware(accessControlMiddleware(false, false, http.HandlerFunc(publicConversationsDeleteHandler)))))
 
+	// Story-to-Manga Endpoints (ported from victorhuangwq/story-to-manga)
+	http.Handle("/api/manga/config", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(mangaConfigHandler))))
+	http.Handle("/api/manga/analyze-story", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(mangaAnalyzeStoryHandler))))
+	http.Handle("/api/manga/generate-character-refs", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(mangaGenerateCharacterRefsHandler))))
+	http.Handle("/api/manga/chunk-story", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(mangaChunkStoryHandler))))
+	http.Handle("/api/manga/generate-panel", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(mangaGeneratePanelHandler))))
+	http.Handle("/api/manga/story", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(mangaStoryHandler))))
+	http.Handle("/api/manga/asset", corsMiddleware(http.HandlerFunc(mangaAssetHandler)))
+
 	// Guest Access Code & Request Endpoints
 	http.Handle("/api/access/verify", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(verifyAccessHandler))))
 	http.Handle("/api/access/request", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(requestAccessHandler))))
@@ -60,9 +69,13 @@ func main() {
 	// Admin API Endpoints
 	http.Handle("/api/admin/login", corsMiddleware(http.HandlerFunc(adminLoginHandler)))
 	http.Handle("/api/admin/settings", corsMiddleware(http.HandlerFunc(adminSettingsHandler)))
+	http.Handle("/api/admin/r2/test", corsMiddleware(http.HandlerFunc(adminTestR2Handler)))
+	http.Handle("/api/admin/manga", corsMiddleware(http.HandlerFunc(adminMangaHandler)))
+	http.Handle("/api/admin/manga/regenerate", corsMiddleware(http.HandlerFunc(adminRegenerateMangaHandler)))
 	http.Handle("/api/admin/ollama-models", corsMiddleware(http.HandlerFunc(adminOllamaModelsHandler)))
 	http.Handle("/api/admin/gemini-models", corsMiddleware(http.HandlerFunc(adminGeminiModelsHandler)))
 	http.Handle("/api/admin/gemini-live-models", corsMiddleware(http.HandlerFunc(adminGeminiLiveModelsHandler)))
+	http.Handle("/api/admin/gemini-image-models", corsMiddleware(http.HandlerFunc(adminGeminiImageModelsHandler)))
 	http.Handle("/api/admin/access-codes", corsMiddleware(http.HandlerFunc(adminAccessCodesHandler)))
 	http.Handle("/api/admin/access-requests", corsMiddleware(http.HandlerFunc(adminAccessRequestsHandler)))
 	http.Handle("/api/admin/access-requests/approve", corsMiddleware(http.HandlerFunc(adminApproveAccessRequestHandler)))

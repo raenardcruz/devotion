@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from 'vue';
 import { useDate } from '../composables/useDate';
 import { useDevotionApi } from '../composables/useDevotionApi';
+import { useAccessControl } from '../composables/useAccessControl';
+import { useStoryToManga } from '../composables/useStoryToManga';
 import { renderMarkdown } from '../utils/markdown';
 import TopNav from '../components/common/TopNav.vue';
 import BottomNav from '../components/common/BottomNav.vue';
@@ -9,6 +11,7 @@ import ParchmentCard from '../components/common/ParchmentCard.vue';
 import AppTabs from '../components/common/AppTabs.vue';
 import CatechismBubble from '../components/catechism/CatechismBubble.vue';
 import FactCheckCitations, { type MagisteriumCitation } from '../components/common/FactCheckCitations.vue';
+import StoryToMangaModal from '../components/devotion/StoryToMangaModal.vue';
 
 interface Reading {
   citation: string;
@@ -37,9 +40,31 @@ const activeTab = ref('first_reading');
 
 const { getLocalISOString } = useDate();
 const { getDevotion, loading, error } = useDevotionApi();
+const { isAdmin, syncAdminState } = useAccessControl();
+const { checkStoryExists } = useStoryToManga();
 const selectedDate = ref(getLocalISOString());
 const modalDate = ref(getLocalISOString());
 const isModalOpen = ref(false);
+const isStoryMangaModalOpen = ref(false);
+const hasMangaStory = ref(false);
+
+const refreshMangaAvailability = async () => {
+  syncAdminState();
+  hasMangaStory.value = await checkStoryExists(selectedDate.value);
+};
+
+const openStoryMangaModal = () => {
+  syncAdminState();
+  if (!isAdmin.value && !hasMangaStory.value) {
+    return;
+  }
+  isStoryMangaModalOpen.value = true;
+};
+
+const closeStoryMangaModal = () => {
+  isStoryMangaModalOpen.value = false;
+  refreshMangaAvailability();
+};
 
 const openModal = () => {
   modalDate.value = selectedDate.value;
@@ -135,7 +160,10 @@ loading.value = true;
 
 const fetchReadings = async () => {
   try {
-    const data = await getDevotion<MassReadings>(selectedDate.value);
+    const [data] = await Promise.all([
+      getDevotion<MassReadings>(selectedDate.value),
+      refreshMangaAvailability(),
+    ]);
     readings.value = data;
     
     // Set default active tab based on what's available
@@ -152,6 +180,7 @@ const fetchReadings = async () => {
 const selectedDateValue = computed(() => new Date(`${selectedDate.value}T12:00:00`));
 
 onMounted(() => {
+  syncAdminState();
   fetchReadings();
 });
 
@@ -234,6 +263,16 @@ const availableTabs = computed(() => {
             >
               <span class="text-sm font-serif">☦</span>
               <span>Latin Mass (PDF)</span>
+            </button>
+
+            <button
+              v-if="readings && (isAdmin || hasMangaStory)"
+              @click="openStoryMangaModal"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#322D29] via-[#72383D] to-[#542529] hover:from-[#72383D] hover:to-[#322D29] text-white border border-[#72383D] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#72383D]/40 active:scale-95 cursor-pointer"
+              :title="isAdmin ? 'One-click generate or view a custom story & manga based on today\'s readings' : 'Read today\'s illustrated story & manga'"
+            >
+              <span>{{ isAdmin ? '🎨' : '📖' }}</span>
+              <span>{{ isAdmin ? 'Generate Story & Manga' : 'Read Story & Manga' }}</span>
             </button>
 
             <a
@@ -602,6 +641,15 @@ const availableTabs = computed(() => {
         </div>
       </transition>
     </Teleport>
+
+    <!-- Story-to-Manga One-Click Generator Modal -->
+    <StoryToMangaModal
+      :isOpen="isStoryMangaModalOpen"
+      :date="selectedDate"
+      :formattedDate="formattedDate"
+      :readings="readings"
+      @close="closeStoryMangaModal"
+    />
   </div>
 </template>
 
