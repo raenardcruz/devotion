@@ -24,6 +24,7 @@ type Settings struct {
 	BibleAPIKey            string `json:"bible_api_key"`
 	GeminiModel            string `json:"gemini_model"`
 	GeminiLiveModel        string `json:"gemini_live_model"`
+	GeminiImageModel       string `json:"gemini_image_model"`
 	OllamaModel            string `json:"ollama_model"`
 	ContextModel           string `json:"context_model"`
 	ContextInstruction     string `json:"context_instruction"`
@@ -62,6 +63,7 @@ func getDefaultSettings() Settings {
 		BibleAPIKey:            "",
 		GeminiModel:            "gemini-3.1-flash-lite",
 		GeminiLiveModel:        "gemini-3.8-live",
+		GeminiImageModel:       "gemini-nano-banana-2.1",
 		OllamaModel:            "gemma4:cloud",
 		ContextModel:           "gemma4:cloud",
 		ContextInstruction:     defaultInstruction,
@@ -209,6 +211,7 @@ func InitDB() {
 		bible_api_key TEXT NOT NULL DEFAULT '',
 		gemini_model VARCHAR(100) NOT NULL DEFAULT 'gemini-3.1-flash-lite',
 		gemini_live_model VARCHAR(100) NOT NULL DEFAULT 'gemini-3.8-live',
+		gemini_image_model VARCHAR(100) NOT NULL DEFAULT 'gemini-nano-banana-2.1',
 		ollama_model VARCHAR(100) NOT NULL DEFAULT 'gemma4:cloud',
 		context_model VARCHAR(100) NOT NULL DEFAULT 'gemma4:cloud',
 		context_instruction TEXT NOT NULL DEFAULT '',
@@ -262,6 +265,7 @@ func InitDB() {
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS bible_api_key TEXT NOT NULL DEFAULT '';`,
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS gemini_model VARCHAR(100) NOT NULL DEFAULT 'gemini-3.1-flash-lite';`,
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS gemini_live_model VARCHAR(100) NOT NULL DEFAULT 'gemini-3.8-live';`,
+		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS gemini_image_model VARCHAR(100) NOT NULL DEFAULT 'gemini-nano-banana-2.1';`,
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS ollama_model VARCHAR(100) NOT NULL DEFAULT 'gemma4:cloud';`,
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS enable_fact_checker BOOLEAN NOT NULL DEFAULT true;`,
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS fact_checker_provider VARCHAR(50) NOT NULL DEFAULT 'gemini';`,
@@ -275,8 +279,8 @@ func InitDB() {
 
 	// Insert initial default settings if empty
 	insertDefaultQuery := `
-	INSERT INTO settings (id, context_provider, fact_checker_provider, magisterium_llm_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, gemini_live_model, ollama_model, context_model, context_instruction, enable_fact_checker)
-	VALUES (1, 'ollama', 'gemini', 'ollama', '', '', '', 'gemini-3.1-flash-lite', 'gemini-3.8-live', 'gemma4:cloud', 'gemma4:cloud', $1, true)
+	INSERT INTO settings (id, context_provider, fact_checker_provider, magisterium_llm_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, gemini_live_model, gemini_image_model, ollama_model, context_model, context_instruction, enable_fact_checker)
+	VALUES (1, 'ollama', 'gemini', 'ollama', '', '', '', 'gemini-3.1-flash-lite', 'gemini-3.8-live', 'gemini-nano-banana-2.1', 'gemma4:cloud', 'gemma4:cloud', $1, true)
 	ON CONFLICT (id) DO NOTHING;`
 
 	if _, err := db.Exec(insertDefaultQuery, defaultInstruction); err != nil {
@@ -286,16 +290,22 @@ func InitDB() {
 
 func GetSettings() Settings {
 	if db == nil || db.Ping() != nil {
+		if memorySettings.GeminiImageModel == "" {
+			memorySettings.GeminiImageModel = "gemini-nano-banana-2.1"
+		}
 		return memorySettings
 	}
 
-	query := `SELECT context_provider, fact_checker_provider, magisterium_llm_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, gemini_live_model, ollama_model, context_model, context_instruction, enable_fact_checker FROM settings WHERE id = 1`
+	query := `SELECT context_provider, fact_checker_provider, magisterium_llm_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, gemini_live_model, gemini_image_model, ollama_model, context_model, context_instruction, enable_fact_checker FROM settings WHERE id = 1`
 	row := db.QueryRow(query)
 
 	var s Settings
-	err := row.Scan(&s.ContextProvider, &s.FactCheckerProvider, &s.MagisteriumLLMProvider, &s.GeminiAPIKey, &s.MagisteriumAPIKey, &s.BibleAPIKey, &s.GeminiModel, &s.GeminiLiveModel, &s.OllamaModel, &s.ContextModel, &s.ContextInstruction, &s.EnableFactChecker)
+	err := row.Scan(&s.ContextProvider, &s.FactCheckerProvider, &s.MagisteriumLLMProvider, &s.GeminiAPIKey, &s.MagisteriumAPIKey, &s.BibleAPIKey, &s.GeminiModel, &s.GeminiLiveModel, &s.GeminiImageModel, &s.OllamaModel, &s.ContextModel, &s.ContextInstruction, &s.EnableFactChecker)
 	if err != nil {
 		log.Printf("[GetSettings] Warning scanning row: %v. Returning current memory settings.", err)
+		if memorySettings.GeminiImageModel == "" {
+			memorySettings.GeminiImageModel = "gemini-nano-banana-2.1"
+		}
 		return memorySettings
 	}
 
@@ -313,6 +323,9 @@ func GetSettings() Settings {
 	}
 	if s.GeminiLiveModel == "" {
 		s.GeminiLiveModel = "gemini-3.8-live"
+	}
+	if s.GeminiImageModel == "" {
+		s.GeminiImageModel = "gemini-nano-banana-2.1"
 	}
 	if s.OllamaModel == "" {
 		s.OllamaModel = "gemma4:cloud"
@@ -346,6 +359,9 @@ func SaveSettings(s Settings) error {
 	if s.GeminiLiveModel == "" {
 		s.GeminiLiveModel = "gemini-3.8-live"
 	}
+	if s.GeminiImageModel == "" {
+		s.GeminiImageModel = "gemini-nano-banana-2.1"
+	}
 	if s.OllamaModel == "" {
 		s.OllamaModel = "gemma4:cloud"
 	}
@@ -366,8 +382,8 @@ func SaveSettings(s Settings) error {
 	}
 
 	query := `
-	INSERT INTO settings (id, context_provider, fact_checker_provider, magisterium_llm_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, gemini_live_model, ollama_model, context_model, context_instruction, enable_fact_checker, updated_at)
-	VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP)
+	INSERT INTO settings (id, context_provider, fact_checker_provider, magisterium_llm_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, gemini_live_model, gemini_image_model, ollama_model, context_model, context_instruction, enable_fact_checker, updated_at)
+	VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, CURRENT_TIMESTAMP)
 	ON CONFLICT (id) DO UPDATE SET
 		context_provider = EXCLUDED.context_provider,
 		fact_checker_provider = EXCLUDED.fact_checker_provider,
@@ -377,13 +393,14 @@ func SaveSettings(s Settings) error {
 		bible_api_key = EXCLUDED.bible_api_key,
 		gemini_model = EXCLUDED.gemini_model,
 		gemini_live_model = EXCLUDED.gemini_live_model,
+		gemini_image_model = EXCLUDED.gemini_image_model,
 		ollama_model = EXCLUDED.ollama_model,
 		context_model = EXCLUDED.context_model,
 		context_instruction = EXCLUDED.context_instruction,
 		enable_fact_checker = EXCLUDED.enable_fact_checker,
 		updated_at = CURRENT_TIMESTAMP;`
 
-	_, err := db.Exec(query, s.ContextProvider, s.FactCheckerProvider, s.MagisteriumLLMProvider, s.GeminiAPIKey, s.MagisteriumAPIKey, s.BibleAPIKey, s.GeminiModel, s.GeminiLiveModel, s.OllamaModel, s.ContextModel, s.ContextInstruction, s.EnableFactChecker)
+	_, err := db.Exec(query, s.ContextProvider, s.FactCheckerProvider, s.MagisteriumLLMProvider, s.GeminiAPIKey, s.MagisteriumAPIKey, s.BibleAPIKey, s.GeminiModel, s.GeminiLiveModel, s.GeminiImageModel, s.OllamaModel, s.ContextModel, s.ContextInstruction, s.EnableFactChecker)
 	if err != nil {
 		log.Printf("[SaveSettings] Error saving settings to postgres: %v", err)
 		return err

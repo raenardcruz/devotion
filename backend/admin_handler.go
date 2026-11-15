@@ -210,3 +210,23 @@ func adminGeminiLiveModelsHandler(w http.ResponseWriter, r *http.Request) {
 		"models": liveModels,
 	})
 }
+
+func adminGeminiImageModelsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	imageModels := []string{
+		"gemini-nano-banana-2.1",
+		"gemini-2.5-flash-image-preview",
+		"gemini-2.0-flash-preview-image-generation",
+		"imagen-3.0-generate-002",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"models": imageModels,
+	})
+}
+

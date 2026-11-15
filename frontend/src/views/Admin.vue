@@ -38,6 +38,7 @@ interface Settings {
   bible_api_key: string;
   gemini_model: string;
   gemini_live_model: string;
+  gemini_image_model: string;
   ollama_model: string;
   context_model?: string;
   context_instruction: string;
@@ -84,6 +85,7 @@ const defaultSettings = (): Settings => ({
   bible_api_key: '',
   gemini_model: 'gemini-4-argon',
   gemini_live_model: 'gemini-3.8-live',
+  gemini_image_model: 'gemini-nano-banana-2.1',
   ollama_model: 'gemma4:cloud',
   context_instruction: '',
   enable_fact_checker: true,
@@ -104,6 +106,12 @@ const geminiLiveModelsList = ref<string[]>([
   'gemini-2.5-flash-native-audio',
   'gemini-2.0-flash-exp',
   'gemini-2.0-flash',
+]);
+const geminiImageModelsList = ref<string[]>([
+  'gemini-nano-banana-2.1',
+  'gemini-2.5-flash-image-preview',
+  'gemini-2.0-flash-preview-image-generation',
+  'imagen-3.0-generate-002',
 ]);
 const ollamaModelsList = ref<string[]>([]);
 const loadingOllamaModels = ref(false);
@@ -338,10 +346,14 @@ const loadSettings = async () => {
     const data = await fetchWithAuth<Settings>('/api/admin/settings');
     if (data) {
       settings.value = { ...defaultSettings(), ...data };
+      if (!settings.value.gemini_image_model) {
+        settings.value.gemini_image_model = 'gemini-nano-banana-2.1';
+      }
       savedSnapshot.value = JSON.stringify(settings.value);
     }
     fetchGeminiModels();
     fetchGeminiLiveModels();
+    fetchGeminiImageModels();
     fetchOllamaModels();
   } catch (err: any) {
     console.error('Failed to load settings:', err);
@@ -375,6 +387,17 @@ const fetchGeminiLiveModels = async () => {
     }
   } catch (err) {
     console.error('Failed to fetch gemini live models:', err);
+  }
+};
+
+const fetchGeminiImageModels = async () => {
+  try {
+    const res = await fetchWithAuth<{ models: string[] }>('/api/admin/gemini-image-models');
+    if (res && res.models && res.models.length > 0) {
+      geminiImageModelsList.value = res.models;
+    }
+  } catch (err) {
+    console.error('Failed to fetch gemini image models:', err);
   }
 };
 
@@ -902,6 +925,30 @@ const formatProviderLabel = (provider: string) => {
                     class="w-full px-3.5 py-2.5 border border-[#D1C7BD] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#72383D]/25 focus:border-[#72383D] text-[#322D29] text-sm font-medium min-h-[44px]"
                   >
                     <option v-for="m in geminiLiveModelsList" :key="m" :value="m">
+                      {{ m }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- Gemini Image Generation Model (Story-to-Manga) -->
+                <div class="p-4 sm:p-5 rounded-2xl border border-[#D1C7BD]/80 bg-white/60 space-y-2.5">
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <label for="gemini-image-model-select" class="font-serif font-bold text-[#322D29] text-sm sm:text-base">
+                      Gemini Image Generation Model (Story-to-Manga)
+                    </label>
+                    <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#72383D]/10 text-[#72383D] border border-[#72383D]/20">
+                      Nano Banana · Story to Manga
+                    </span>
+                  </div>
+                  <p class="text-xs text-[#322D29]/65">
+                    Used to generate character reference sheets and comic/manga panels from the daily Mass readings. Defaults to <code class="font-mono bg-[#EFE9E1] px-1.5 py-0.5 rounded text-[#72383D]">gemini-nano-banana-2.1</code>.
+                  </p>
+                  <select
+                    id="gemini-image-model-select"
+                    v-model="settings.gemini_image_model"
+                    class="w-full px-3.5 py-2.5 border border-[#D1C7BD] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#72383D]/25 focus:border-[#72383D] text-[#322D29] text-sm font-medium min-h-[44px]"
+                  >
+                    <option v-for="m in geminiImageModelsList" :key="m" :value="m">
                       {{ m }}
                     </option>
                   </select>

@@ -9,6 +9,7 @@ import ParchmentCard from '../components/common/ParchmentCard.vue';
 import AppTabs from '../components/common/AppTabs.vue';
 import CatechismBubble from '../components/catechism/CatechismBubble.vue';
 import FactCheckCitations, { type MagisteriumCitation } from '../components/common/FactCheckCitations.vue';
+import StoryToMangaModal from '../components/devotion/StoryToMangaModal.vue';
 
 interface Reading {
   citation: string;
@@ -40,6 +41,15 @@ const { getDevotion, loading, error } = useDevotionApi();
 const selectedDate = ref(getLocalISOString());
 const modalDate = ref(getLocalISOString());
 const isModalOpen = ref(false);
+const isStoryMangaModalOpen = ref(false);
+
+const openStoryMangaModal = () => {
+  isStoryMangaModalOpen.value = true;
+};
+
+const closeStoryMangaModal = () => {
+  isStoryMangaModalOpen.value = false;
+};
 
 const openModal = () => {
   modalDate.value = selectedDate.value;
@@ -234,6 +244,16 @@ const availableTabs = computed(() => {
             >
               <span class="text-sm font-serif">☦</span>
               <span>Latin Mass (PDF)</span>
+            </button>
+
+            <button
+              v-if="readings"
+              @click="openStoryMangaModal"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#322D29] via-[#72383D] to-[#542529] hover:from-[#72383D] hover:to-[#322D29] text-white border border-[#72383D] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#72383D]/40 active:scale-95 cursor-pointer"
+              title="One-click generate a custom story & manga based on today's readings and lessons (powered by story-to-manga & gemini-nano-banana-2.1)"
+            >
+              <span>🎨</span>
+              <span>Generate Story &amp; Manga</span>
             </button>
 
             <a
@@ -602,6 +622,15 @@ const availableTabs = computed(() => {
         </div>
       </transition>
     </Teleport>
+
+    <!-- Story-to-Manga One-Click Generator Modal -->
+    <StoryToMangaModal
+      :isOpen="isStoryMangaModalOpen"
+      :date="selectedDate"
+      :formattedDate="formattedDate"
+      :readings="readings"
+      @close="closeStoryMangaModal"
+    />
   </div>
 </template>
 
