@@ -62,6 +62,10 @@ func main() {
 	http.Handle("/api/manga/story", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(mangaStoryHandler))))
 	http.Handle("/api/manga/asset", corsMiddleware(http.HandlerFunc(mangaAssetHandler)))
 
+	// Magazine Reading Illustration Endpoints
+	http.Handle("/api/magazine/reading-image", corsMiddleware(apiTokenMiddleware(accessControlMiddleware(true, true, http.HandlerFunc(magazineReadingImageHandler)))))
+	http.Handle("/api/magazine/images", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(magazineImagesListHandler))))
+
 	// Guest Access Code & Request Endpoints
 	http.Handle("/api/access/verify", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(verifyAccessHandler))))
 	http.Handle("/api/access/request", corsMiddleware(apiTokenMiddleware(http.HandlerFunc(requestAccessHandler))))

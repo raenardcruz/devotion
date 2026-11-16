@@ -13,6 +13,7 @@ import CatechismBubble from '../components/catechism/CatechismBubble.vue';
 import FactCheckCitations, { type MagisteriumCitation } from '../components/common/FactCheckCitations.vue';
 import StoryToMangaModal from '../components/devotion/StoryToMangaModal.vue';
 import DailyMangaTab from '../components/devotion/DailyMangaTab.vue';
+import DailyMagazineModal from '../components/devotion/DailyMagazineModal.vue';
 
 interface Reading {
   citation: string;
@@ -47,8 +48,17 @@ const selectedDate = ref(getLocalISOString());
 const modalDate = ref(getLocalISOString());
 const isModalOpen = ref(false);
 const isStoryMangaModalOpen = ref(false);
+const isMagazineModalOpen = ref(false);
 const hasMangaStory = ref(false);
 const mangaRefreshKey = ref(0);
+
+const openMagazineModal = () => {
+  isMagazineModalOpen.value = true;
+};
+
+const closeMagazineModal = () => {
+  isMagazineModalOpen.value = false;
+};
 
 const refreshMangaAvailability = async () => {
   syncAdminState();
@@ -279,6 +289,16 @@ const availableTabs = computed(() => {
             >
               <span>{{ isAdmin ? '🎨' : '📖' }}</span>
               <span>{{ isAdmin ? 'Generate Story & Manga' : 'Read Story & Manga' }}</span>
+            </button>
+
+            <button
+              v-if="readings"
+              @click="openMagazineModal"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-[#FAF6EE] hover:bg-[#F3EBD8] text-[#72383D] border border-[#C5A059] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C5A059]/40 active:scale-95 cursor-pointer"
+              title="Print-ready editorial magazine PDF with readings, AI commentaries, illustrations, and comics"
+            >
+              <span>📰</span>
+              <span>Magazine (PDF)</span>
             </button>
 
             <a
@@ -665,6 +685,15 @@ const availableTabs = computed(() => {
       :formattedDate="formattedDate"
       :readings="readings"
       @close="closeStoryMangaModal"
+    />
+
+    <!-- Daily Magazine PDF Studio Modal -->
+    <DailyMagazineModal
+      :isOpen="isMagazineModalOpen"
+      :date="selectedDate"
+      :formattedDate="formattedDate"
+      :readings="readings"
+      @close="closeMagazineModal"
     />
   </div>
 </template>
