@@ -1,5 +1,5 @@
 <template>
-  <div class="ambient-glow-bottom"></div>
+  <div class="ambient-glow-bottom print:hidden"></div>
   <router-view />
   <BackToTop />
   <MagisteriumFloatingModal />

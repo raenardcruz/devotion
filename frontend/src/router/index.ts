@@ -8,6 +8,7 @@ import DivineMercy from '../views/DivineMercy.vue'
 import PrayersGallery from '../views/PrayersGallery.vue'
 import Catechism from '../views/Catechism.vue'
 import DailyMassReadings from '../views/DailyMassReadings.vue'
+import DailyMagazine from '../views/DailyMagazine.vue'
 import KindleReadings from '../views/KindleReadings.vue'
 import Resources from '../views/Resources.vue'
 import BibleStudy from '../views/BibleStudy.vue'
@@ -44,6 +45,12 @@ const router = createRouter({
             name: 'DailyMassReadings',
             component: DailyMassReadings,
             meta: { lastReadTitle: 'Daily Mass Readings' }
+        },
+        {
+            path: '/magazine',
+            name: 'DailyMagazine',
+            component: DailyMagazine,
+            meta: { lastReadTitle: 'Daily Readings Magazine' }
         },
         {
             path: '/kindle',

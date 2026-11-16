@@ -846,7 +846,7 @@ func mangaAssetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	key := strings.TrimSpace(r.URL.Query().Get("key"))
-	if key == "" || !strings.HasPrefix(key, "stories/") || strings.Contains(key, "..") {
+	if key == "" || (!strings.HasPrefix(key, "stories/") && !strings.HasPrefix(key, "magazine/")) || strings.Contains(key, "..") {
 		respondWithError(w, http.StatusBadRequest, "Invalid asset key")
 		return
 	}
