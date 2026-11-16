@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;500;600;700;800;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,700&family=Inter:wght@300;400;500;600;700&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Marcellus&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Cardo:ital,wght@0,400;0,700;1,400&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;500;600;700;800;900&family=Comic+Neue:ital,wght@0,400;0,700;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,700&family=Inter:wght@300;400;500;600;700&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Marcellus&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&display=swap');
 
 :root {
   font-family: 'Source Sans 3', 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -507,4 +507,115 @@ button.btn-primary {
 .settings-pop-leave-to {
   opacity: 0;
   transform: translateY(-8px) scale(0.95);
+}
+
+/* Comic-Style Typography & Panel Surfaces */
+.font-comic {
+  font-family: 'Comic Neue', 'Comic Sans MS', 'Chalkboard SE', 'Trebuchet MS', sans-serif;
+}
+
+.font-comic-display {
+  font-family: 'Bangers', 'Comic Neue', 'Impact', sans-serif;
+  letter-spacing: 0.04em;
+}
+
+.comic-panel-frame {
+  border: 3px solid #1E1B18;
+  box-shadow: 4px 4px 0 #1E1B18;
+}
+
+.comic-narrative-panel {
+  border: 3px solid #1E1B18;
+  background-color: #FFFDF5;
+  box-shadow: 4px 4px 0 #1E1B18;
+}
+
+/* A4 Print Styles for Story-to-Manga Modal */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  body {
+    background: #FFFFFF !important;
+    color: #111111 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* When the manga modal is open, print only the manga modal content */
+  body.printing-manga > *:not(.manga-print-modal) {
+    display: none !important;
+  }
+
+  .manga-print-modal {
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    background: #FFFFFF !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    backdrop-filter: none !important;
+  }
+
+  .manga-print-dialog {
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #FFFFFF !important;
+    overflow: visible !important;
+  }
+
+  .manga-print-body {
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  .manga-no-print {
+    display: none !important;
+  }
+
+  .manga-print-row {
+    display: grid !important;
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+    gap: 12pt !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 14pt !important;
+  }
+
+  .manga-print-col-6 {
+    grid-column: span 6 / span 6 !important;
+  }
+
+  .comic-panel-frame,
+  .comic-narrative-panel {
+    border: 2pt solid #1E1B18 !important;
+    box-shadow: none !important;
+    border-radius: 6pt !important;
+  }
+
+  .manga-print-narrative-text {
+    font-family: 'Comic Neue', 'Comic Sans MS', sans-serif !important;
+    font-size: 12.5pt !important;
+    line-height: 1.48 !important;
+    color: #111111 !important;
+  }
+
+  .manga-print-dialogue-text {
+    font-family: 'Comic Neue', 'Comic Sans MS', sans-serif !important;
+    font-size: 11.5pt !important;
+    line-height: 1.42 !important;
+    color: #111111 !important;
+  }
+
+  .manga-print-title {
+    font-size: 20pt !important;
+    line-height: 1.2 !important;
+    color: #111111 !important;
+  }
 }
