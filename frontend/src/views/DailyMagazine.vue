@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useDate } from '../composables/useDate';
 import { useDevotionApi } from '../composables/useDevotionApi';
+import { useAccessControl } from '../composables/useAccessControl';
 import { useMagazineImages, type MagazineReadingKey } from '../composables/useMagazineImages';
 import { useStoryToManga } from '../composables/useStoryToManga';
 import MagazineDocument, { type MagazineMassReadings } from '../components/devotion/MagazineDocument.vue';
@@ -38,6 +39,8 @@ const handleDocumentKeydown = (event: KeyboardEvent) => {
 };
 
 const readings = ref<MagazineMassReadings | null>(null);
+
+const { isAdmin, syncAdminState } = useAccessControl();
 
 const {
   images,
@@ -93,6 +96,7 @@ const triggerPrint = async () => {
 };
 
 const loadMagazine = async () => {
+  syncAdminState();
   const date = selectedDate.value;
   try {
     const [data] = await Promise.all([
@@ -119,6 +123,8 @@ const handleGenerateSingleImage = async (payload: {
   context?: string;
   force?: boolean;
 }) => {
+  syncAdminState();
+  if (!isAdmin.value) return;
   await generateReadingImage(
     selectedDate.value,
     payload.key,
@@ -130,11 +136,13 @@ const handleGenerateSingleImage = async (payload: {
 };
 
 const handleGenerateAllMissing = async () => {
-  if (!readings.value) return;
+  syncAdminState();
+  if (!isAdmin.value || !readings.value) return;
   await generateMissingImages(selectedDate.value, readings.value);
 };
 
 onMounted(() => {
+  syncAdminState();
   loadMagazine();
   document.addEventListener('click', handleDocumentClick);
   document.addEventListener('keydown', handleDocumentKeydown);
@@ -159,7 +167,7 @@ onUnmounted(() => {
           ← Daily Readings
         </button>
         <span class="text-xs font-serif font-bold text-[#72383D]">
-          Lumen Liturgiae · {{ formattedDate }}
+          Light of the Liturgy · {{ formattedDate }}
         </span>
       </div>
 
@@ -201,10 +209,10 @@ onUnmounted(() => {
               <input v-model="includeComics" type="checkbox" class="accent-[#72383D]" />
             </label>
 
-            <div v-if="includeImages && readings" class="my-1 border-t border-[#D1C7BD]/60"></div>
+            <div v-if="isAdmin && includeImages && readings" class="my-1 border-t border-[#D1C7BD]/60"></div>
 
             <button
-              v-if="includeImages && readings"
+              v-if="isAdmin && includeImages && readings"
               type="button"
               role="menuitem"
               :disabled="isGeneratingAll"
@@ -255,7 +263,7 @@ onUnmounted(() => {
       :images="images"
       :resolveImageSrc="resolveImageSrc"
       :generatingKeys="generatingKeys"
-      :interactive="true"
+      :interactive="isAdmin"
       :includeCommentaries="includeCommentaries"
       :includeImages="includeImages"
       :includeComics="includeComics"

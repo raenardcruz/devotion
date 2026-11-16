@@ -252,6 +252,58 @@ func (c R2Config) DeleteObjects(ctx context.Context, keys []string) error {
 
 type r2ListBucketResult struct {
 	KeyCount int `xml:"KeyCount"`
+	Contents []struct {
+		Key string `xml:"Key"`
+	} `xml:"Contents"`
+}
+
+func (c R2Config) ListObjectKeys(ctx context.Context, prefix string) ([]string, error) {
+	if !c.IsConfigured() {
+		return nil, fmt.Errorf("R2 storage is not configured")
+	}
+
+	vals := url.Values{}
+	vals.Set("list-type", "2")
+	cleanPrefix := strings.TrimLeft(strings.TrimSpace(prefix), "/")
+	if cleanPrefix != "" {
+		vals.Set("prefix", cleanPrefix)
+	}
+
+	reqURL, err := c.objectRequestURL("", vals.Encode())
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	signR2Request(req, nil, c, time.Now().UTC())
+
+	resp, err := r2HTTPClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("R2 ListObjectKeys request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("R2 ListObjectKeys failed (%d): %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+
+	var parsed r2ListBucketResult
+	if err := xml.Unmarshal(body, &parsed); err != nil {
+		return nil, fmt.Errorf("failed to parse R2 ListBucketResult: %w", err)
+	}
+
+	keys := make([]string, 0, len(parsed.Contents))
+	for _, item := range parsed.Contents {
+		if k := strings.TrimSpace(item.Key); k != "" {
+			keys = append(keys, k)
+		}
+	}
+	return keys, nil
 }
 
 func (c R2Config) TestConnection(ctx context.Context) (int, error) {

@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import { useDevotionApi } from './useDevotionApi';
+import { useAccessControl } from './useAccessControl';
 
 export type MagazineReadingKey =
   | 'cover'
@@ -28,6 +29,7 @@ const STORAGE_PREFIX = 'devotion_magazine_images_';
 
 export function useMagazineImages() {
   const { fetchWithAuth, getApiUrl } = useDevotionApi();
+  const { isAdmin, syncAdminState } = useAccessControl();
 
   const images = ref<Partial<Record<MagazineReadingKey, MagazineReadingImage>>>({});
   const generatingKeys = ref<Set<MagazineReadingKey>>(new Set());
@@ -61,6 +63,9 @@ export function useMagazineImages() {
     if (!img) return '';
     if (img.image && (img.image.startsWith('data:') || img.image.startsWith('http'))) {
       return img.image;
+    }
+    if (img.image && img.image.startsWith('/')) {
+      return getApiUrl(img.image);
     }
     if (img.r2Key) {
       return getApiUrl(`/api/manga/asset?key=${encodeURIComponent(img.r2Key)}`);
@@ -104,6 +109,12 @@ export function useMagazineImages() {
     context?: string,
     forceRegenerate = false
   ): Promise<MagazineReadingImage | null> => {
+    syncAdminState();
+    if (!isAdmin.value) {
+      imageError.value = 'Magazine image generation is restricted to administrators.';
+      return null;
+    }
+
     imageError.value = null;
     const nextSet = new Set(generatingKeys.value);
     nextSet.add(readingKey);
@@ -144,6 +155,12 @@ export function useMagazineImages() {
   };
 
   const generateMissingImages = async (date: string, readings: MagazineReadingsInput) => {
+    syncAdminState();
+    if (!isAdmin.value) {
+      imageError.value = 'Magazine image generation is restricted to administrators.';
+      return;
+    }
+
     isGeneratingAll.value = true;
     imageError.value = null;
 

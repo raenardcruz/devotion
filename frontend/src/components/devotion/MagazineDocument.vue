@@ -231,10 +231,10 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
     <section class="magazine-sheet magazine-cover">
       <header class="cover-masthead">
         <div class="cover-issue-bar">
-          <span>VOL. MMXXVI · ISSUE {{ date }}</span>
+          <span>VOL ISSUE {{ date }}</span>
           <span>CATHOLIC DAILY LITURGICAL MAGAZINE</span>
         </div>
-        <h1 class="masthead-title">LUMEN LITURGIAE</h1>
+        <h1 class="masthead-title">LIGHT OF THE LITURGY</h1>
         <p class="masthead-subtitle">{{ issueSubtitle }}</p>
       </header>
 
@@ -333,7 +333,7 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
 
       <footer class="cover-footer">
         <span>{{ formattedDate }}</span>
-        <span>Sacred Scripture · AI Theological Commentary · Illustrated Parable</span>
+        <span>Sacred Scripture · AI Assisted Theological Commentary · Illustrated Parable</span>
       </footer>
     </section>
 
@@ -345,7 +345,7 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
     >
       <!-- Running Header -->
       <div class="running-header">
-        <span>LUMEN LITURGIAE · {{ formattedDate.toUpperCase() }}</span>
+        <span>LIGHT OF THE LITURGY · {{ formattedDate.toUpperCase() }}</span>
         <span>{{ sec.kicker.toUpperCase() }}</span>
       </div>
 
@@ -359,7 +359,7 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
       </header>
 
       <!-- Reading Editorial Illustration -->
-      <figure v-if="includeImages" class="article-figure">
+      <figure v-if="includeImages && (resolveImageSrc(images[sec.key]) || interactive)" class="article-figure">
         <template v-if="resolveImageSrc(images[sec.key])">
           <div class="article-image-frame">
             <img
@@ -468,7 +468,7 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
     <!-- ==================== WORDS OF THE POPES ==================== -->
     <section v-if="readings.pope_quote" class="magazine-sheet magazine-article">
       <div class="running-header">
-        <span>LUMEN LITURGIAE · {{ formattedDate.toUpperCase() }}</span>
+        <span>LIGHT OF THE LITURGY · {{ formattedDate.toUpperCase() }}</span>
         <span>PAPAL MAGISTERIUM</span>
       </div>
       <header class="article-header">
@@ -485,7 +485,7 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
     <!-- ==================== AT THE END: DAILY PARABLE & COMICS ==================== -->
     <section v-if="hasComics && storyAnalysis" class="magazine-sheet magazine-comics-section">
       <div class="running-header">
-        <span>LUMEN LITURGIAE · {{ formattedDate.toUpperCase() }}</span>
+        <span>LIGHT OF THE LITURGY · {{ formattedDate.toUpperCase() }}</span>
         <span>PART II · ILLUSTRATED PARABLE &amp; COMICS</span>
       </div>
 
@@ -554,7 +554,7 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
         “Digital tools serve to support human reflection, but can never replace personal prayer, attendance at the Holy Sacrifice of the Mass, or the grace of the Sacraments in your local parish community.”
       </p>
       <p class="colophon-sub">
-        Lumen Liturgiae · Daily Catholic Readings Magazine · Guided by Pope Leo XIV's Encyclical <em>Magnifica Humanitas</em>
+        Light of the Liturgy · Daily Catholic Readings Magazine · Guided by Pope Leo XIV's Encyclical <em>Magnifica Humanitas</em>
       </p>
       <p class="colophon-copyright">
         Holy Bible, New Living Translation Catholic Edition, copyright © 2016 by Tyndale House Foundation. All rights reserved. Used by permission of Tyndale House Publishers.

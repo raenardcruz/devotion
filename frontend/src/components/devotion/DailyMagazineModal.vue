@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { useAccessControl } from '../../composables/useAccessControl';
 import { useMagazineImages, type MagazineReadingKey } from '../../composables/useMagazineImages';
 import { useStoryToManga } from '../../composables/useStoryToManga';
 import MagazineDocument, { type MagazineMassReadings } from './MagazineDocument.vue';
@@ -36,6 +37,7 @@ const handleDocumentKeydown = (event: KeyboardEvent) => {
 };
 
 onMounted(() => {
+  syncAdminState();
   document.addEventListener('click', handleDocumentClick);
   document.addEventListener('keydown', handleDocumentKeydown);
 });
@@ -47,6 +49,8 @@ onUnmounted(() => {
     document.body.classList.remove('magazine-modal-open');
   }
 });
+
+const { isAdmin, syncAdminState } = useAccessControl();
 
 const {
   images,
@@ -71,6 +75,7 @@ const {
 
 const syncMagazineData = async () => {
   if (!props.isOpen) return;
+  syncAdminState();
   await Promise.all([
     loadImagesForDate(props.date),
     loadStateFromServer(props.date, true),
@@ -97,6 +102,8 @@ const handleGenerateSingleImage = async (payload: {
   context?: string;
   force?: boolean;
 }) => {
+  syncAdminState();
+  if (!isAdmin.value) return;
   await generateReadingImage(
     props.date,
     payload.key,
@@ -108,7 +115,8 @@ const handleGenerateSingleImage = async (payload: {
 };
 
 const handleGenerateAllMissing = async () => {
-  if (!props.readings) return;
+  syncAdminState();
+  if (!isAdmin.value || !props.readings) return;
   await generateMissingImages(props.date, props.readings);
 };
 
@@ -155,7 +163,7 @@ const openPrintView = (autoPrint: boolean) => {
               </button>
               <div>
                 <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#72383D] block">
-                  Lumen Liturgiae · Magazine Edition
+                  Light of the Liturgy · Magazine Edition
                 </span>
                 <h2 class="text-base sm:text-lg font-serif font-bold text-[#1E1B18]">
                   {{ formattedDate }}
@@ -205,7 +213,7 @@ const openPrintView = (autoPrint: boolean) => {
                   <div class="my-1 border-t border-[#D1C7BD]/60"></div>
 
                   <button
-                    v-if="includeImages && readings"
+                    v-if="isAdmin && includeImages && readings"
                     type="button"
                     role="menuitem"
                     :disabled="isGeneratingAll"
@@ -257,7 +265,7 @@ const openPrintView = (autoPrint: boolean) => {
             :images="images"
             :resolveImageSrc="resolveImageSrc"
             :generatingKeys="generatingKeys"
-            :interactive="true"
+            :interactive="isAdmin"
             :includeCommentaries="includeCommentaries"
             :includeImages="includeImages"
             :includeComics="includeComics"

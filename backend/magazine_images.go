@@ -147,6 +147,11 @@ func magazineReadingImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !isAdminRequest(r) {
+		respondWithError(w, http.StatusUnauthorized, "Admin authentication required to generate magazine images")
+		return
+	}
+
 	var req MagazineReadingImageRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
@@ -156,6 +161,10 @@ func magazineReadingImageHandler(w http.ResponseWriter, r *http.Request) {
 	date := strings.TrimSpace(req.Date)
 	if date == "" {
 		date = time.Now().Format("2006-01-02")
+	}
+	if strings.Contains(date, "/") || strings.Contains(date, "\\") || strings.Contains(date, "..") {
+		respondWithError(w, http.StatusBadRequest, "Invalid date")
+		return
 	}
 	readingKey := normalizeMagazineReadingKey(req.ReadingKey)
 	citation := strings.TrimSpace(req.Citation)
@@ -225,6 +234,10 @@ func magazineImagesListHandler(w http.ResponseWriter, r *http.Request) {
 	if date == "" {
 		date = time.Now().Format("2006-01-02")
 	}
+	if strings.Contains(date, "/") || strings.Contains(date, "\\") || strings.Contains(date, "..") {
+		respondWithError(w, http.StatusBadRequest, "Invalid date")
+		return
+	}
 
 	ctx := r.Context()
 	keys := []string{"cover", "first_reading", "responsorial_psalm", "second_reading", "gospel"}
@@ -233,6 +246,41 @@ func magazineImagesListHandler(w http.ResponseWriter, r *http.Request) {
 	for _, k := range keys {
 		if cached, ok := getCachedMagazineImage(ctx, date, k); ok {
 			images[k] = cached
+		}
+	}
+
+	if len(images) < len(keys) {
+		r2Cfg := ResolveR2Config(nil)
+		if r2Cfg.IsConfigured() {
+			prefix := fmt.Sprintf("magazine/%s/", date)
+			if objKeys, err := r2Cfg.ListObjectKeys(ctx, prefix); err == nil {
+				for _, objKey := range objKeys {
+					filename := strings.TrimPrefix(objKey, prefix)
+					if filename == "" || strings.Contains(filename, "/") {
+						continue
+					}
+					stem := filename
+					if dotIdx := strings.LastIndex(filename, "."); dotIdx > 0 {
+						stem = filename[:dotIdx]
+					}
+					readingKey := normalizeMagazineReadingKey(stem)
+					if readingKey == "reading" {
+						continue
+					}
+					if _, exists := images[readingKey]; exists {
+						continue
+					}
+					resp := MagazineReadingImageResponse{
+						Date:       date,
+						ReadingKey: readingKey,
+						Image:      r2Cfg.PublicAssetURL(objKey),
+						R2Key:      objKey,
+						Cached:     true,
+					}
+					setCachedMagazineImage(ctx, resp)
+					images[readingKey] = resp
+				}
+			}
 		}
 	}
 
