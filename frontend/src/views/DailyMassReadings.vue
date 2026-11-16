@@ -275,7 +275,7 @@ const availableTabs = computed(() => {
               v-if="readings && (isAdmin || hasMangaStory)"
               @click="openStoryMangaModal"
               class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#322D29] via-[#72383D] to-[#542529] hover:from-[#72383D] hover:to-[#322D29] text-white border border-[#72383D] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#72383D]/40 active:scale-95 cursor-pointer"
-              :title="isAdmin ? 'One-click generate or view a custom story & manga based on today\'s readings' : 'Read today\'s illustrated story & manga'"
+              :title="isAdmin ? 'Step-by-step studio to write or AI-generate a story, adjust characters, and create manga panels' : 'Read today\'s illustrated story & manga'"
             >
               <span>{{ isAdmin ? '🎨' : '📖' }}</span>
               <span>{{ isAdmin ? 'Generate Story & Manga' : 'Read Story & Manga' }}</span>
@@ -658,7 +658,7 @@ const availableTabs = computed(() => {
       </transition>
     </Teleport>
 
-    <!-- Story-to-Manga One-Click Generator Modal -->
+    <!-- Story-to-Manga Step-by-Step Studio Modal -->
     <StoryToMangaModal
       :isOpen="isStoryMangaModalOpen"
       :date="selectedDate"

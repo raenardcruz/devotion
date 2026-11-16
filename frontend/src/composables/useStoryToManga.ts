@@ -366,6 +366,9 @@ export function useStoryToManga() {
   const saveStateToServer = async (date: string, createNewVersion = false): Promise<boolean> => {
     if (!storyAnalysis.value) return false;
     try {
+      const validCharRefs = characterReferences.value.filter(
+        (c) => Boolean(c && (c.image || c.r2Key))
+      );
       const res = await fetchWithAuth<{
         success: boolean;
         story?: MangaStoryRecord;
@@ -382,7 +385,7 @@ export function useStoryToManga() {
           generatedStory: generatedStory.value,
           moralLesson: moralLesson.value,
           storyAnalysis: storyAnalysis.value,
-          characterReferences: characterReferences.value,
+          characterReferences: validCharRefs,
           storyBreakdown: storyBreakdown.value || { panels: [] },
           generatedPanels: generatedPanels.value,
         }),
@@ -715,12 +718,226 @@ export function useStoryToManga() {
     }
   };
 
-  const regenerateCharacter = async (index: number, date?: string) => {
+  const resetWorkflowState = (keepVersions = true) => {
+    generatedStory.value = '';
+    moralLesson.value = '';
+    storyAnalysis.value = null;
+    characterReferences.value = [];
+    storyBreakdown.value = null;
+    generatedPanels.value = [];
+    r2Stored.value = false;
+    currentStoryId.value = null;
+    currentVersion.value = 1;
+    if (!keepVersions) {
+      availableVersions.value = [];
+    }
+    error.value = null;
+    failedStep.value = null;
+    currentStepText.value = '';
+  };
+
+  const ensureAdminOrError = (): boolean => {
     syncAdminState();
     if (!isAdmin.value) {
       error.value = 'Story & manga generation is restricted to administrators.';
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const generateStoryWithAI = async (
+    date: string,
+    readings: ReadingsPayload | null
+  ): Promise<MangaStoryAnalysis | null> => {
+    if (!ensureAdminOrError()) return null;
+
+    isGenerating.value = true;
+    isAnalyzing.value = true;
+    error.value = null;
+    failedStep.value = null;
+    currentStepText.value = 'Crafting an inspiring story from today’s Mass readings...';
+
+    try {
+      const analyzeRes = await fetchWithAuth<{
+        success: boolean;
+        story: string;
+        moralLesson?: string;
+        analysis: MangaStoryAnalysis;
+      }>('/api/manga/analyze-story', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date,
+          readings: readings || undefined,
+          style: style.value,
+        }),
+      });
+
+      if (!analyzeRes?.analysis) {
+        throw new Error('Failed to generate story from today’s readings');
+      }
+
+      generatedStory.value = analyzeRes.story || analyzeRes.analysis.story || '';
+      moralLesson.value = analyzeRes.moralLesson || analyzeRes.analysis.moralLesson || '';
+      storyAnalysis.value = analyzeRes.analysis;
+      characterReferences.value = [];
+      storyBreakdown.value = null;
+      generatedPanels.value = [];
+      r2Stored.value = false;
+      currentStepText.value = '';
+      return analyzeRes.analysis;
+    } catch (err: any) {
+      failedStep.value = 'analysis';
+      currentStepText.value = '';
+      error.value = err?.message || 'Failed to generate story from readings.';
+      return null;
+    } finally {
+      isAnalyzing.value = false;
+      isGenerating.value = false;
+    }
+  };
+
+  const analyzeUserStory = async (
+    date: string,
+    readings: ReadingsPayload | null,
+    storyText: string,
+    overrides?: { title?: string; moralLesson?: string }
+  ): Promise<MangaStoryAnalysis | null> => {
+    if (!ensureAdminOrError()) return null;
+    const trimmed = storyText.trim();
+    if (!trimmed) {
+      error.value = 'Please enter a story or use the AI pencil to generate one.';
+      return null;
+    }
+    const wordCount = trimmed.split(/\s+/).length;
+    if (wordCount > 500) {
+      error.value = `Story too long. Maximum 500 words, got ${wordCount} words.`;
+      return null;
+    }
+
+    isGenerating.value = true;
+    isAnalyzing.value = true;
+    error.value = null;
+    failedStep.value = null;
+    currentStepText.value = 'Analyzing your story to extract characters and setting...';
+
+    try {
+      const analyzeRes = await fetchWithAuth<{
+        success: boolean;
+        story: string;
+        moralLesson?: string;
+        analysis: MangaStoryAnalysis;
+      }>('/api/manga/analyze-story', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date,
+          readings: readings || undefined,
+          story: trimmed,
+          style: style.value,
+        }),
+      });
+
+      if (!analyzeRes?.analysis) {
+        throw new Error('Failed to analyze your story');
+      }
+
+      if (overrides?.title?.trim()) {
+        analyzeRes.analysis.title = overrides.title.trim();
+      }
+      const lessonToUse = overrides?.moralLesson?.trim()
+        ? overrides.moralLesson.trim()
+        : analyzeRes.moralLesson || analyzeRes.analysis.moralLesson || '';
+      analyzeRes.analysis.moralLesson = lessonToUse;
+
+      generatedStory.value = analyzeRes.story || trimmed;
+      moralLesson.value = lessonToUse;
+      storyAnalysis.value = analyzeRes.analysis;
+      characterReferences.value = [];
+      storyBreakdown.value = null;
+      generatedPanels.value = [];
+      r2Stored.value = false;
+      currentStepText.value = '';
+      return analyzeRes.analysis;
+    } catch (err: any) {
+      failedStep.value = 'analysis';
+      currentStepText.value = '';
+      error.value = err?.message || 'Failed to analyze your story.';
+      return null;
+    } finally {
+      isAnalyzing.value = false;
+      isGenerating.value = false;
+    }
+  };
+
+  const generateAllCharacterRefs = async (
+    uploadedCharacterReferences?: MangaUploadedReference[],
+    onlyMissing = false
+  ): Promise<boolean> => {
+    if (!ensureAdminOrError()) return false;
+    if (!storyAnalysis.value || !storyAnalysis.value.characters?.length) {
+      error.value = 'Add at least one character before generating character designs.';
+      return false;
+    }
+
+    isGenerating.value = true;
+    isGeneratingCharacters.value = true;
+    error.value = null;
+    failedStep.value = null;
+
+    const chars = storyAnalysis.value.characters;
+    const updatedList: MangaCharacterReference[] = chars.map((c, idx) => {
+      const existing = characterReferences.value[idx];
+      return existing
+        ? { ...existing, name: c.name, description: c.physicalDescription }
+        : { name: c.name, image: '', description: c.physicalDescription };
+    });
+    characterReferences.value = updatedList;
+
+    try {
+      for (let i = 0; i < chars.length; i++) {
+        const charData = chars[i];
+        if (!charData) continue;
+        if (onlyMissing && updatedList[i]?.image) continue;
+
+        const nextSet = new Set(regeneratingCharacters.value);
+        nextSet.add(i);
+        regeneratingCharacters.value = nextSet;
+        currentStepText.value = `Designing character ${i + 1}/${chars.length} (${charData.name}) with ${imageModel.value}...`;
+
+        try {
+          const refItem = await generateSingleCharacter(
+            charData,
+            storyAnalysis.value.setting,
+            uploadedCharacterReferences
+          );
+          updatedList[i] = refItem;
+          characterReferences.value = [...updatedList];
+        } finally {
+          const finalSet = new Set(regeneratingCharacters.value);
+          finalSet.delete(i);
+          regeneratingCharacters.value = finalSet;
+        }
+      }
+      currentStepText.value = '';
+      return true;
+    } catch (err: any) {
+      failedStep.value = 'characters';
+      currentStepText.value = '';
+      error.value = err?.message || 'Failed to generate character designs.';
+      return false;
+    } finally {
+      isGeneratingCharacters.value = false;
+      isGenerating.value = false;
+    }
+  };
+
+  const regenerateCharacter = async (
+    index: number,
+    date?: string,
+    uploadedCharacterReferences?: MangaUploadedReference[]
+  ) => {
+    if (!ensureAdminOrError()) return;
     if (!storyAnalysis.value) return;
     const charData = storyAnalysis.value.characters[index];
     if (!charData) return;
@@ -731,11 +948,23 @@ export function useStoryToManga() {
     error.value = null;
 
     try {
-      const updatedRef = await generateSingleCharacter(charData, storyAnalysis.value.setting);
+      const updatedRef = await generateSingleCharacter(
+        charData,
+        storyAnalysis.value.setting,
+        uploadedCharacterReferences
+      );
       const updatedList = [...characterReferences.value];
+      while (updatedList.length <= index) {
+        const c = storyAnalysis.value.characters[updatedList.length];
+        updatedList.push({
+          name: c?.name || '',
+          image: '',
+          description: c?.physicalDescription || '',
+        });
+      }
       updatedList[index] = updatedRef;
       characterReferences.value = updatedList;
-      if (date) {
+      if (date && generatedPanels.value.length > 0) {
         const savedOnServer = await saveStateToServer(date);
         if (!savedOnServer) {
           await saveStateForDate(date);
@@ -750,12 +979,131 @@ export function useStoryToManga() {
     }
   };
 
-  const regeneratePanel = async (panelNumber: number, date?: string) => {
-    syncAdminState();
-    if (!isAdmin.value) {
-      error.value = 'Story & manga generation is restricted to administrators.';
-      return;
+  const planStoryPanels = async (): Promise<MangaStoryBreakdown | null> => {
+    if (!ensureAdminOrError()) return null;
+    if (!storyAnalysis.value || !generatedStory.value.trim()) {
+      error.value = 'A story and characters are required before planning panels.';
+      return null;
     }
+
+    isGenerating.value = true;
+    isChunking.value = true;
+    error.value = null;
+    failedStep.value = null;
+    currentStepText.value = 'Planning manga/comic panels, dialogue & panel narratives...';
+
+    try {
+      const chunkRes = await fetchWithAuth<{
+        success: boolean;
+        storyBreakdown: MangaStoryBreakdown;
+      }>('/api/manga/chunk-story', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          story: generatedStory.value,
+          characters: storyAnalysis.value.characters,
+          setting: storyAnalysis.value.setting,
+          style: style.value,
+        }),
+      });
+
+      if (!chunkRes?.storyBreakdown?.panels?.length) {
+        throw new Error('Failed to plan comic panel layout');
+      }
+
+      storyBreakdown.value = chunkRes.storyBreakdown;
+      generatedPanels.value = [];
+      currentStepText.value = '';
+      return chunkRes.storyBreakdown;
+    } catch (err: any) {
+      failedStep.value = 'layout';
+      currentStepText.value = '';
+      error.value = err?.message || 'Failed to plan comic panel layout.';
+      return null;
+    } finally {
+      isChunking.value = false;
+      isGenerating.value = false;
+    }
+  };
+
+  const generateAllPanels = async (
+    date: string,
+    createNewVersion = false,
+    onlyMissing = false
+  ): Promise<boolean> => {
+    if (!ensureAdminOrError()) return false;
+    if (!storyAnalysis.value) return false;
+
+    if (!storyBreakdown.value?.panels?.length) {
+      const planned = await planStoryPanels();
+      if (!planned) return false;
+    }
+    if (!storyBreakdown.value?.panels?.length) return false;
+
+    isGenerating.value = true;
+    isGeneratingPanels.value = true;
+    error.value = null;
+    failedStep.value = null;
+
+    const panels = storyBreakdown.value.panels;
+    const validCharRefs = characterReferences.value.filter(
+      (c) => Boolean(c && (c.image || c.r2Key))
+    );
+    const renderedPanels: MangaGeneratedPanel[] = onlyMissing ? [...generatedPanels.value] : [];
+
+    try {
+      for (let i = 0; i < panels.length; i++) {
+        const panelPlan = panels[i];
+        if (!panelPlan) continue;
+        if (onlyMissing && renderedPanels.some((p) => p.panelNumber === panelPlan.panelNumber && p.image)) {
+          continue;
+        }
+
+        const nextSet = new Set(regeneratingPanels.value);
+        nextSet.add(panelPlan.panelNumber);
+        regeneratingPanels.value = nextSet;
+        currentStepText.value = `Illustrating panel ${i + 1}/${panels.length} with ${imageModel.value}...`;
+
+        try {
+          const generated = await generateSinglePanel(
+            panelPlan,
+            validCharRefs,
+            storyAnalysis.value.setting
+          );
+          const existingIdx = renderedPanels.findIndex((p) => p.panelNumber === panelPlan.panelNumber);
+          if (existingIdx >= 0) {
+            renderedPanels[existingIdx] = generated;
+          } else {
+            renderedPanels.push(generated);
+          }
+          generatedPanels.value = [...renderedPanels];
+        } finally {
+          const finalSet = new Set(regeneratingPanels.value);
+          finalSet.delete(panelPlan.panelNumber);
+          regeneratingPanels.value = finalSet;
+        }
+      }
+
+      currentStepText.value = 'Panels complete! Saving story & manga...';
+      const savedOnServer = await saveStateToServer(date, createNewVersion);
+      if (!savedOnServer) {
+        await saveStateForDate(date);
+      }
+      currentStepText.value = '';
+      return true;
+    } catch (err: any) {
+      failedStep.value = 'panels';
+      currentStepText.value = '';
+      error.value = err?.message || 'An error occurred while illustrating panels.';
+      return false;
+    } finally {
+      isGeneratingPanels.value = false;
+      isGenerating.value = false;
+    }
+  };
+
+  const regeneratePanel = async (panelNumber: number, date?: string) => {
+    if (!ensureAdminOrError()) return;
     if (!storyAnalysis.value || !storyBreakdown.value) return;
     const panelPlan = storyBreakdown.value.panels.find((p) => p.panelNumber === panelNumber);
     if (!panelPlan) return;
@@ -765,10 +1113,14 @@ export function useStoryToManga() {
     regeneratingPanels.value = nextSet;
     error.value = null;
 
+    const validCharRefs = characterReferences.value.filter(
+      (c) => Boolean(c && (c.image || c.r2Key))
+    );
+
     try {
       const updatedPanel = await generateSinglePanel(
         panelPlan,
-        characterReferences.value,
+        validCharRefs,
         storyAnalysis.value.setting
       );
       const idx = generatedPanels.value.findIndex((p) => p.panelNumber === panelNumber);
@@ -779,7 +1131,7 @@ export function useStoryToManga() {
         updatedList.push(updatedPanel);
       }
       generatedPanels.value = updatedList;
-      if (date) {
+      if (date && (currentStoryId.value != null || updatedList.length >= storyBreakdown.value.panels.length)) {
         const savedOnServer = await saveStateToServer(date);
         if (!savedOnServer) {
           await saveStateForDate(date);
@@ -824,7 +1176,15 @@ export function useStoryToManga() {
     getProxyAssetUrl,
     checkStoryExists,
     loadStateFromServer,
+    loadStateForDate,
     loadVersionFromServer,
+    saveStateToServer,
+    resetWorkflowState,
+    generateStoryWithAI,
+    analyzeUserStory,
+    generateAllCharacterRefs,
+    planStoryPanels,
+    generateAllPanels,
     generateStoryAndManga,
     regenerateCharacter,
     regeneratePanel,

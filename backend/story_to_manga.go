@@ -452,13 +452,7 @@ func generateCharacterRefsInternal(ctx context.Context, req MangaGenerateCharact
 	var characterReferences []MangaCharacterReference
 
 	for _, character := range req.Characters {
-		var matchingUploads []MangaUploadedReference
-		for _, ref := range req.UploadedCharacterReferences {
-			if strings.Contains(strings.ToLower(ref.Name), strings.ToLower(character.Name)) ||
-				strings.Contains(strings.ToLower(character.Name), strings.ToLower(ref.Name)) {
-				matchingUploads = append(matchingUploads, ref)
-			}
-		}
+		matchingUploads, generalUploads := selectUploadedRefsForCharacter(character.Name, req.UploadedCharacterReferences)
 
 		prompt := fmt.Sprintf(`Character reference sheet in %s. 
 
@@ -469,16 +463,18 @@ Full body character design showing front view of %s:
 - Setting context: %s, %s
 `, stylePrefix, character.Name, character.PhysicalDescription, character.Personality, character.Role, req.Setting.TimePeriod, req.Setting.Location)
 
+		uploadsForPrompt := matchingUploads
 		if len(matchingUploads) > 0 {
 			prompt += fmt.Sprintf("\nIMPORTANT: Use the provided reference images as inspiration for this character's design. The reference images show visual elements that should be incorporated while adapting them to the %s aesthetic. Maintain the essence and key visual features shown in the references.\n", stylePrefix)
-		} else if len(req.UploadedCharacterReferences) > 0 {
+		} else if len(generalUploads) > 0 {
+			uploadsForPrompt = generalUploads
 			prompt += "\nNote: Reference images are provided, but use them as general style inspiration for this character design.\n"
 		}
 
 		prompt += "\nThe character should be drawn in a neutral pose against a plain background, showing their full design clearly for reference purposes. This is a character reference sheet that will be used to maintain consistency across multiple comic panels.\n"
 
 		var refImages []string
-		for _, upload := range req.UploadedCharacterReferences {
+		for _, upload := range uploadsForPrompt {
 			if upload.Image != "" {
 				refImages = append(refImages, upload.Image)
 			}
@@ -498,6 +494,21 @@ Full body character design showing front view of %s:
 	}
 
 	return characterReferences, imageModel, nil
+}
+
+func selectUploadedRefsForCharacter(characterName string, uploads []MangaUploadedReference) (matching []MangaUploadedReference, general []MangaUploadedReference) {
+	lowerChar := strings.ToLower(strings.TrimSpace(characterName))
+	for _, ref := range uploads {
+		lowerRef := strings.ToLower(strings.TrimSpace(ref.Name))
+		if lowerRef == "" {
+			general = append(general, ref)
+			continue
+		}
+		if lowerChar != "" && (strings.Contains(lowerRef, lowerChar) || strings.Contains(lowerChar, lowerRef)) {
+			matching = append(matching, ref)
+		}
+	}
+	return matching, general
 }
 
 func mangaChunkStoryHandler(w http.ResponseWriter, r *http.Request) {
