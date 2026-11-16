@@ -32,6 +32,13 @@ export interface MangaCharacterReference {
   description: string;
 }
 
+export interface MangaUploadedReference {
+  id?: string;
+  name: string;
+  image: string;
+  fileName?: string;
+}
+
 export interface MangaPanelPlan {
   panelNumber: number;
   characters: string[];
@@ -412,20 +419,26 @@ export function useStoryToManga() {
 
   const generateSingleCharacter = async (
     character: MangaCharacter,
-    setting: MangaSetting
+    setting: MangaSetting,
+    uploadedCharacterReferences?: MangaUploadedReference[]
   ): Promise<MangaCharacterReference> => {
+    const payload: Record<string, unknown> = {
+      characters: [character],
+      setting,
+      style: style.value,
+      imageModel: imageModel.value,
+    };
+    if (uploadedCharacterReferences && uploadedCharacterReferences.length > 0) {
+      payload.uploadedCharacterReferences = uploadedCharacterReferences;
+    }
+
     const res = await fetchWithAuth<{
       success: boolean;
       characterReferences: MangaCharacterReference[];
     }>('/api/manga/generate-character-refs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        characters: [character],
-        setting,
-        style: style.value,
-        imageModel: imageModel.value,
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!res?.characterReferences || res.characterReferences.length === 0 || !res.characterReferences[0]) {
@@ -460,12 +473,23 @@ export function useStoryToManga() {
     return res.generatedPanel;
   };
 
-  // One-click end-to-end generation pipeline (story from readings -> character sheets -> panel layout -> panel images)
-  const generateStoryAndManga = async (date: string, readings: ReadingsPayload, forceRegenerate = false) => {
+  // One-click end-to-end generation pipeline (story from readings or user-supplied customStory/customCharacters -> character sheets -> panel layout -> panel images)
+  const generateStoryAndManga = async (
+    date: string,
+    readings: ReadingsPayload,
+    forceRegenerate = false,
+    customStory?: string,
+    customCharacters?: MangaCharacter[],
+    uploadedCharacterReferences?: MangaUploadedReference[]
+  ) => {
     syncAdminState();
     error.value = null;
+    const trimmedCustomStory = (customStory || '').trim();
+    const validCustomChars = (customCharacters || []).filter(
+      (c) => c.name.trim() !== '' && c.physicalDescription.trim() !== ''
+    );
 
-    if (!forceRegenerate) {
+    if (!forceRegenerate && !trimmedCustomStory && validCustomChars.length === 0) {
       const hasServer = await loadStateFromServer(date);
       if (hasServer) {
         return;
@@ -502,10 +526,25 @@ export function useStoryToManga() {
     r2Stored.value = false;
 
     try {
-      // Step 1: Generate custom story from the day's readings & lessons + analyze characters/setting
+      // Step 1: Analyze user-provided story or generate custom story from the day's readings
       isAnalyzing.value = true;
-      currentStepText.value =
-        'Step 1/4: Crafting custom story from today’s readings & lessons (Problem → Listening to Readings → Applying Lesson → Resolution)...';
+      currentStepText.value = trimmedCustomStory
+        ? 'Step 1/4: Analyzing your custom story, characters, and setting...'
+        : 'Step 1/4: Crafting custom story from today’s readings & lessons (Problem → Listening to Readings → Applying Lesson → Resolution)...';
+
+      const analyzePayload: Record<string, unknown> = {
+        date,
+        readings,
+        style: style.value,
+      };
+      if (trimmedCustomStory) {
+        analyzePayload.story = trimmedCustomStory;
+      } else if (validCustomChars.length > 0) {
+        const charSummary = validCustomChars
+          .map((c) => `${c.name} (${c.role || 'Character'}: ${c.physicalDescription})`)
+          .join('; ');
+        analyzePayload.protagonistHint = `Feature these specific characters in the story (Problem -> Listening to Readings -> Applying Lesson -> Resolution): ${charSummary}`;
+      }
 
       const analyzeRes = await fetchWithAuth<{
         success: boolean;
@@ -515,15 +554,19 @@ export function useStoryToManga() {
       }>('/api/manga/analyze-story', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date,
-          readings,
-          style: style.value,
-        }),
+        body: JSON.stringify(analyzePayload),
       });
 
       if (!analyzeRes?.analysis) {
-        throw new Error('Failed to generate and analyze story from readings');
+        throw new Error(
+          trimmedCustomStory
+            ? 'Failed to analyze your custom story'
+            : 'Failed to generate and analyze story from readings'
+        );
+      }
+
+      if (validCustomChars.length > 0) {
+        analyzeRes.analysis.characters = validCustomChars;
       }
 
       generatedStory.value = analyzeRes.story || analyzeRes.analysis.story || '';
@@ -540,7 +583,11 @@ export function useStoryToManga() {
         const charData = analyzeRes.analysis.characters[i];
         if (!charData) continue;
         currentStepText.value = `Step 2/4: Generating character design ${i + 1}/${totalChars} (${charData.name}) with ${imageModel.value}...`;
-        const refItem = await generateSingleCharacter(charData, analyzeRes.analysis.setting);
+        const refItem = await generateSingleCharacter(
+          charData,
+          analyzeRes.analysis.setting,
+          uploadedCharacterReferences
+        );
         charRefs.push(refItem);
         characterReferences.value = [...charRefs];
       }
