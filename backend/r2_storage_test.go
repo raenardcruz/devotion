@@ -267,3 +267,61 @@ func TestR2StorageAndMangaLifecycle(t *testing.T) {
 		t.Fatalf("expected 0 stories in DB/memory after delete, got %d", len(storiesAfter))
 	}
 }
+
+func TestMangaStoryVersioning(t *testing.T) {
+	memMangaMu.Lock()
+	memMangaStories = nil
+	memNextMangaID = 1
+	memMangaMu.Unlock()
+
+	rec1, err := SaveMangaStoryRecord(context.Background(), MangaSaveStoryRequest{
+		Date:  "2026-06-01",
+		Style: "manga",
+		StoryAnalysis: MangaStoryAnalysis{
+			Title: "Version One Title",
+			Story: "First draft story.",
+		},
+	})
+	if err != nil {
+		t.Fatalf("failed saving v1: %v", err)
+	}
+	if rec1.Version != 1 {
+		t.Fatalf("expected version 1, got %d", rec1.Version)
+	}
+
+	// Regenerating with CreateNewVersion=true creates v2 without removing v1
+	rec2, err := SaveMangaStoryRecord(context.Background(), MangaSaveStoryRequest{
+		Date:             "2026-06-01",
+		Style:            "manga",
+		CreateNewVersion: true,
+		StoryAnalysis: MangaStoryAnalysis{
+			Title: "Version Two Title",
+			Story: "Second draft story.",
+		},
+	})
+	if err != nil {
+		t.Fatalf("failed saving v2: %v", err)
+	}
+	if rec2.Version != 2 || rec2.ID == rec1.ID {
+		t.Fatalf("expected version 2 with new ID, got version=%d id=%d (v1 id=%d)", rec2.Version, rec2.ID, rec1.ID)
+	}
+
+	versions, err := ListMangaStoryVersions("2026-06-01", "manga")
+	if err != nil {
+		t.Fatalf("failed listing versions: %v", err)
+	}
+	if len(versions) != 2 {
+		t.Fatalf("expected 2 versions, got %d", len(versions))
+	}
+
+	latest, err := GetMangaStoryByDateAndStyle("2026-06-01", "manga")
+	if err != nil || latest == nil || latest.Version != 2 {
+		t.Fatalf("expected latest version 2, got %+v (err=%v)", latest, err)
+	}
+
+	v1Loaded, err := GetMangaStoryByID(rec1.ID)
+	if err != nil || v1Loaded == nil || v1Loaded.Title != "Version One Title" {
+		t.Fatalf("expected v1 to still be intact, got %+v (err=%v)", v1Loaded, err)
+	}
+}
+

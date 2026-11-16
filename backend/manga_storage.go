@@ -17,6 +17,7 @@ type MangaStoryRecord struct {
 	ID                  int                       `json:"id"`
 	Date                string                    `json:"date"`
 	Style               string                    `json:"style"`
+	Version             int                       `json:"version"`
 	Title               string                    `json:"title"`
 	MoralLesson         string                    `json:"moralLesson"`
 	Story               string                    `json:"story"`
@@ -36,6 +37,7 @@ type MangaStorySummary struct {
 	ID             int      `json:"id"`
 	Date           string   `json:"date"`
 	Style          string   `json:"style"`
+	Version        int      `json:"version"`
 	Title          string   `json:"title"`
 	MoralLesson    string   `json:"moralLesson"`
 	ImageModel     string   `json:"imageModel"`
@@ -49,9 +51,21 @@ type MangaStorySummary struct {
 	UpdatedAt      string   `json:"updatedAt"`
 }
 
+type MangaStoryVersionInfo struct {
+	ID         int    `json:"id"`
+	Version    int    `json:"version"`
+	Style      string `json:"style"`
+	Title      string `json:"title"`
+	ImageModel string `json:"imageModel"`
+	CreatedAt  string `json:"createdAt"`
+	UpdatedAt  string `json:"updatedAt"`
+}
+
 type MangaSaveStoryRequest struct {
+	ID                  int                       `json:"id,omitempty"`
 	Date                string                    `json:"date"`
 	Style               string                    `json:"style"`
+	CreateNewVersion    bool                      `json:"createNewVersion,omitempty"`
 	ImageModel          string                    `json:"imageModel"`
 	GeneratedStory      string                    `json:"generatedStory"`
 	MoralLesson         string                    `json:"moralLesson"`
@@ -129,14 +143,29 @@ func SaveMangaStoryRecord(ctx context.Context, req MangaSaveStoryRequest) (*Mang
 
 	normalizeStoryBreakdown(&req.StoryBreakdown)
 
-	existing, _ := GetMangaStoryByDateAndStyle(date, style)
+	var existing *MangaStoryRecord
+	if !req.CreateNewVersion {
+		if req.ID > 0 {
+			existing, _ = GetMangaStoryByID(req.ID)
+		} else {
+			existing, _ = GetMangaStoryByDateAndStyle(date, style)
+		}
+	}
+
+	version := 1
+	if req.CreateNewVersion || existing == nil {
+		version = getNextMangaVersion(date, style)
+	} else if existing.Version > 0 {
+		version = existing.Version
+	}
+
 	var oldR2Keys []string
-	if existing != nil {
+	if existing != nil && !req.CreateNewVersion {
 		oldR2Keys = existing.R2Keys
 	}
 
 	r2Cfg := ResolveR2Config(nil)
-	prefix := fmt.Sprintf("stories/%s/%s", date, style)
+	prefix := fmt.Sprintf("stories/%s/%s/v%d", date, style, version)
 	stamp := fmt.Sprintf("%d", time.Now().UnixMilli())
 
 	charRefs := make([]MangaCharacterReference, len(req.CharacterReferences))
@@ -195,6 +224,7 @@ func SaveMangaStoryRecord(ctx context.Context, req MangaSaveStoryRequest) (*Mang
 		manifestPayload := map[string]interface{}{
 			"date":                date,
 			"style":               style,
+			"version":             version,
 			"title":               title,
 			"moralLesson":         moralLesson,
 			"story":               storyText,
@@ -214,20 +244,22 @@ func SaveMangaStoryRecord(ctx context.Context, req MangaSaveStoryRequest) (*Mang
 
 		r2Stored = len(newR2Keys) > 0
 
-		// Clean up obsolete R2 keys from an earlier generation
-		newKeySet := make(map[string]bool, len(newR2Keys))
-		for _, k := range newR2Keys {
-			newKeySet[k] = true
-		}
-		var staleKeys []string
-		for _, oldKey := range oldR2Keys {
-			if oldKey != "" && !newKeySet[oldKey] {
-				staleKeys = append(staleKeys, oldKey)
+		// Clean up obsolete R2 keys from the same version when updating in-place
+		if len(oldR2Keys) > 0 {
+			newKeySet := make(map[string]bool, len(newR2Keys))
+			for _, k := range newR2Keys {
+				newKeySet[k] = true
 			}
-		}
-		if len(staleKeys) > 0 {
-			if err := r2Cfg.DeleteObjects(ctx, staleKeys); err != nil {
-				log.Printf("[SaveMangaStoryRecord] Warning cleaning stale R2 keys: %v", err)
+			var staleKeys []string
+			for _, oldKey := range oldR2Keys {
+				if oldKey != "" && !newKeySet[oldKey] {
+					staleKeys = append(staleKeys, oldKey)
+				}
+			}
+			if len(staleKeys) > 0 {
+				if err := r2Cfg.DeleteObjects(ctx, staleKeys); err != nil {
+					log.Printf("[SaveMangaStoryRecord] Warning cleaning stale R2 keys: %v", err)
+				}
 			}
 		}
 	}
@@ -236,6 +268,7 @@ func SaveMangaStoryRecord(ctx context.Context, req MangaSaveStoryRequest) (*Mang
 	rec := &MangaStoryRecord{
 		Date:                date,
 		Style:               style,
+		Version:             version,
 		Title:               title,
 		MoralLesson:         moralLesson,
 		Story:               storyText,
@@ -258,45 +291,68 @@ func SaveMangaStoryRecord(ctx context.Context, req MangaSaveStoryRequest) (*Mang
 		panelsJSON, _ := json.Marshal(rec.GeneratedPanels)
 		r2KeysJSON, _ := json.Marshal(rec.R2Keys)
 
-		query := `
-		INSERT INTO generated_manga_stories (
-			story_date, style, title, moral_lesson, story_text, image_model,
-			analysis_json, character_refs_json, breakdown_json, panels_json,
-			r2_prefix, r2_keys_json, created_at, updated_at
-		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-		ON CONFLICT (story_date, style) DO UPDATE SET
-			title = EXCLUDED.title,
-			moral_lesson = EXCLUDED.moral_lesson,
-			story_text = EXCLUDED.story_text,
-			image_model = EXCLUDED.image_model,
-			analysis_json = EXCLUDED.analysis_json,
-			character_refs_json = EXCLUDED.character_refs_json,
-			breakdown_json = EXCLUDED.breakdown_json,
-			panels_json = EXCLUDED.panels_json,
-			r2_prefix = EXCLUDED.r2_prefix,
-			r2_keys_json = EXCLUDED.r2_keys_json,
-			updated_at = CURRENT_TIMESTAMP
-		RETURNING id, created_at, updated_at;`
-
 		var createdAt, updatedAt time.Time
-		err := db.QueryRow(
-			query,
-			rec.Date,
-			rec.Style,
-			rec.Title,
-			rec.MoralLesson,
-			rec.Story,
-			rec.ImageModel,
-			string(analysisJSON),
-			string(charRefsJSON),
-			string(breakdownJSON),
-			string(panelsJSON),
-			rec.R2Prefix,
-			string(r2KeysJSON),
-		).Scan(&rec.ID, &createdAt, &updatedAt)
-		if err != nil {
-			return nil, fmt.Errorf("failed saving generated manga story to database: %w", err)
+		if existing != nil && !req.CreateNewVersion {
+			updateQuery := `
+			UPDATE generated_manga_stories SET
+				title = $2,
+				moral_lesson = $3,
+				story_text = $4,
+				image_model = $5,
+				analysis_json = $6,
+				character_refs_json = $7,
+				breakdown_json = $8,
+				panels_json = $9,
+				r2_prefix = $10,
+				r2_keys_json = $11,
+				updated_at = CURRENT_TIMESTAMP
+			WHERE id = $1
+			RETURNING id, created_at, updated_at;`
+			err := db.QueryRow(
+				updateQuery,
+				existing.ID,
+				rec.Title,
+				rec.MoralLesson,
+				rec.Story,
+				rec.ImageModel,
+				string(analysisJSON),
+				string(charRefsJSON),
+				string(breakdownJSON),
+				string(panelsJSON),
+				rec.R2Prefix,
+				string(r2KeysJSON),
+			).Scan(&rec.ID, &createdAt, &updatedAt)
+			if err != nil {
+				return nil, fmt.Errorf("failed updating generated manga story in database: %w", err)
+			}
+		} else {
+			insertQuery := `
+			INSERT INTO generated_manga_stories (
+				story_date, style, version, title, moral_lesson, story_text, image_model,
+				analysis_json, character_refs_json, breakdown_json, panels_json,
+				r2_prefix, r2_keys_json, created_at, updated_at
+			)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+			RETURNING id, created_at, updated_at;`
+			err := db.QueryRow(
+				insertQuery,
+				rec.Date,
+				rec.Style,
+				rec.Version,
+				rec.Title,
+				rec.MoralLesson,
+				rec.Story,
+				rec.ImageModel,
+				string(analysisJSON),
+				string(charRefsJSON),
+				string(breakdownJSON),
+				string(panelsJSON),
+				rec.R2Prefix,
+				string(r2KeysJSON),
+			).Scan(&rec.ID, &createdAt, &updatedAt)
+			if err != nil {
+				return nil, fmt.Errorf("failed saving generated manga story to database: %w", err)
+			}
 		}
 		rec.CreatedAt = createdAt.Format(time.RFC3339)
 		rec.UpdatedAt = updatedAt.Format(time.RFC3339)
@@ -306,18 +362,49 @@ func SaveMangaStoryRecord(ctx context.Context, req MangaSaveStoryRequest) (*Mang
 	// In-memory fallback
 	memMangaMu.Lock()
 	defer memMangaMu.Unlock()
-	for i := range memMangaStories {
-		if memMangaStories[i].Date == rec.Date && memMangaStories[i].Style == rec.Style {
-			rec.ID = memMangaStories[i].ID
-			rec.CreatedAt = memMangaStories[i].CreatedAt
-			memMangaStories[i] = *rec
-			return rec, nil
+	if existing != nil && !req.CreateNewVersion {
+		for i := range memMangaStories {
+			if memMangaStories[i].ID == existing.ID {
+				rec.ID = memMangaStories[i].ID
+				rec.CreatedAt = memMangaStories[i].CreatedAt
+				memMangaStories[i] = *rec
+				return rec, nil
+			}
 		}
 	}
 	rec.ID = memNextMangaID
 	memNextMangaID++
 	memMangaStories = append([]MangaStoryRecord{*rec}, memMangaStories...)
 	return rec, nil
+}
+
+func getNextMangaVersion(date, style string) int {
+	cleanDate := strings.TrimSpace(date)
+	normStyle := normalizeMangaStyle(style)
+
+	if dbAvailable() {
+		var maxVer sql.NullInt64
+		err := db.QueryRow(`
+			SELECT COALESCE(MAX(version), 0)
+			FROM generated_manga_stories
+			WHERE story_date = $1 AND style = $2`, cleanDate, normStyle).Scan(&maxVer)
+		if err == nil && maxVer.Valid {
+			return int(maxVer.Int64) + 1
+		}
+		return 1
+	}
+
+	memMangaMu.Lock()
+	defer memMangaMu.Unlock()
+	maxV := 0
+	for i := range memMangaStories {
+		if memMangaStories[i].Date == cleanDate && memMangaStories[i].Style == normStyle {
+			if memMangaStories[i].Version > maxV {
+				maxV = memMangaStories[i].Version
+			}
+		}
+	}
+	return maxV + 1
 }
 
 func scanMangaStoryRow(scanner interface {
@@ -331,6 +418,7 @@ func scanMangaStoryRow(scanner interface {
 		&rec.ID,
 		&rec.Date,
 		&rec.Style,
+		&rec.Version,
 		&rec.Title,
 		&rec.MoralLesson,
 		&rec.Story,
@@ -348,6 +436,9 @@ func scanMangaStoryRow(scanner interface {
 		return nil, err
 	}
 
+	if rec.Version <= 0 {
+		rec.Version = 1
+	}
 	_ = json.Unmarshal([]byte(analysisRaw), &rec.StoryAnalysis)
 	_ = json.Unmarshal([]byte(charRefsRaw), &rec.CharacterReferences)
 	_ = json.Unmarshal([]byte(breakdownRaw), &rec.StoryBreakdown)
@@ -368,20 +459,21 @@ func GetMangaStoryByDateAndStyle(date, style string) (*MangaStoryRecord, error) 
 		var row *sql.Row
 		if cleanStyle != "" {
 			row = db.QueryRow(`
-				SELECT id, story_date, style, title, moral_lesson, story_text, image_model,
+				SELECT id, story_date, style, version, title, moral_lesson, story_text, image_model,
 				       analysis_json, character_refs_json, breakdown_json, panels_json,
 				       r2_prefix, r2_keys_json, created_at, updated_at
 				FROM generated_manga_stories
 				WHERE story_date = $1 AND style = $2
+				ORDER BY version DESC, updated_at DESC
 				LIMIT 1`, cleanDate, normalizeMangaStyle(cleanStyle))
 		} else {
 			row = db.QueryRow(`
-				SELECT id, story_date, style, title, moral_lesson, story_text, image_model,
+				SELECT id, story_date, style, version, title, moral_lesson, story_text, image_model,
 				       analysis_json, character_refs_json, breakdown_json, panels_json,
 				       r2_prefix, r2_keys_json, created_at, updated_at
 				FROM generated_manga_stories
 				WHERE story_date = $1
-				ORDER BY updated_at DESC
+				ORDER BY updated_at DESC, version DESC
 				LIMIT 1`, cleanDate)
 		}
 		rec, err := scanMangaStoryRow(row)
@@ -396,14 +488,86 @@ func GetMangaStoryByDateAndStyle(date, style string) (*MangaStoryRecord, error) 
 
 	memMangaMu.Lock()
 	defer memMangaMu.Unlock()
+	var best *MangaStoryRecord
 	for i := range memMangaStories {
 		if memMangaStories[i].Date == cleanDate && (cleanStyle == "" || memMangaStories[i].Style == normalizeMangaStyle(cleanStyle)) {
-			copied := memMangaStories[i]
-			hydrateRecordAssetURLs(&copied)
-			return &copied, nil
+			if best == nil || memMangaStories[i].Version > best.Version {
+				copied := memMangaStories[i]
+				best = &copied
+			}
 		}
 	}
+	if best != nil {
+		hydrateRecordAssetURLs(best)
+		return best, nil
+	}
 	return nil, nil
+}
+
+func ListMangaStoryVersions(date, style string) ([]MangaStoryVersionInfo, error) {
+	cleanDate := strings.TrimSpace(date)
+	cleanStyle := strings.ToLower(strings.TrimSpace(style))
+
+	if dbAvailable() {
+		var rows *sql.Rows
+		var err error
+		if cleanStyle != "" {
+			rows, err = db.Query(`
+				SELECT id, version, style, title, image_model, created_at, updated_at
+				FROM generated_manga_stories
+				WHERE story_date = $1 AND style = $2
+				ORDER BY version DESC, updated_at DESC`, cleanDate, normalizeMangaStyle(cleanStyle))
+		} else {
+			rows, err = db.Query(`
+				SELECT id, version, style, title, image_model, created_at, updated_at
+				FROM generated_manga_stories
+				WHERE story_date = $1
+				ORDER BY updated_at DESC, version DESC`, cleanDate)
+		}
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		var versions []MangaStoryVersionInfo
+		for rows.Next() {
+			var v MangaStoryVersionInfo
+			var createdAt, updatedAt time.Time
+			if scanErr := rows.Scan(&v.ID, &v.Version, &v.Style, &v.Title, &v.ImageModel, &createdAt, &updatedAt); scanErr != nil {
+				continue
+			}
+			if v.Version <= 0 {
+				v.Version = 1
+			}
+			v.CreatedAt = createdAt.Format(time.RFC3339)
+			v.UpdatedAt = updatedAt.Format(time.RFC3339)
+			versions = append(versions, v)
+		}
+		return versions, nil
+	}
+
+	memMangaMu.Lock()
+	defer memMangaMu.Unlock()
+	var versions []MangaStoryVersionInfo
+	for i := range memMangaStories {
+		m := memMangaStories[i]
+		if m.Date == cleanDate && (cleanStyle == "" || m.Style == normalizeMangaStyle(cleanStyle)) {
+			ver := m.Version
+			if ver <= 0 {
+				ver = 1
+			}
+			versions = append(versions, MangaStoryVersionInfo{
+				ID:         m.ID,
+				Version:    ver,
+				Style:      m.Style,
+				Title:      m.Title,
+				ImageModel: m.ImageModel,
+				CreatedAt:  m.CreatedAt,
+				UpdatedAt:  m.UpdatedAt,
+			})
+		}
+	}
+	return versions, nil
 }
 
 func GetMangaStoryByID(id int) (*MangaStoryRecord, error) {
@@ -413,7 +577,7 @@ func GetMangaStoryByID(id int) (*MangaStoryRecord, error) {
 
 	if dbAvailable() {
 		row := db.QueryRow(`
-			SELECT id, story_date, style, title, moral_lesson, story_text, image_model,
+			SELECT id, story_date, style, version, title, moral_lesson, story_text, image_model,
 			       analysis_json, character_refs_json, breakdown_json, panels_json,
 			       r2_prefix, r2_keys_json, created_at, updated_at
 			FROM generated_manga_stories
@@ -458,10 +622,16 @@ func recordToSummary(rec *MangaStoryRecord) MangaStorySummary {
 		panelCount = len(rec.GeneratedPanels)
 	}
 
+	ver := rec.Version
+	if ver <= 0 {
+		ver = 1
+	}
+
 	return MangaStorySummary{
 		ID:             rec.ID,
 		Date:           rec.Date,
 		Style:          rec.Style,
+		Version:        ver,
 		Title:          rec.Title,
 		MoralLesson:    rec.MoralLesson,
 		ImageModel:     rec.ImageModel,
@@ -479,11 +649,11 @@ func recordToSummary(rec *MangaStoryRecord) MangaStorySummary {
 func ListMangaStories() ([]MangaStorySummary, error) {
 	if dbAvailable() {
 		rows, err := db.Query(`
-			SELECT id, story_date, style, title, moral_lesson, story_text, image_model,
+			SELECT id, story_date, style, version, title, moral_lesson, story_text, image_model,
 			       analysis_json, character_refs_json, breakdown_json, panels_json,
 			       r2_prefix, r2_keys_json, created_at, updated_at
 			FROM generated_manga_stories
-			ORDER BY story_date DESC, updated_at DESC`)
+			ORDER BY story_date DESC, version DESC, updated_at DESC`)
 		if err != nil {
 			return nil, err
 		}
@@ -590,15 +760,21 @@ func mangaStoryHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if rec == nil {
 			json.NewEncoder(w).Encode(map[string]interface{}{
-				"success": true,
-				"found":   false,
+				"success":  true,
+				"found":    false,
+				"versions": []MangaStoryVersionInfo{},
 			})
 			return
 		}
+		versions, _ := ListMangaStoryVersions(rec.Date, style)
+		if versions == nil {
+			versions = []MangaStoryVersionInfo{}
+		}
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": true,
-			"found":   true,
-			"story":   rec,
+			"success":  true,
+			"found":    true,
+			"story":    rec,
+			"versions": versions,
 		})
 
 	case http.MethodPost, http.MethodPut:
@@ -617,10 +793,15 @@ func mangaStoryHandler(w http.ResponseWriter, r *http.Request) {
 			respondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
+		versions, _ := ListMangaStoryVersions(rec.Date, rec.Style)
+		if versions == nil {
+			versions = []MangaStoryVersionInfo{}
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": true,
-			"story":   rec,
+			"success":  true,
+			"story":    rec,
+			"versions": versions,
 		})
 
 	case http.MethodDelete:

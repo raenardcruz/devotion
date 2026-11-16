@@ -66,6 +66,9 @@ type MangaPanelPlan struct {
 	Narrative        string   `json:"narrative"`
 	CameraAngle      string   `json:"cameraAngle"`
 	VisualMood       string   `json:"visualMood"`
+	LayoutRow        int      `json:"layoutRow,omitempty"`
+	ColSpan          int      `json:"colSpan,omitempty"`
+	AspectRatio      string   `json:"aspectRatio,omitempty"`
 }
 
 type MangaStoryBreakdown struct {
@@ -481,7 +484,7 @@ Full body character design showing front view of %s:
 			}
 		}
 
-		dataURL, usedModel, err := generateGeminiImage(ctx, imageModel, prompt, refImages)
+		dataURL, usedModel, err := generateGeminiImage(ctx, imageModel, prompt, refImages, "1:1")
 		if err != nil {
 			return nil, imageModel, fmt.Errorf("failed to generate reference for %s: %w", character.Name, err)
 		}
@@ -564,7 +567,7 @@ func chunkStoryInternal(ctx context.Context, req MangaChunkStoryRequest) (*Manga
 		actionDetail = " (emphasize visual storytelling without dialogue)"
 	}
 
-	prompt := fmt.Sprintf(`Break down this story into a cohesive mix of narrative prose and illustrated comic/manga panels so that reading the panels together with each panel's accompanying narrative tells the ENTIRE story from beginning to end.
+	prompt := fmt.Sprintf(`Break down this story into a cohesive mix of narrative prose and illustrated comic/manga panels arranged in a classic, dynamic comic-book page layout (NOT a uniform 2-column grid).
 
 Story: "%s"
 Characters: %s
@@ -573,16 +576,25 @@ Style: %s
 
 %s
 
-Create 4-6 panels (prefer 5-6 panels when needed) to carry the full narrative arc from the opening problem, listening to the day's Scripture readings, applying the lesson, to the final resolution.
+Create 5-6 panels (4-6 panels total) to carry the full narrative arc from the opening problem, listening to the day's Scripture readings, applying the lesson, to the final resolution.
 
 %s
 
+Design a varied, authentic comic page layout using a 6-column grid where each row's colSpan values sum to exactly 6:
+- Full-width splash / establishing / climax row: 1 panel with colSpan=6, aspectRatio="16:9"
+- Asymmetric dramatic row: 2 panels with colSpan=4 (aspectRatio="4:3") and colSpan=2 (aspectRatio="2:3"), or vice versa (2 + 4)
+- Balanced two-panel row: 2 panels with colSpan=3 (aspectRatio="1:1") and colSpan=3 (aspectRatio="1:1")
+- Three-beat montage / reaction row: 3 panels with colSpan=2 (aspectRatio="2:3") each
+
+Assign sequential layoutRow numbers starting at 1, and ensure every row's colSpan sums to 6.
+
 Because comic panels and speech bubbles alone are too brief to carry all the story's depth, EVERY panel must combine visual illustration direction with a rich literary narrative passage:
 - Characters present
-- Action/scene description (concrete visual directions for the illustrator: composition, poses, facial expressions, environment)%s
+- Action/scene description (concrete visual directions for the illustrator tailored to the tile's aspect ratio: wide panoramic framing for 16:9/4:3, tall vertical framing for 2:3, balanced framing for 1:1)%s
 - Narrative (2-4 vivid sentences of storytelling prose, ~40-80 words, that supplements this panel—bridging from the previous beat, revealing inner thoughts, feelings, context, and the spiritual lesson from the readings—so that all panel narratives together tell the complete story seamlessly without repeating the scene directions verbatim)
 - Camera angle (close-up, medium shot, wide shot, etc.)
 - Visual mood/atmosphere
+- layoutRow (1-based row number), colSpan (2, 3, 4, or 6), and aspectRatio ("16:9", "4:3", "1:1", or "2:3")
 
 Return as a flat array of panels with sequential panel numbers.`,
 		req.Story,
@@ -611,6 +623,9 @@ Return as a flat array of panels with sequential panel numbers.`,
 						"narrative":        {Type: genai.TypeString},
 						"cameraAngle":      {Type: genai.TypeString},
 						"visualMood":       {Type: genai.TypeString},
+						"layoutRow":        {Type: genai.TypeInteger},
+						"colSpan":          {Type: genai.TypeInteger},
+						"aspectRatio":      {Type: genai.TypeString},
 					},
 					PropertyOrdering: []string{
 						"panelNumber",
@@ -620,8 +635,21 @@ Return as a flat array of panels with sequential panel numbers.`,
 						"narrative",
 						"cameraAngle",
 						"visualMood",
+						"layoutRow",
+						"colSpan",
+						"aspectRatio",
 					},
-					Required: []string{"panelNumber", "characters", "sceneDescription", "narrative", "cameraAngle", "visualMood"},
+					Required: []string{
+						"panelNumber",
+						"characters",
+						"sceneDescription",
+						"narrative",
+						"cameraAngle",
+						"visualMood",
+						"layoutRow",
+						"colSpan",
+						"aspectRatio",
+					},
 				},
 			},
 		},
@@ -644,8 +672,74 @@ Return as a flat array of panels with sequential panel numbers.`,
 	return &storyBreakdown, nil
 }
 
+func aspectRatioForColSpan(colSpan int) string {
+	switch colSpan {
+	case 6:
+		return "16:9"
+	case 4:
+		return "4:3"
+	case 2:
+		return "2:3"
+	default:
+		return "1:1"
+	}
+}
+
+func normalizeAspectRatio(raw string, colSpan int) string {
+	trimmed := strings.TrimSpace(raw)
+	switch trimmed {
+	case "16:9", "4:3", "1:1", "2:3", "3:4", "3:2", "9:16", "21:9":
+		// Ensure paired tiles in a row share a consistent height ratio
+		if colSpan > 0 {
+			return aspectRatioForColSpan(colSpan)
+		}
+		return trimmed
+	default:
+		return aspectRatioForColSpan(colSpan)
+	}
+}
+
+func defaultComicRowSpans(total int) [][]int {
+	switch total {
+	case 1:
+		return [][]int{{6}}
+	case 2:
+		return [][]int{{4, 2}}
+	case 3:
+		return [][]int{{6}, {3, 3}}
+	case 4:
+		return [][]int{{6}, {4, 2}, {6}}
+	case 5:
+		return [][]int{{6}, {4, 2}, {3, 3}}
+	case 6:
+		return [][]int{{6}, {4, 2}, {2, 2, 2}}
+	default:
+		var rows [][]int
+		remaining := total
+		rowIdx := 0
+		for remaining > 0 {
+			switch {
+			case remaining >= 3 && rowIdx%3 == 2:
+				rows = append(rows, []int{2, 2, 2})
+				remaining -= 3
+			case remaining >= 2 && rowIdx%2 == 1:
+				rows = append(rows, []int{4, 2})
+				remaining -= 2
+			case remaining >= 2:
+				rows = append(rows, []int{3, 3})
+				remaining -= 2
+			default:
+				rows = append(rows, []int{6})
+				remaining--
+			}
+			rowIdx++
+		}
+		return rows
+	}
+}
+
 func normalizeStoryBreakdown(breakdown *MangaStoryBreakdown) {
-	if breakdown == nil {
+	if breakdown == nil || len(breakdown.Panels) == 0 {
 		return
 	}
 	for i := range breakdown.Panels {
@@ -656,6 +750,53 @@ func normalizeStoryBreakdown(breakdown *MangaStoryBreakdown) {
 		if breakdown.Panels[i].Narrative == "" {
 			breakdown.Panels[i].Narrative = strings.TrimSpace(breakdown.Panels[i].SceneDescription)
 		}
+	}
+
+	// Validate whether existing layoutRow/colSpan assignments form valid 6-column rows
+	validLayout := true
+	rowSums := make(map[int]int)
+	var rowOrder []int
+	for _, p := range breakdown.Panels {
+		if p.LayoutRow <= 0 || (p.ColSpan != 2 && p.ColSpan != 3 && p.ColSpan != 4 && p.ColSpan != 6) {
+			validLayout = false
+			break
+		}
+		if _, exists := rowSums[p.LayoutRow]; !exists {
+			rowOrder = append(rowOrder, p.LayoutRow)
+		}
+		rowSums[p.LayoutRow] += p.ColSpan
+	}
+	if validLayout {
+		for _, r := range rowOrder {
+			if rowSums[r] != 6 {
+				validLayout = false
+				break
+			}
+		}
+	}
+
+	if !validLayout {
+		rows := defaultComicRowSpans(len(breakdown.Panels))
+		idx := 0
+		for rIdx, spans := range rows {
+			for _, span := range spans {
+				if idx >= len(breakdown.Panels) {
+					break
+				}
+				breakdown.Panels[idx].LayoutRow = rIdx + 1
+				breakdown.Panels[idx].ColSpan = span
+				breakdown.Panels[idx].AspectRatio = aspectRatioForColSpan(span)
+				idx++
+			}
+		}
+		return
+	}
+
+	for i := range breakdown.Panels {
+		breakdown.Panels[i].AspectRatio = normalizeAspectRatio(
+			breakdown.Panels[i].AspectRatio,
+			breakdown.Panels[i].ColSpan,
+		)
 	}
 }
 
@@ -731,12 +872,24 @@ func generatePanelInternal(ctx context.Context, req MangaGeneratePanelRequest) (
 		dialoguePart = fmt.Sprintf(`Dialogue: "%s"`, req.Panel.Dialogue)
 	}
 
+	aspectRatio := normalizeAspectRatio(req.Panel.AspectRatio, req.Panel.ColSpan)
+	tileComposition := "balanced square 1:1 panel framing"
+	switch aspectRatio {
+	case "16:9", "21:9":
+		tileComposition = fmt.Sprintf("wide cinematic %s splash panel framing (horizontal panoramic composition)", aspectRatio)
+	case "4:3", "3:2":
+		tileComposition = fmt.Sprintf("wide horizontal %s panel framing", aspectRatio)
+	case "2:3", "3:4", "9:16":
+		tileComposition = fmt.Sprintf("tall vertical %s portrait panel framing (vertical emphasis)", aspectRatio)
+	}
+
 	prompt := fmt.Sprintf(`Create a single comic panel in %s.
 
 Setting: %s, %s, mood: %s
 
 Panel Details:
 Panel %d: %s shot of %s. Scene: %s. %s. Mood: %s.
+Tile Layout & Framing: %s.
 
 IMPORTANT: Use the character reference images provided to maintain visual consistency. Each character should match their appearance from the reference images exactly.
 `,
@@ -750,6 +903,7 @@ IMPORTANT: Use the character reference images provided to maintain visual consis
 		req.Panel.SceneDescription,
 		dialoguePart,
 		req.Panel.VisualMood,
+		tileComposition,
 	)
 
 	if len(req.UploadedSettingReferences) > 0 {
@@ -797,7 +951,7 @@ Generate a single comic panel image with proper framing and composition.
 		}
 	}
 
-	dataURL, usedModel, err := generateGeminiImage(ctx, imageModel, prompt, refImages)
+	dataURL, usedModel, err := generateGeminiImage(ctx, imageModel, prompt, refImages, aspectRatio)
 	if err != nil {
 		return nil, usedModel, err
 	}
@@ -1055,7 +1209,7 @@ func resolveReferenceImageBytes(ctx context.Context, ref string) ([]byte, string
 	return decodeDataURL(trimmed)
 }
 
-func generateGeminiImage(ctx context.Context, requestedModel string, prompt string, referenceDataURLs []string) (string, string, error) {
+func generateGeminiImage(ctx context.Context, requestedModel string, prompt string, referenceDataURLs []string, aspectRatio string) (string, string, error) {
 	apiKey := resolveGeminiAPIKey()
 	if apiKey == "" {
 		return "", requestedModel, fmt.Errorf("Gemini API key is not configured in Admin Settings")
@@ -1095,12 +1249,18 @@ func generateGeminiImage(ctx context.Context, requestedModel string, prompt stri
 
 	var lastErr error
 	for _, m := range modelsToTry {
-		log.Printf("[generateGeminiImage] Calling Gemini image generation with model %q (refs=%d)", m, len(referenceDataURLs))
+		log.Printf("[generateGeminiImage] Calling Gemini image generation with model %q (refs=%d, aspectRatio=%q)", m, len(referenceDataURLs), aspectRatio)
 
 		var cfg *genai.GenerateContentConfig
 		if strings.Contains(m, "2.0-flash") {
 			cfg = &genai.GenerateContentConfig{
 				ResponseModalities: []string{"TEXT", "IMAGE"},
+			}
+		} else if aspectRatio != "" {
+			cfg = &genai.GenerateContentConfig{
+				ImageConfig: &genai.ImageConfig{
+					AspectRatio: aspectRatio,
+				},
 			}
 		}
 

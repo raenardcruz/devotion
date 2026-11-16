@@ -47,6 +47,9 @@ export interface MangaPanelPlan {
   narrative?: string;
   cameraAngle: string;
   visualMood: string;
+  layoutRow?: number;
+  colSpan?: number;
+  aspectRatio?: string;
 }
 
 export interface MangaStoryBreakdown {
@@ -59,10 +62,21 @@ export interface MangaGeneratedPanel {
   r2Key?: string;
 }
 
+export interface MangaStoryVersionInfo {
+  id: number;
+  version: number;
+  style: ComicStyle;
+  title: string;
+  imageModel: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface MangaStoryRecord {
   id: number;
   date: string;
   style: ComicStyle;
+  version?: number;
   title: string;
   moralLesson: string;
   story: string;
@@ -180,6 +194,9 @@ export function useStoryToManga() {
   const storyBreakdown = ref<MangaStoryBreakdown | null>(null);
   const generatedPanels = ref<MangaGeneratedPanel[]>([]);
   const r2Stored = ref<boolean>(false);
+  const currentStoryId = ref<number | null>(null);
+  const currentVersion = ref<number>(1);
+  const availableVersions = ref<MangaStoryVersionInfo[]>([]);
 
   const isGenerating = ref(false);
   const isAnalyzing = ref(false);
@@ -239,13 +256,14 @@ export function useStoryToManga() {
     }
   };
 
-  const checkStoryExists = async (date: string): Promise<boolean> => {
+  const checkStoryExists = async (date: string, anyStyle = false): Promise<boolean> => {
     try {
+      const styleQuery = anyStyle ? '' : `&style=${encodeURIComponent(style.value)}`;
       const res = await fetchWithAuth<{
         success: boolean;
         found: boolean;
         story?: MangaStoryRecord;
-      }>(`/api/manga/story?date=${encodeURIComponent(date)}&style=${encodeURIComponent(style.value)}`);
+      }>(`/api/manga/story?date=${encodeURIComponent(date)}${styleQuery}`);
       return Boolean(res?.found && res.story);
     } catch {
       return false;
@@ -269,7 +287,18 @@ export function useStoryToManga() {
     return getApiUrl(`/api/manga/asset?key=${encodeURIComponent(r2Key)}`);
   };
 
-  const applyServerStoryRecord = (rec: MangaStoryRecord) => {
+  const applyServerStoryRecord = (
+    rec: MangaStoryRecord,
+    versions?: MangaStoryVersionInfo[]
+  ) => {
+    currentStoryId.value = rec.id || null;
+    currentVersion.value = rec.version && rec.version > 0 ? rec.version : 1;
+    if (Array.isArray(versions)) {
+      availableVersions.value = versions;
+    }
+    if (rec.style === 'manga' || rec.style === 'comic') {
+      style.value = rec.style;
+    }
     generatedStory.value = rec.story || rec.storyAnalysis?.story || '';
     moralLesson.value = rec.moralLesson || rec.storyAnalysis?.moralLesson || '';
     storyAnalysis.value = rec.storyAnalysis || null;
@@ -290,21 +319,43 @@ export function useStoryToManga() {
     }
   };
 
-  const loadStateFromServer = async (date: string): Promise<boolean> => {
+  const loadStateFromServer = async (date: string, anyStyle = false): Promise<boolean> => {
     try {
+      const styleQuery = anyStyle ? '' : `&style=${encodeURIComponent(style.value)}`;
       const res = await fetchWithAuth<{
         success: boolean;
         found: boolean;
         story?: MangaStoryRecord;
-      }>(`/api/manga/story?date=${encodeURIComponent(date)}&style=${encodeURIComponent(style.value)}`);
+        versions?: MangaStoryVersionInfo[];
+      }>(`/api/manga/story?date=${encodeURIComponent(date)}${styleQuery}`);
 
       if (res?.found && res.story) {
-        applyServerStoryRecord(res.story);
+        applyServerStoryRecord(res.story, res.versions);
         return (
           Boolean(storyAnalysis.value) &&
           characterReferences.value.length > 0 &&
           generatedPanels.value.length > 0
         );
+      }
+      availableVersions.value = [];
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const loadVersionFromServer = async (id: number): Promise<boolean> => {
+    try {
+      const res = await fetchWithAuth<{
+        success: boolean;
+        found: boolean;
+        story?: MangaStoryRecord;
+        versions?: MangaStoryVersionInfo[];
+      }>(`/api/manga/story?id=${encodeURIComponent(String(id))}`);
+
+      if (res?.found && res.story) {
+        applyServerStoryRecord(res.story, res.versions);
+        return true;
       }
       return false;
     } catch {
@@ -312,18 +363,21 @@ export function useStoryToManga() {
     }
   };
 
-  const saveStateToServer = async (date: string): Promise<boolean> => {
+  const saveStateToServer = async (date: string, createNewVersion = false): Promise<boolean> => {
     if (!storyAnalysis.value) return false;
     try {
       const res = await fetchWithAuth<{
         success: boolean;
         story?: MangaStoryRecord;
+        versions?: MangaStoryVersionInfo[];
       }>('/api/manga/story', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          id: createNewVersion ? undefined : currentStoryId.value || undefined,
           date,
           style: style.value,
+          createNewVersion,
           imageModel: imageModel.value,
           generatedStory: generatedStory.value,
           moralLesson: moralLesson.value,
@@ -334,7 +388,7 @@ export function useStoryToManga() {
         }),
       });
       if (res?.story) {
-        applyServerStoryRecord(res.story);
+        applyServerStoryRecord(res.story, res.versions);
         return true;
       }
       return false;
@@ -638,7 +692,8 @@ export function useStoryToManga() {
       isGeneratingPanels.value = false;
 
       currentStepText.value = 'Story & Manga generation complete! Saving to storage...';
-      const savedOnServer = await saveStateToServer(date);
+      const createNewVersion = forceRegenerate || Boolean(trimmedCustomStory) || validCustomChars.length > 0;
+      const savedOnServer = await saveStateToServer(date, createNewVersion);
       if (!savedOnServer) {
         await saveStateForDate(date);
       }
@@ -750,6 +805,9 @@ export function useStoryToManga() {
     storyBreakdown,
     generatedPanels,
     r2Stored,
+    currentStoryId,
+    currentVersion,
+    availableVersions,
     isGenerating,
     isAnalyzing,
     isGeneratingCharacters,
@@ -766,6 +824,7 @@ export function useStoryToManga() {
     getProxyAssetUrl,
     checkStoryExists,
     loadStateFromServer,
+    loadVersionFromServer,
     generateStoryAndManga,
     regenerateCharacter,
     regeneratePanel,
