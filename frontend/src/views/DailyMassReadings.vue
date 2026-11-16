@@ -12,6 +12,7 @@ import AppTabs from '../components/common/AppTabs.vue';
 import CatechismBubble from '../components/catechism/CatechismBubble.vue';
 import FactCheckCitations, { type MagisteriumCitation } from '../components/common/FactCheckCitations.vue';
 import StoryToMangaModal from '../components/devotion/StoryToMangaModal.vue';
+import DailyMangaTab from '../components/devotion/DailyMangaTab.vue';
 
 interface Reading {
   citation: string;
@@ -47,10 +48,11 @@ const modalDate = ref(getLocalISOString());
 const isModalOpen = ref(false);
 const isStoryMangaModalOpen = ref(false);
 const hasMangaStory = ref(false);
+const mangaRefreshKey = ref(0);
 
 const refreshMangaAvailability = async () => {
   syncAdminState();
-  hasMangaStory.value = await checkStoryExists(selectedDate.value);
+  hasMangaStory.value = await checkStoryExists(selectedDate.value, true);
 };
 
 const openStoryMangaModal = () => {
@@ -61,9 +63,10 @@ const openStoryMangaModal = () => {
   isStoryMangaModalOpen.value = true;
 };
 
-const closeStoryMangaModal = () => {
+const closeStoryMangaModal = async () => {
   isStoryMangaModalOpen.value = false;
-  refreshMangaAvailability();
+  await refreshMangaAvailability();
+  mangaRefreshKey.value++;
 };
 
 const openModal = () => {
@@ -219,6 +222,9 @@ const availableTabs = computed(() => {
   if (readings.value.pope_quote) {
     tabs.push({ id: 'pope_quote', label: 'Words of the Popes' });
   }
+  if (hasMangaStory.value) {
+    tabs.push({ id: 'manga_story', label: 'Story & Manga' });
+  }
   return tabs;
 });
 </script>
@@ -269,7 +275,7 @@ const availableTabs = computed(() => {
               v-if="readings && (isAdmin || hasMangaStory)"
               @click="openStoryMangaModal"
               class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#322D29] via-[#72383D] to-[#542529] hover:from-[#72383D] hover:to-[#322D29] text-white border border-[#72383D] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#72383D]/40 active:scale-95 cursor-pointer"
-              :title="isAdmin ? 'One-click generate or view a custom story & manga based on today\'s readings' : 'Read today\'s illustrated story & manga'"
+              :title="isAdmin ? 'Step-by-step studio to write or AI-generate a story, adjust characters, and create manga panels' : 'Read today\'s illustrated story & manga'"
             >
               <span>{{ isAdmin ? '🎨' : '📖' }}</span>
               <span>{{ isAdmin ? 'Generate Story & Manga' : 'Read Story & Manga' }}</span>
@@ -466,6 +472,16 @@ const availableTabs = computed(() => {
               </div>
             </ParchmentCard>
 
+            <!-- Story & Manga Tab -->
+            <DailyMangaTab
+              v-if="activeTab === 'manga_story' && hasMangaStory"
+              :key="`manga-${selectedDate}-${mangaRefreshKey}`"
+              :date="selectedDate"
+              :formattedDate="formattedDate"
+              :isAdmin="isAdmin"
+              @open-generator="openStoryMangaModal"
+            />
+
           </div>
         </transition>
 
@@ -642,7 +658,7 @@ const availableTabs = computed(() => {
       </transition>
     </Teleport>
 
-    <!-- Story-to-Manga One-Click Generator Modal -->
+    <!-- Story-to-Manga Step-by-Step Studio Modal -->
     <StoryToMangaModal
       :isOpen="isStoryMangaModalOpen"
       :date="selectedDate"

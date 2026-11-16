@@ -243,3 +243,27 @@ func TestMangaGenerationRequiresAdmin(t *testing.T) {
 		}
 	}
 }
+
+func TestSelectUploadedRefsForCharacter(t *testing.T) {
+	uploads := []MangaUploadedReference{
+		{Name: "Leo", Image: "data:image/png;base64,leo"},
+		{Name: "Maria", Image: "data:image/png;base64,maria"},
+		{Name: "", Image: "data:image/png;base64,style"},
+	}
+
+	matching, general := selectUploadedRefsForCharacter("Leo", uploads)
+	if len(matching) != 1 || matching[0].Name != "Leo" {
+		t.Fatalf("expected only Leo match, got %+v", matching)
+	}
+	if len(general) != 1 || general[0].Image != "data:image/png;base64,style" {
+		t.Fatalf("expected 1 general upload, got %+v", general)
+	}
+
+	matchingOther, generalOther := selectUploadedRefsForCharacter("Peter", uploads)
+	if len(matchingOther) != 0 {
+		t.Fatalf("expected 0 specific matches for Peter, got %+v", matchingOther)
+	}
+	if len(generalOther) != 1 {
+		t.Fatalf("expected 1 general upload for Peter, got %+v", generalOther)
+	}
+}

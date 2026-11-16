@@ -270,6 +270,7 @@ func InitDB() {
 		id SERIAL PRIMARY KEY,
 		story_date VARCHAR(20) NOT NULL,
 		style VARCHAR(20) NOT NULL DEFAULT 'manga',
+		version INTEGER NOT NULL DEFAULT 1,
 		title VARCHAR(300) NOT NULL DEFAULT '',
 		moral_lesson TEXT NOT NULL DEFAULT '',
 		story_text TEXT NOT NULL DEFAULT '',
@@ -282,7 +283,7 @@ func InitDB() {
 		r2_keys_json JSONB NOT NULL DEFAULT '[]'::jsonb,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		UNIQUE (story_date, style)
+		UNIQUE (story_date, style, version)
 	);`
 
 	if _, err := db.Exec(createTableQuery); err != nil {
@@ -307,6 +308,9 @@ func InitDB() {
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS r2_access_key_id TEXT NOT NULL DEFAULT '';`,
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS r2_secret_access_key TEXT NOT NULL DEFAULT '';`,
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS r2_public_url TEXT NOT NULL DEFAULT '';`,
+		`ALTER TABLE generated_manga_stories ADD COLUMN IF NOT EXISTS version INTEGER NOT NULL DEFAULT 1;`,
+		`ALTER TABLE generated_manga_stories DROP CONSTRAINT IF EXISTS generated_manga_stories_story_date_style_key;`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_generated_manga_stories_date_style_version ON generated_manga_stories (story_date, style, version);`,
 	}
 	for _, m := range migrations {
 		if _, err := db.Exec(m); err != nil {

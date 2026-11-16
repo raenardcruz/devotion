@@ -5,10 +5,16 @@ import {
   type ReadingsPayload,
   type ComicStyle,
   type MangaPanelPlan,
-  type MangaCharacter,
+  type MangaSetting,
   type MangaUploadedReference,
 } from '../../composables/useStoryToManga';
 import { useAccessControl } from '../../composables/useAccessControl';
+import { exportMangaAsA4Pdf } from '../../utils/mangaPdfExport';
+import {
+  groupPanelsIntoComicRows,
+  getTileAspectClass,
+  getTileColSpanClass,
+} from '../../utils/mangaLayout';
 
 const props = defineProps<{
   isOpen: boolean;
@@ -34,6 +40,9 @@ const {
   storyBreakdown,
   generatedPanels,
   r2Stored,
+  currentStoryId,
+  currentVersion,
+  availableVersions,
   isGenerating,
   isAnalyzing,
   isGeneratingCharacters,
@@ -44,59 +53,156 @@ const {
   regeneratingCharacters,
   regeneratingPanels,
   loadConfig,
+  loadStateFromServer,
+  loadStateForDate,
+  loadVersionFromServer,
+  saveStateToServer,
+  resetWorkflowState,
   updateImageModel,
   updateStyle,
   getProxyAssetUrl,
-  generateStoryAndManga,
+  generateStoryWithAI,
+  analyzeUserStory,
+  generateAllCharacterRefs,
+  planStoryPanels,
+  generateAllPanels,
   regenerateCharacter,
   regeneratePanel,
 } = useStoryToManga();
 
-const showSettingsBar = ref(false);
-const showCustomStoryForm = ref(false);
-const customStoryText = ref('');
-const customCharacters = ref<
-  Array<MangaCharacter & { refImage?: string; refFileName?: string }>
->([]);
-const layoutMode = ref<'storybook' | 'grid'>('storybook');
-const lightboxImage = ref<{ url: string; caption: string } | null>(null);
-const isDownloadingComposite = ref(false);
+type WizardStep = 1 | 2 | 3;
 
-const customStoryWordCount = computed(() => {
-  const trimmed = customStoryText.value.trim();
+const activeStep = ref<WizardStep>(1);
+const showSettingsBar = ref(false);
+const isLoadingInitial = ref(false);
+const storyDraft = ref('');
+const titleDraft = ref('');
+const moralLessonDraft = ref('');
+const settingDraft = ref<MangaSetting>({
+  timePeriod: 'Modern day',
+  location: '',
+  mood: '',
+});
+const lastAnalyzedStoryText = ref('');
+const createNewVersionOnSave = ref(false);
+
+const characterUploads = ref<Record<number, { image: string; fileName?: string }>>({});
+const refineFromExisting = ref<Record<number, boolean>>({});
+const editingPanelNumber = ref<number | null>(null);
+const isSavingChanges = ref(false);
+const saveFeedback = ref<string | null>(null);
+
+const layoutMode = ref<'storybook' | 'grid'>('grid');
+const lightboxImage = ref<{ url: string; caption: string } | null>(null);
+const isExportingPdf = ref(false);
+
+const comicLayoutRows = computed(() =>
+  groupPanelsIntoComicRows(storyBreakdown.value?.panels || [])
+);
+
+const storyWordCount = computed(() => {
+  const trimmed = storyDraft.value.trim();
   return trimmed ? trimmed.split(/\s+/).length : 0;
 });
 
-const validCustomCharacters = computed(() =>
-  customCharacters.value.filter(
-    (c) => c.name.trim() !== '' && c.physicalDescription.trim() !== ''
-  )
+const canProceedStep1 = computed(() => {
+  return (
+    storyWordCount.value > 0 &&
+    storyWordCount.value <= 500 &&
+    !isAnalyzing.value &&
+    !isGenerating.value
+  );
+});
+
+const charactersList = computed(() => storyAnalysis.value?.characters || []);
+
+const generatedCharacterCount = computed(() => {
+  return charactersList.value.filter((_, idx) => Boolean(characterReferences.value[idx]?.image)).length;
+});
+
+const allCharactersHaveImages = computed(() => {
+  return (
+    charactersList.value.length > 0 &&
+    generatedCharacterCount.value === charactersList.value.length
+  );
+});
+
+const canProceedStep2 = computed(() => {
+  return (
+    charactersList.value.length > 0 &&
+    charactersList.value.every(
+      (c) => c.name.trim() !== '' && c.physicalDescription.trim() !== ''
+    ) &&
+    !isGenerating.value
+  );
+});
+
+const plannedPanelCount = computed(() => storyBreakdown.value?.panels?.length || 0);
+const generatedPanelCount = computed(() => generatedPanels.value.filter((p) => Boolean(p.image)).length);
+const allPanelsGenerated = computed(
+  () => plannedPanelCount.value > 0 && generatedPanelCount.value >= plannedPanelCount.value
 );
 
-const canSubmitCustomForm = computed(() => {
-  if (customStoryWordCount.value > 500) return false;
-  return customStoryWordCount.value > 0 || validCustomCharacters.value.length > 0;
-});
+const syncDraftsFromAnalysis = () => {
+  storyDraft.value = generatedStory.value || storyAnalysis.value?.story || '';
+  titleDraft.value = storyAnalysis.value?.title || '';
+  moralLessonDraft.value = moralLesson.value || storyAnalysis.value?.moralLesson || '';
+  settingDraft.value = {
+    timePeriod: storyAnalysis.value?.setting?.timePeriod || 'Modern day',
+    location: storyAnalysis.value?.setting?.location || '',
+    mood: storyAnalysis.value?.setting?.mood || '',
+  };
+  lastAnalyzedStoryText.value = storyDraft.value.trim();
+};
+
+const clearTransientUiState = () => {
+  characterUploads.value = {};
+  refineFromExisting.value = {};
+  editingPanelNumber.value = null;
+  saveFeedback.value = null;
+};
 
 onMounted(() => {
   syncAdminState();
   loadConfig();
 });
 
-// Automatic load or one-click generation when opened
+// Load saved story on open without auto-triggering generation
 watch(
   () => props.isOpen,
   async (open) => {
-    if (open && props.readings) {
-      syncAdminState();
+    if (!open) return;
+    syncAdminState();
+    isLoadingInitial.value = true;
+    clearTransientUiState();
+
+    try {
       await loadConfig();
       if (!isAdmin.value) {
         showSettingsBar.value = false;
-        showCustomStoryForm.value = false;
       }
-      if (!isGenerating.value) {
-        await generateStoryAndManga(props.date, props.readings, false);
+
+      let hasExisting = await loadStateFromServer(props.date, true);
+      if (!hasExisting && isAdmin.value) {
+        hasExisting = await loadStateForDate(props.date);
       }
+
+      if (hasExisting && storyAnalysis.value) {
+        syncDraftsFromAnalysis();
+        createNewVersionOnSave.value = false;
+        activeStep.value = 3;
+      } else {
+        resetWorkflowState(false);
+        storyDraft.value = '';
+        titleDraft.value = '';
+        moralLessonDraft.value = '';
+        settingDraft.value = { timePeriod: 'Modern day', location: '', mood: '' };
+        lastAnalyzedStoryText.value = '';
+        createNewVersionOnSave.value = false;
+        activeStep.value = 1;
+      }
+    } finally {
+      isLoadingInitial.value = false;
     }
   }
 );
@@ -114,89 +220,266 @@ const handleStyleChange = (newStyle: ComicStyle) => {
   updateStyle(newStyle);
 };
 
-const handleRerunAll = async () => {
-  if (!isAdmin.value || !props.readings || isGenerating.value) return;
-  await generateStoryAndManga(props.date, props.readings, true);
-};
-
-const prefillCurrentStory = () => {
-  if (generatedStory.value) {
-    customStoryText.value = generatedStory.value;
+const handleVersionChange = async (event: Event) => {
+  const target = event.target as HTMLSelectElement;
+  const id = Number(target?.value);
+  if (id > 0 && !isGenerating.value) {
+    const ok = await loadVersionFromServer(id);
+    if (ok) {
+      syncDraftsFromAnalysis();
+      clearTransientUiState();
+      createNewVersionOnSave.value = false;
+    }
   }
 };
 
-const addCustomCharacter = () => {
-  if (customCharacters.value.length >= 4) return;
-  customCharacters.value.push({
+const handleStartNewStory = () => {
+  if (!isAdmin.value || isGenerating.value) return;
+  const hadVersions = availableVersions.value.length > 0;
+  resetWorkflowState(true);
+  storyDraft.value = '';
+  titleDraft.value = '';
+  moralLessonDraft.value = '';
+  settingDraft.value = { timePeriod: 'Modern day', location: '', mood: '' };
+  lastAnalyzedStoryText.value = '';
+  clearTransientUiState();
+  createNewVersionOnSave.value = hadVersions;
+  activeStep.value = 1;
+};
+
+// Step 1: AI Pencil icon auto-generates a story from today's readings (stays on Step 1 so user can review/edit)
+const handleAiGenerateStory = async () => {
+  if (!isAdmin.value || isGenerating.value) return;
+  const hadVersions = availableVersions.value.length > 0;
+  const analysis = await generateStoryWithAI(props.date, props.readings);
+  if (analysis) {
+    if (hadVersions) {
+      createNewVersionOnSave.value = true;
+      currentStoryId.value = null;
+    }
+    syncDraftsFromAnalysis();
+    clearTransientUiState();
+  }
+};
+
+// Step 1 -> Step 2
+const handleStep1Next = async () => {
+  if (!isAdmin.value || !canProceedStep1.value) return;
+  const trimmed = storyDraft.value.trim();
+
+  if (storyAnalysis.value && trimmed === lastAnalyzedStoryText.value) {
+    if (titleDraft.value.trim()) {
+      storyAnalysis.value.title = titleDraft.value.trim();
+    }
+    if (moralLessonDraft.value.trim()) {
+      moralLesson.value = moralLessonDraft.value.trim();
+      storyAnalysis.value.moralLesson = moralLessonDraft.value.trim();
+    }
+    if (settingDraft.value.location.trim()) {
+      storyAnalysis.value.setting = { ...settingDraft.value };
+    }
+    activeStep.value = 2;
+    return;
+  }
+
+  const hadVersions = availableVersions.value.length > 0;
+  if (hadVersions && trimmed !== generatedStory.value.trim()) {
+    createNewVersionOnSave.value = true;
+    currentStoryId.value = null;
+  }
+
+  const analysis = await analyzeUserStory(props.date, props.readings, trimmed, {
+    title: titleDraft.value,
+    moralLesson: moralLessonDraft.value,
+  });
+  if (analysis) {
+    syncDraftsFromAnalysis();
+    clearTransientUiState();
+    activeStep.value = 2;
+  }
+};
+
+// Step 2: Character Design Adjustments
+const addCharacter = () => {
+  if (!storyAnalysis.value || storyAnalysis.value.characters.length >= 4) return;
+  storyAnalysis.value.characters.push({
     name: '',
-    role: customCharacters.value.length === 0 ? 'Protagonist' : 'Supporting',
+    role: storyAnalysis.value.characters.length === 0 ? 'Protagonist' : 'Supporting',
     physicalDescription: '',
     personality: '',
   });
+  characterReferences.value = [
+    ...characterReferences.value,
+    { name: '', image: '', description: '' },
+  ];
 };
 
-const removeCustomCharacter = (idx: number) => {
-  customCharacters.value.splice(idx, 1);
-};
+const removeCharacter = (idx: number) => {
+  if (!storyAnalysis.value || storyAnalysis.value.characters.length <= 1) return;
+  storyAnalysis.value.characters.splice(idx, 1);
 
-const prefillCurrentCharacters = () => {
-  if (!storyAnalysis.value?.characters?.length) return;
-  customCharacters.value = storyAnalysis.value.characters.slice(0, 4).map((c) => ({
-    name: c.name,
-    role: c.role,
-    physicalDescription: c.physicalDescription,
-    personality: c.personality,
-  }));
+  const nextRefs = [...characterReferences.value];
+  if (idx < nextRefs.length) {
+    nextRefs.splice(idx, 1);
+  }
+  characterReferences.value = nextRefs;
+
+  const nextUploads: Record<number, { image: string; fileName?: string }> = {};
+  Object.entries(characterUploads.value).forEach(([k, v]) => {
+    const keyIdx = Number(k);
+    if (keyIdx < idx) nextUploads[keyIdx] = v;
+    else if (keyIdx > idx) nextUploads[keyIdx - 1] = v;
+  });
+  characterUploads.value = nextUploads;
+
+  const nextRefine: Record<number, boolean> = {};
+  Object.entries(refineFromExisting.value).forEach(([k, v]) => {
+    const keyIdx = Number(k);
+    if (keyIdx < idx) nextRefine[keyIdx] = v;
+    else if (keyIdx > idx) nextRefine[keyIdx - 1] = v;
+  });
+  refineFromExisting.value = nextRefine;
 };
 
 const handleCharacterRefUpload = (idx: number, event: Event) => {
   const input = event.target as HTMLInputElement;
   const file = input?.files?.[0];
-  if (!file || !customCharacters.value[idx]) return;
+  if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
     const result = typeof reader.result === 'string' ? reader.result : '';
-    if (result && customCharacters.value[idx]) {
-      customCharacters.value[idx].refImage = result;
-      customCharacters.value[idx].refFileName = file.name;
+    if (result) {
+      characterUploads.value = {
+        ...characterUploads.value,
+        [idx]: { image: result, fileName: file.name },
+      };
     }
   };
   reader.readAsDataURL(file);
 };
 
 const clearCharacterRefUpload = (idx: number) => {
-  if (!customCharacters.value[idx]) return;
-  customCharacters.value[idx].refImage = undefined;
-  customCharacters.value[idx].refFileName = undefined;
+  const next = { ...characterUploads.value };
+  delete next[idx];
+  characterUploads.value = next;
 };
 
-const handleGenerateFromCustomStory = async () => {
-  if (!isAdmin.value || isGenerating.value || !canSubmitCustomForm.value) return;
-  const storyToUse = customStoryText.value.trim();
-  const charsToUse: MangaCharacter[] = validCustomCharacters.value.map((c) => ({
-    name: c.name.trim(),
-    role: c.role.trim() || 'Character',
-    physicalDescription: c.physicalDescription.trim(),
-    personality: c.personality.trim() || 'Kind and relatable',
-  }));
-  const uploadedRefs: MangaUploadedReference[] = validCustomCharacters.value
-    .filter((c) => c.refImage)
-    .map((c, i) => ({
-      id: `custom_char_${i}`,
-      name: c.name.trim(),
-      image: c.refImage!,
-      fileName: c.refFileName,
-    }));
+const buildUploadsForCharacter = (idx: number): MangaUploadedReference[] => {
+  const char = storyAnalysis.value?.characters[idx];
+  if (!char || !char.name.trim()) return [];
+  const uploaded = characterUploads.value[idx];
+  if (uploaded?.image) {
+    return [
+      {
+        id: `upload_${idx}`,
+        name: char.name.trim(),
+        image: uploaded.image,
+        fileName: uploaded.fileName,
+      },
+    ];
+  }
+  const existingImg = characterReferences.value[idx]?.image;
+  if (refineFromExisting.value[idx] && existingImg) {
+    return [
+      {
+        id: `refine_${idx}`,
+        name: char.name.trim(),
+        image: existingImg,
+      },
+    ];
+  }
+  return [];
+};
 
-  showCustomStoryForm.value = false;
-  await generateStoryAndManga(
-    props.date,
-    props.readings || {},
-    true,
-    storyToUse || undefined,
-    charsToUse.length > 0 ? charsToUse : undefined,
-    uploadedRefs.length > 0 ? uploadedRefs : undefined
+const handleGenerateSingleCharacter = async (idx: number) => {
+  if (!isAdmin.value || isGenerating.value) return;
+  const uploads = buildUploadsForCharacter(idx);
+  await regenerateCharacter(
+    idx,
+    generatedPanels.value.length > 0 ? props.date : undefined,
+    uploads.length > 0 ? uploads : undefined
   );
+};
+
+const handleGenerateAllCharacters = async (onlyMissing = false) => {
+  if (!isAdmin.value || !canProceedStep2.value) return;
+  const allUploads: MangaUploadedReference[] = [];
+  charactersList.value.forEach((_, idx) => {
+    allUploads.push(...buildUploadsForCharacter(idx));
+  });
+  await generateAllCharacterRefs(
+    allUploads.length > 0 ? allUploads : undefined,
+    onlyMissing
+  );
+};
+
+// Step 2 -> Step 3
+const handleStep2Next = async () => {
+  if (!isAdmin.value || !canProceedStep2.value) return;
+  activeStep.value = 3;
+  if (!storyBreakdown.value?.panels?.length) {
+    await planStoryPanels();
+  }
+};
+
+// Step 3: Panels
+const handleReplanStoryboard = async () => {
+  if (!isAdmin.value || isGenerating.value) return;
+  editingPanelNumber.value = null;
+  await planStoryPanels();
+};
+
+const handleGenerateAllPanels = async (onlyMissing = false) => {
+  if (!isAdmin.value || isGenerating.value) return;
+  editingPanelNumber.value = null;
+  const ok = await generateAllPanels(props.date, createNewVersionOnSave.value, onlyMissing);
+  if (ok) {
+    createNewVersionOnSave.value = false;
+    saveFeedback.value = 'Saved to story archive';
+    setTimeout(() => {
+      saveFeedback.value = null;
+    }, 3000);
+  }
+};
+
+const handleSaveEdits = async () => {
+  if (!isAdmin.value || isGenerating.value || isSavingChanges.value) return;
+  isSavingChanges.value = true;
+  saveFeedback.value = null;
+  try {
+    const saved = await saveStateToServer(props.date, createNewVersionOnSave.value);
+    if (saved) {
+      createNewVersionOnSave.value = false;
+      editingPanelNumber.value = null;
+      saveFeedback.value = 'Changes saved';
+      setTimeout(() => {
+        saveFeedback.value = null;
+      }, 3000);
+    }
+  } finally {
+    isSavingChanges.value = false;
+  }
+};
+
+const toggleEditPanel = (panelNumber: number) => {
+  editingPanelNumber.value = editingPanelNumber.value === panelNumber ? null : panelNumber;
+};
+
+// Navigation via Stepper Tabs
+const canNavigateToStep = (target: WizardStep): boolean => {
+  if (!isAdmin.value || isGenerating.value) return false;
+  if (target === 1) return true;
+  if (target === 2) return Boolean(storyAnalysis.value);
+  if (target === 3) return Boolean(storyAnalysis.value && charactersList.value.length > 0);
+  return false;
+};
+
+const navigateToStep = async (target: WizardStep) => {
+  if (!canNavigateToStep(target)) return;
+  activeStep.value = target;
+  if (target === 3 && !storyBreakdown.value?.panels?.length) {
+    await planStoryPanels();
+  }
 };
 
 const getGeneratedPanel = (panelNumber: number) => {
@@ -287,314 +570,58 @@ const getPanelLightboxCaption = (panel: MangaPanelPlan): string => {
   return narrative ? `Panel ${panel.panelNumber} — ${narrative}` : `Panel ${panel.panelNumber}`;
 };
 
-const wrapCanvasText = (
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  maxWidth: number
-): string[] => {
-  const trimmed = text.trim();
-  if (!trimmed) return [];
-  const words = trimmed.split(/\s+/);
-  const lines: string[] = [];
-  let currentLine = '';
-
-  for (const word of words) {
-    const testLine = currentLine ? `${currentLine} ${word}` : word;
-    if (ctx.measureText(testLine).width <= maxWidth) {
-      currentLine = testLine;
-    } else {
-      if (currentLine) {
-        lines.push(currentLine);
-      }
-      currentLine = word;
-    }
-  }
-  if (currentLine) {
-    lines.push(currentLine);
-  }
-  return lines;
-};
-
-const printMangaA4 = () => {
-  if (typeof window === 'undefined') return;
-  document.body.classList.add('printing-manga');
-  const cleanup = () => {
-    document.body.classList.remove('printing-manga');
-  };
-  window.addEventListener('afterprint', cleanup, { once: true });
-  setTimeout(() => {
-    window.print();
-  }, 50);
-  setTimeout(cleanup, 2000);
-};
-
-const drawRoundedRect = (
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  r: number
-) => {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-};
-
-// Shareable A4-readable composite comic page with separate Artwork & Narrative panels
-const downloadCompositeComicPage = async () => {
+const downloadMangaA4Pdf = async () => {
   if (generatedPanels.value.length === 0) return;
-  isDownloadingComposite.value = true;
+  isExportingPdf.value = true;
   try {
-    if (typeof document !== 'undefined' && document.fonts?.ready) {
-      await document.fonts.ready;
-    }
-
-    const panels = [...generatedPanels.value].sort((a, b) => a.panelNumber - b.panelNumber);
-    // 1240px = A4 width at 150 DPI so printed text remains crisp & readable (~11pt+)
-    const canvasW = 1240;
-    const pad = 44;
-    const gutter = 28;
-    const artW = 560;
-    const textW = canvasW - pad * 2 - gutter - artW; // 564px
-    const minPanelH = 470;
-    const panelHeaderH = 42;
-    const rowGap = 32;
-    const footerH = 64;
-
-    const comicFont = 'bold 26px "Comic Neue", "Comic Sans MS", "Trebuchet MS", sans-serif';
-    const dialogueFont = 'italic bold 22px "Comic Neue", "Comic Sans MS", "Trebuchet MS", sans-serif';
-    const narrativeLineH = 36;
-    const dialogueLineH = 30;
-    const textPadX = 26;
-    const textInnerW = textW - textPadX * 2;
-
-    const measureCanvas = document.createElement('canvas');
-    const measureCtx = measureCanvas.getContext('2d');
-    if (!measureCtx) return;
-
-    const titleText = storyAnalysis.value?.title || `Daily Readings ${style.value === 'manga' ? 'Manga' : 'Comic'}`;
-    measureCtx.font = 'bold 42px "Bangers", "Comic Neue", Impact, sans-serif';
-    const titleLines = wrapCanvasText(measureCtx, titleText, canvasW - pad * 2);
-
-    measureCtx.font = 'italic bold 21px "Comic Neue", "Comic Sans MS", sans-serif';
-    const lessonText = moralLesson.value ? `Lesson: "${moralLesson.value}"` : '';
-    const lessonLines = lessonText ? wrapCanvasText(measureCtx, lessonText, canvasW - pad * 2 - 40) : [];
-
-    const headerH = 74 + titleLines.length * 46 + (lessonLines.length > 0 ? lessonLines.length * 28 + 24 : 16);
-
-    const panelEntries = panels.map((p) => {
-      const plan = getPanelPlan(p.panelNumber);
-      const narrative = plan ? getPanelNarrative(plan) : '';
-      const dialogue = (plan?.dialogue || '').trim();
-
-      measureCtx.font = comicFont;
-      const narrativeLines = wrapCanvasText(measureCtx, narrative, textInnerW);
-
-      measureCtx.font = dialogueFont;
-      const dialogueLines = dialogue ? wrapCanvasText(measureCtx, `“${dialogue}”`, textInnerW - 28) : [];
-
-      const narrativeBlockH = narrativeLines.length * narrativeLineH;
-      const dialogueBlockH = dialogueLines.length > 0 ? dialogueLines.length * dialogueLineH + 34 : 0;
-      const neededTextH =
-        panelHeaderH + 28 + narrativeBlockH + (dialogueBlockH > 0 ? 20 + dialogueBlockH : 0) + 26;
-
-      return {
-        panel: p,
-        narrativeLines,
-        dialogueLines,
-        rowH: Math.max(minPanelH, neededTextH),
-      };
+    await exportMangaAsA4Pdf({
+      date: props.date,
+      formattedDate: props.formattedDate,
+      style: style.value,
+      storyAnalysis: storyAnalysis.value,
+      moralLesson: moralLesson.value,
+      panels: generatedPanels.value,
+      getPanelPlan,
+      getPanelNarrative,
+      loadImageElement,
     });
-
-    const totalRowsH =
-      panelEntries.reduce((sum, entry) => sum + entry.rowH, 0) +
-      Math.max(0, panelEntries.length - 1) * rowGap;
-    const canvasH = headerH + totalRowsH + footerH;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = canvasW;
-    canvas.height = canvasH;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Background
-    ctx.fillStyle = '#FBF8F3';
-    ctx.fillRect(0, 0, canvasW, canvasH);
-
-    // Header Title
-    ctx.fillStyle = '#72383D';
-    ctx.font = 'bold 42px "Bangers", "Comic Neue", Impact, sans-serif';
-    ctx.textAlign = 'center';
-    titleLines.forEach((line, i) => {
-      ctx.fillText(line, canvasW / 2, 54 + i * 46);
-    });
-
-    const metaY = 54 + titleLines.length * 46;
-    ctx.fillStyle = '#5C5149';
-    ctx.font = 'bold 20px "Comic Neue", "Comic Sans MS", sans-serif';
-    ctx.fillText(`${props.formattedDate} · ${style.value === 'manga' ? 'Manga' : 'Comic'} Edition`, canvasW / 2, metaY);
-
-    if (lessonLines.length > 0) {
-      ctx.fillStyle = '#1E1B18';
-      ctx.font = 'italic bold 21px "Comic Neue", "Comic Sans MS", sans-serif';
-      lessonLines.forEach((line, i) => {
-        ctx.fillText(line, canvasW / 2, metaY + 34 + i * 28);
-      });
-    }
-
-    // Draw separate Artwork Panel + Narrative Panel per row
-    let currentY = headerH;
-    for (let idx = 0; idx < panelEntries.length; idx++) {
-      const entry = panelEntries[idx];
-      if (!entry) continue;
-      const p = entry.panel;
-      const rowH = entry.rowH;
-      const artX = pad;
-      const textX = pad + artW + gutter;
-      const y = currentY;
-
-      // 1) Artwork Panel (separate bordered panel with comic shadow)
-      ctx.fillStyle = '#1E1B18';
-      ctx.fillRect(artX + 5, y + 5, artW, rowH);
-
-      ctx.fillStyle = '#FFFFFF';
-      ctx.strokeStyle = '#1E1B18';
-      ctx.lineWidth = 3.5;
-      ctx.fillRect(artX, y, artW, rowH);
-      ctx.strokeRect(artX, y, artW, rowH);
-
-      // Artwork Panel Header Bar
-      ctx.fillStyle = '#1E1B18';
-      ctx.fillRect(artX, y, artW, panelHeaderH);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'bold 21px "Bangers", "Comic Neue", Impact, sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText(`PANEL ${p.panelNumber}`, artX + 16, y + 29);
-
-      if (p.image) {
-        try {
-          const img = await loadImageElement(p.image, p.r2Key);
-          const availW = artW - 16;
-          const availH = rowH - panelHeaderH - 16;
-          const scale = Math.min(availW / img.width, availH / img.height);
-          const drawW = img.width * scale;
-          const drawH = img.height * scale;
-          const drawX = artX + (artW - drawW) / 2;
-          const drawY = y + panelHeaderH + (rowH - panelHeaderH - drawH) / 2;
-          ctx.drawImage(img, drawX, drawY, drawW, drawH);
-        } catch {
-          // Skip broken image
-        }
-      }
-
-      // 2) Separate Narrative Text Panel (own border, warm comic paper fill, comic shadow)
-      ctx.fillStyle = '#1E1B18';
-      ctx.fillRect(textX + 5, y + 5, textW, rowH);
-
-      ctx.fillStyle = '#FFFDF5';
-      ctx.strokeStyle = '#1E1B18';
-      ctx.lineWidth = 3.5;
-      ctx.fillRect(textX, y, textW, rowH);
-      ctx.strokeRect(textX, y, textW, rowH);
-
-      // Narrative Panel Header Bar
-      ctx.fillStyle = '#72383D';
-      ctx.fillRect(textX, y, textW, panelHeaderH);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'bold 21px "Bangers", "Comic Neue", Impact, sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText(`STORY · PART ${p.panelNumber} OF ${panelEntries.length}`, textX + 16, y + 29);
-
-      // Narrative Comic Lettering
-      ctx.fillStyle = '#1E1B18';
-      ctx.font = comicFont;
-      ctx.textAlign = 'left';
-      let textCursorY = y + panelHeaderH + 40;
-      entry.narrativeLines.forEach((line) => {
-        ctx.fillText(line, textX + textPadX, textCursorY);
-        textCursorY += narrativeLineH;
-      });
-
-      // Speech Bubble Box for Dialogue (if any)
-      if (entry.dialogueLines.length > 0) {
-        const bubbleY = textCursorY + 8;
-        const bubbleH = entry.dialogueLines.length * dialogueLineH + 26;
-        const bubbleX = textX + textPadX;
-        const bubbleW = textInnerW;
-
-        ctx.fillStyle = '#FFFFFF';
-        ctx.strokeStyle = '#1E1B18';
-        ctx.lineWidth = 2.5;
-        drawRoundedRect(ctx, bubbleX, bubbleY, bubbleW, bubbleH, 14);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = '#1E1B18';
-        ctx.font = dialogueFont;
-        entry.dialogueLines.forEach((line, lIdx) => {
-          ctx.fillText(line, bubbleX + 16, bubbleY + 30 + lIdx * dialogueLineH);
-        });
-      }
-
-      currentY += rowH + rowGap;
-    }
-
-    // Footer
-    ctx.fillStyle = '#72383D';
-    ctx.font = 'bold 18px "Comic Neue", "Comic Sans MS", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Catholic Digital Devotional · Story-to-Manga Edition', canvasW / 2, canvasH - 24);
-
-    const compositeUrl = canvas.toDataURL('image/png');
-    downloadDataUrl(compositeUrl, `Devotion_Story_${style.value}_${props.date}.png`);
   } finally {
-    isDownloadingComposite.value = false;
+    isExportingPdf.value = false;
   }
 };
 
-const stepStates = computed(() => {
-  const s1Done = !!storyAnalysis.value;
-  const s2Done =
-    !!storyAnalysis.value &&
-    characterReferences.value.length >= (storyAnalysis.value.characters?.length || 1);
-  const s3Done = !!storyBreakdown.value && (storyBreakdown.value.panels?.length || 0) > 0;
-  const s4Done =
-    s3Done &&
-    generatedPanels.value.length >= (storyBreakdown.value?.panels?.length || 1);
+const wizardSteps = computed(() => {
+  const step1Done = Boolean(storyAnalysis.value && storyDraft.value.trim());
+  const step2Done = allCharactersHaveImages.value;
+  const step3Done = allPanelsGenerated.value;
 
   return [
     {
-      id: 'story',
-      label: '1. Story & Lesson',
-      active: isAnalyzing.value,
-      done: s1Done,
+      step: 1 as WizardStep,
+      title: '1. Story',
+      subtitle: 'Write or AI-generate',
+      active: activeStep.value === 1,
+      busy: isAnalyzing.value,
+      done: step1Done && activeStep.value !== 1,
+      enabled: canNavigateToStep(1),
     },
     {
-      id: 'characters',
-      label: '2. Character Sheets',
-      active: isGeneratingCharacters.value,
-      done: s2Done,
+      step: 2 as WizardStep,
+      title: '2. Characters',
+      subtitle: 'Design & adjust',
+      active: activeStep.value === 2,
+      busy: isGeneratingCharacters.value,
+      done: step2Done && activeStep.value !== 2,
+      enabled: canNavigateToStep(2),
     },
     {
-      id: 'layout',
-      label: '3. Panel Plan',
-      active: isChunking.value,
-      done: s3Done,
-    },
-    {
-      id: 'panels',
-      label: '4. Manga Panels',
-      active: isGeneratingPanels.value,
-      done: s4Done,
+      step: 3 as WizardStep,
+      title: '3. Panels',
+      subtitle: 'Plan & illustrate',
+      active: activeStep.value === 3,
+      busy: isChunking.value || isGeneratingPanels.value,
+      done: step3Done,
+      enabled: canNavigateToStep(3),
     },
   ];
 });
@@ -624,6 +651,12 @@ const stepStates = computed(() => {
                     {{ imageModel }}
                   </span>
                   <span
+                    v-if="currentStoryId"
+                    class="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-amber-300/20 text-amber-100 border border-amber-200/35"
+                  >
+                    v{{ currentVersion }}
+                  </span>
+                  <span
                     v-if="r2Stored"
                     class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-100 border border-emerald-300/35"
                     title="Stored in Cloudflare R2 & PostgreSQL"
@@ -632,13 +665,12 @@ const stepStates = computed(() => {
                   </span>
                 </div>
                 <p class="text-xs text-white/80">
-                  {{ formattedDate }} · Problem → Listening to Readings → Applying Lesson → Resolution
+                  {{ formattedDate }} · Step-by-Step Studio: Story → Characters → Panels
                 </p>
               </div>
             </div>
 
             <div class="flex items-center gap-2 flex-wrap">
-              <!-- Toggle Model & Style Settings (Admin Only) -->
               <button
                 v-if="isAdmin"
                 type="button"
@@ -650,36 +682,20 @@ const stepStates = computed(() => {
                   <circle cx="12" cy="12" r="3"></circle>
                   <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                 </svg>
-                <span>Model Settings</span>
+                <span>Model &amp; Style</span>
               </button>
 
-              <!-- Write Custom Story & Characters (Admin Only) -->
               <button
-                v-if="isAdmin"
+                v-if="isAdmin && (storyAnalysis || storyDraft.trim())"
                 type="button"
-                @click="showCustomStoryForm = !showCustomStoryForm"
+                @click="handleStartNewStory"
                 :disabled="isGenerating"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/25 text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
-                :class="showCustomStoryForm ? 'bg-white text-[#72383D]' : 'bg-white/15 hover:bg-white/25 text-white'"
-                title="Add your own story and/or characters"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
+                title="Start a brand-new story from Step 1"
               >
-                <span>✍️</span>
-                <span>Story &amp; Characters</span>
+                <span>+ New Story</span>
               </button>
 
-              <!-- One-Click Regenerate (Admin Only) -->
-              <button
-                v-if="isAdmin"
-                type="button"
-                @click="handleRerunAll"
-                :disabled="isGenerating"
-                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#EFE9E1] hover:bg-white text-[#72383D] text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                <span>✨</span>
-                <span>{{ isGenerating ? 'Generating...' : 'Regenerate Story' }}</span>
-              </button>
-
-              <!-- Close Button -->
               <button
                 type="button"
                 @click="emit('close')"
@@ -749,229 +765,87 @@ const stepStates = computed(() => {
             </div>
           </div>
 
-          <!-- 4-Step Pipeline Progress Bar -->
+          <!-- 3-Step Interactive Guide Bar (Admin Only) -->
           <div
-            v-if="isAdmin || isGenerating || storyAnalysis"
+            v-if="isAdmin && !isLoadingInitial"
             class="manga-no-print px-5 py-3 bg-[#FAF6EE] border-b border-[#D1C7BD]/70 shrink-0"
           >
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <div
-                v-for="step in stepStates"
-                :key="step.id"
-                class="flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all"
-                :class="
-                  step.active
-                    ? 'bg-[#72383D]/10 border-[#72383D] text-[#72383D]'
-                    : step.done
-                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                      : 'bg-white/60 border-[#D1C7BD]/60 text-[#322D29]/50'
-                "
+            <div class="grid grid-cols-3 gap-2 sm:gap-3">
+              <button
+                v-for="item in wizardSteps"
+                :key="item.step"
+                type="button"
+                @click="navigateToStep(item.step)"
+                :disabled="!item.enabled"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-xl border text-left transition-all"
+                :class="[
+                  item.active
+                    ? 'bg-[#72383D] border-[#72383D] text-white shadow-xs'
+                    : item.done
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-900 hover:bg-emerald-100/70'
+                      : 'bg-white/75 border-[#D1C7BD]/70 text-[#322D29]/65',
+                  item.enabled ? 'cursor-pointer' : 'opacity-55 cursor-not-allowed',
+                ]"
               >
                 <span
-                  v-if="step.active"
-                  class="w-3.5 h-3.5 border-2 border-[#72383D] border-t-transparent rounded-full animate-spin shrink-0"
+                  v-if="item.busy"
+                  class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0"
                 ></span>
-                <span v-else-if="step.done" class="text-emerald-600 font-bold shrink-0">✓</span>
-                <span v-else class="w-2 h-2 rounded-full bg-[#D1C7BD] shrink-0"></span>
-                <span class="truncate">{{ step.label }}</span>
-              </div>
+                <span
+                  v-else-if="item.done"
+                  class="w-5 h-5 rounded-full bg-emerald-600 text-white text-[11px] font-bold flex items-center justify-center shrink-0"
+                >
+                  ✓
+                </span>
+                <span
+                  v-else
+                  class="w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center shrink-0"
+                  :class="item.active ? 'bg-white/20 text-white' : 'bg-[#EFE9E1] text-[#72383D]'"
+                >
+                  {{ item.step }}
+                </span>
+
+                <div class="min-w-0">
+                  <div class="text-xs sm:text-sm font-bold truncate">{{ item.title }}</div>
+                  <div
+                    class="text-[10px] truncate hidden sm:block"
+                    :class="item.active ? 'text-white/80' : 'opacity-70'"
+                  >
+                    {{ item.subtitle }}
+                  </div>
+                </div>
+              </button>
             </div>
-            <p v-if="currentStepText && isGenerating" class="text-xs text-[#72383D] font-medium mt-2 animate-pulse">
+
+            <p v-if="currentStepText && isGenerating" class="text-xs text-[#72383D] font-semibold mt-2 animate-pulse">
               {{ currentStepText }}
             </p>
           </div>
 
           <!-- Modal Body (Scrollable) -->
           <div class="manga-print-body p-5 sm:p-6 overflow-y-auto space-y-6 flex-1">
-            <!-- Custom Story & Characters Composer (Admin Only) -->
-            <section
-              v-if="isAdmin && showCustomStoryForm"
-              class="manga-no-print bg-white border-2 border-[#72383D] rounded-2xl p-5 shadow-[3px_3px_0_#72383D] space-y-5"
+            <!-- Initial Load Spinner -->
+            <div
+              v-if="isLoadingInitial"
+              class="py-16 flex flex-col items-center justify-center text-center space-y-3"
             >
-              <!-- Custom Story Textarea -->
-              <div class="space-y-2.5">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <h3 class="font-serif font-bold text-base sm:text-lg text-[#72383D]">
-                      ✍️ Custom Story &amp; Characters
-                    </h3>
-                    <p class="text-xs text-[#322D29]/70">
-                      Write or paste your own story (optional if you only want to customize characters for today’s readings) and/or add up to 4 characters.
-                    </p>
-                  </div>
-                  <button
-                    v-if="generatedStory"
-                    type="button"
-                    @click="prefillCurrentStory"
-                    class="px-3 py-1 rounded-lg border border-[#D1C7BD] bg-[#FAF6EE] hover:bg-[#EFE9E1] text-xs font-bold text-[#322D29] transition-colors cursor-pointer"
-                  >
-                    Use Current Story
-                  </button>
-                </div>
-
-                <textarea
-                  v-model="customStoryText"
-                  rows="5"
-                  placeholder="Write or paste your story here (up to 500 words)... Leave blank to generate a story from today's Mass readings using your custom characters below."
-                  class="w-full rounded-xl border-2 border-[#D1C7BD] bg-[#FBF8F3] p-3.5 text-sm sm:text-base font-comic text-[#1E1B18] focus:outline-none focus:border-[#72383D] leading-relaxed"
-                ></textarea>
-
-                <div class="text-xs font-bold" :class="customStoryWordCount > 500 ? 'text-red-700' : 'text-[#322D29]/70'">
-                  {{ customStoryWordCount }} / 500 words
-                  <span v-if="customStoryWordCount > 500"> — Please shorten to 500 words or fewer.</span>
-                </div>
-              </div>
-
-              <!-- Custom Characters Builder -->
-              <div class="pt-4 border-t border-[#D1C7BD]/70 space-y-3">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <h4 class="font-serif font-bold text-sm sm:text-base text-[#322D29]">
-                      👤 Custom Characters ({{ customCharacters.length }}/4)
-                    </h4>
-                    <p class="text-xs text-[#322D29]/65">
-                      Define character names, appearance, and optional reference photos. Leave empty to auto-extract characters from the story.
-                    </p>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button
-                      v-if="storyAnalysis?.characters?.length"
-                      type="button"
-                      @click="prefillCurrentCharacters"
-                      class="px-3 py-1.5 rounded-lg border border-[#D1C7BD] bg-[#FAF6EE] hover:bg-[#EFE9E1] text-xs font-bold text-[#322D29] transition-colors cursor-pointer"
-                    >
-                      Load Current Characters
-                    </button>
-                    <button
-                      type="button"
-                      @click="addCustomCharacter"
-                      :disabled="customCharacters.length >= 4"
-                      class="px-3 py-1.5 rounded-lg bg-[#72383D]/10 hover:bg-[#72383D]/20 text-xs font-bold text-[#72383D] transition-colors disabled:opacity-40 cursor-pointer"
-                    >
-                      + Add Character
-                    </button>
-                  </div>
-                </div>
-
-                <div v-if="customCharacters.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  <div
-                    v-for="(char, idx) in customCharacters"
-                    :key="idx"
-                    class="p-3.5 rounded-xl border border-[#D1C7BD] bg-[#FAF6EE]/70 space-y-2.5"
-                  >
-                    <div class="flex items-center justify-between gap-2">
-                      <span class="text-xs font-bold uppercase tracking-wider text-[#72383D]">
-                        Character {{ idx + 1 }}
-                      </span>
-                      <button
-                        type="button"
-                        @click="removeCustomCharacter(idx)"
-                        class="text-xs font-bold text-red-700 hover:text-red-900 cursor-pointer"
-                      >
-                        Remove
-                      </button>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2">
-                      <input
-                        v-model="char.name"
-                        type="text"
-                        placeholder="Name (e.g. Leo) *"
-                        class="px-3 py-1.5 rounded-lg border border-[#D1C7BD] bg-white text-xs sm:text-sm font-semibold text-[#1E1B18] focus:outline-none focus:border-[#72383D]"
-                      />
-                      <input
-                        v-model="char.role"
-                        type="text"
-                        placeholder="Role (e.g. Protagonist)"
-                        class="px-3 py-1.5 rounded-lg border border-[#D1C7BD] bg-white text-xs sm:text-sm text-[#1E1B18] focus:outline-none focus:border-[#72383D]"
-                      />
-                    </div>
-
-                    <textarea
-                      v-model="char.physicalDescription"
-                      rows="2"
-                      placeholder="Physical appearance (age, hair, clothes, distinctive features) *"
-                      class="w-full px-3 py-1.5 rounded-lg border border-[#D1C7BD] bg-white text-xs sm:text-sm text-[#1E1B18] focus:outline-none focus:border-[#72383D]"
-                    ></textarea>
-
-                    <input
-                      v-model="char.personality"
-                      type="text"
-                      placeholder="Personality traits (optional, e.g. Curious, gentle)"
-                      class="w-full px-3 py-1.5 rounded-lg border border-[#D1C7BD] bg-white text-xs sm:text-sm text-[#1E1B18] focus:outline-none focus:border-[#72383D]"
-                    />
-
-                    <!-- Optional Reference Image Upload -->
-                    <div class="flex items-center justify-between gap-2 pt-1">
-                      <label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#D1C7BD] bg-white hover:bg-[#EFE9E1] text-[11px] font-bold text-[#322D29] cursor-pointer">
-                        <span>📷 {{ char.refImage ? 'Change Photo' : 'Reference Photo (Optional)' }}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          class="hidden"
-                          @change="handleCharacterRefUpload(idx, $event)"
-                        />
-                      </label>
-
-                      <div v-if="char.refImage" class="flex items-center gap-2">
-                        <img
-                          :src="char.refImage"
-                          :alt="char.name || 'Character reference'"
-                          class="w-8 h-8 rounded-md object-cover border border-[#D1C7BD]"
-                        />
-                        <button
-                          type="button"
-                          @click="clearCharacterRefUpload(idx)"
-                          class="text-[11px] font-bold text-red-700 hover:underline cursor-pointer"
-                        >
-                          Clear
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Submit Bar -->
-              <div class="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-[#D1C7BD]/70">
-                <button
-                  type="button"
-                  @click="showCustomStoryForm = false"
-                  class="px-3.5 py-2 rounded-xl border border-[#D1C7BD] bg-white hover:bg-[#EFE9E1] text-xs font-bold text-[#322D29] transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  @click="handleGenerateFromCustomStory"
-                  :disabled="!canSubmitCustomForm || isGenerating"
-                  class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#72383D] to-[#542529] hover:from-[#8B444A] hover:to-[#72383D] text-white text-xs font-bold uppercase tracking-wider shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
-                >
-                  <span>🎨</span>
-                  <span>{{ isGenerating ? 'Generating...' : 'Generate Manga' }}</span>
-                </button>
-              </div>
-            </section>
+              <div class="w-10 h-10 border-4 border-[#D1C7BD] border-t-[#72383D] rounded-full animate-spin"></div>
+              <p class="text-xs font-bold uppercase tracking-wider text-[#72383D]">
+                Loading Story Studio...
+              </p>
+            </div>
 
             <!-- Error Alert -->
             <div
-              v-if="error"
+              v-if="error && !isLoadingInitial"
               class="manga-no-print p-4 rounded-2xl bg-red-50 border border-red-200 text-red-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
             >
               <div>
-                <h4 class="font-bold text-sm">Story-to-Manga Generation Notice</h4>
+                <h4 class="font-bold text-sm">Story-to-Manga Notice</h4>
                 <p class="text-xs text-red-700 mt-0.5">{{ error }}</p>
               </div>
-              <button
-                v-if="isAdmin"
-                type="button"
-                @click="handleRerunAll"
-                class="px-4 py-2 rounded-xl bg-red-800 hover:bg-red-900 text-white text-xs font-bold uppercase tracking-wider shrink-0 cursor-pointer"
-              >
-                Retry Generation
-              </button>
               <router-link
-                v-else
+                v-if="!isAdmin"
                 to="/admin"
                 @click="emit('close')"
                 class="px-4 py-2 rounded-xl bg-[#72383D] hover:bg-[#542529] text-white text-xs font-bold uppercase tracking-wider shrink-0"
@@ -980,450 +854,1120 @@ const stepStates = computed(() => {
               </router-link>
             </div>
 
-            <!-- Initial Loading State before Step 1 completes -->
-            <div
-              v-if="isAnalyzing && !storyAnalysis"
-              class="manga-no-print py-16 flex flex-col items-center justify-center text-center space-y-3"
-            >
-              <div class="w-12 h-12 border-4 border-[#D1C7BD] border-t-[#72383D] rounded-full animate-spin"></div>
-              <h3 class="font-serif text-lg font-bold text-[#72383D]">
-                Writing Custom Story from Today's Readings...
-              </h3>
-              <p class="text-xs text-[#322D29]/70 max-w-md">
-                Crafting a story where a protagonist faces a daily problem, listens to today's Mass readings, applies the lesson, and finds resolution.
-              </p>
-            </div>
-
-            <!-- Stage 1: Generated Custom Story & Lesson Card -->
-            <section
-              v-if="storyAnalysis"
-              class="bg-white/95 border-2 border-[#1E1B18] rounded-2xl p-5 shadow-[3px_3px_0_#1E1B18] space-y-4"
-            >
-              <div class="flex flex-wrap items-start justify-between gap-2 border-b border-[#D1C7BD]/60 pb-3">
-                <div>
-                  <span class="font-comic font-bold text-xs uppercase tracking-[0.16em] text-[#72383D] block">
-                    Custom Parable · Inspired by {{ formattedDate }} Readings
-                  </span>
-                  <h3 class="manga-print-title text-2xl sm:text-3xl font-comic-display text-[#1E1B18] mt-1">
-                    {{ storyAnalysis.title }}
-                  </h3>
-                </div>
-                <div class="flex items-center gap-2 text-xs font-comic font-bold text-[#322D29]/80 bg-[#FAF6EE] px-3 py-1 rounded-full border border-[#1E1B18]/40">
-                  <span>📍 {{ storyAnalysis.setting.location }}</span>
-                  <span>·</span>
-                  <span>{{ storyAnalysis.setting.mood }}</span>
-                </div>
-              </div>
-
-              <!-- Moral Lesson Highlight -->
-              <div
-                v-if="moralLesson"
-                class="p-3.5 rounded-xl bg-[#FFFDF5] border-2 border-[#1E1B18] border-l-4 border-l-[#72383D] text-sm sm:text-base text-[#1E1B18]"
-              >
-                <span class="font-comic font-bold uppercase tracking-wider text-xs text-[#72383D] block mb-0.5">
-                  Lesson Applied from Today's Readings
-                </span>
-                <p class="font-comic font-bold italic leading-relaxed">{{ moralLesson }}</p>
-              </div>
-
-              <!-- Unabridged Narrative Text (shown directly while planning panels, collapsible once Story + Panels flow is ready) -->
-              <div
-                v-if="!storyBreakdown?.panels?.length"
-                class="prose max-w-none text-base sm:text-lg font-comic font-bold leading-relaxed text-[#1E1B18] whitespace-pre-line"
-              >
-                {{ generatedStory }}
-              </div>
-              <details
-                v-else-if="generatedStory"
-                class="manga-no-print rounded-xl border border-[#D1C7BD]/80 bg-[#FAF6EE]/70 px-4 py-2.5"
-              >
-                <summary class="cursor-pointer text-xs font-bold uppercase tracking-wider text-[#72383D] select-none">
-                  Read Full Unabridged Story Text
-                </summary>
-                <div class="prose max-w-none text-base font-comic leading-relaxed text-[#1E1B18] whitespace-pre-line mt-3 pt-3 border-t border-[#D1C7BD]/60">
-                  {{ generatedStory }}
-                </div>
-              </details>
-            </section>
-
-            <!-- Stage 2: Character Reference Sheets -->
-            <section v-if="storyAnalysis && storyAnalysis.characters?.length" class="manga-no-print space-y-3">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h3 class="text-base sm:text-lg font-serif font-bold text-[#72383D]">
-                    Character Reference Sheets
-                  </h3>
-                  <p class="text-xs text-[#322D29]/65">
-                    Generated with <code class="font-mono text-[#72383D]">{{ imageModel }}</code> to keep characters consistent across every panel
-                  </p>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <div
-                  v-for="(char, idx) in storyAnalysis.characters"
-                  :key="char.name"
-                  class="bg-white/90 border border-[#D1C7BD] rounded-2xl p-4 flex flex-col justify-between shadow-xs"
-                >
+            <!-- ============================================================ -->
+            <!-- ADMIN STEP-BY-STEP WIZARD                                    -->
+            <!-- ============================================================ -->
+            <template v-if="isAdmin && !isLoadingInitial">
+              <!-- STEP 1: WRITE OR AI-GENERATE STORY -->
+              <section v-if="activeStep === 1" class="space-y-5">
+                <div class="rounded-2xl bg-[#FAF6EE] border border-[#D1C7BD] p-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <!-- Reference Image or Loading Placeholder -->
-                    <div class="relative aspect-square w-full rounded-xl bg-[#EFE9E1] border border-[#D1C7BD] overflow-hidden mb-3 flex items-center justify-center">
-                      <img
-                        v-if="characterReferences[idx]?.image"
-                        :src="characterReferences[idx].image"
-                        :alt="char.name"
-                        class="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform"
-                        @click="openLightbox(characterReferences[idx].image, `${char.name} — Character Reference`)"
-                      />
-                      <div
-                        v-else-if="isGeneratingCharacters"
-                        class="flex flex-col items-center justify-center p-4 text-center space-y-2"
-                      >
-                        <div class="w-8 h-8 border-3 border-[#D1C7BD] border-t-[#72383D] rounded-full animate-spin"></div>
-                        <span class="text-[11px] text-[#72383D] font-semibold">Designing {{ char.name }}...</span>
-                      </div>
-                      <div v-else class="text-xs text-[#322D29]/50 p-4 text-center">
-                        Awaiting character sheet
-                      </div>
-
-                      <!-- Regenerating Overlay -->
-                      <div
-                        v-if="regeneratingCharacters.has(idx)"
-                        class="absolute inset-0 bg-black/55 flex flex-col items-center justify-center text-white space-y-2"
-                      >
-                        <div class="w-7 h-7 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span class="text-xs font-semibold">Regenerating...</span>
-                      </div>
-                    </div>
-
-                    <div class="flex items-center justify-between gap-2 mb-1">
-                      <h4 class="font-serif font-bold text-base text-[#322D29]">{{ char.name }}</h4>
-                      <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#EFE9E1] text-[#72383D]">
-                        {{ char.role }}
-                      </span>
-                    </div>
-                    <p class="text-xs text-[#322D29]/75 line-clamp-3">
-                      {{ char.physicalDescription }}
+                    <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#72383D]">
+                      Step 1 of 3 · Story
+                    </span>
+                    <h3 class="text-base sm:text-lg font-serif font-bold text-[#322D29]">
+                      Write Your Story or Auto-Generate with AI
+                    </h3>
+                    <p class="text-xs text-[#322D29]/75 mt-0.5">
+                      Enter your own story below (up to 500 words), or click the <strong>AI Pencil</strong> button to automatically craft a story inspired by today’s Mass readings.
                     </p>
                   </div>
 
-                  <div v-if="characterReferences[idx]?.image" class="flex items-center gap-2 mt-3 pt-2.5 border-t border-[#D1C7BD]/50">
+                  <!-- Version Selector if prior versions exist -->
+                  <div v-if="availableVersions.length > 0" class="flex items-center gap-2">
+                    <label for="step1-version-select" class="text-[11px] font-bold uppercase tracking-wider text-[#72383D]">
+                      Saved
+                    </label>
+                    <select
+                      id="step1-version-select"
+                      :value="currentStoryId || ''"
+                      @change="handleVersionChange"
+                      :disabled="isGenerating"
+                      class="px-2.5 py-1.5 rounded-xl border border-[#D1C7BD] bg-white text-xs font-bold text-[#322D29] focus:outline-none focus:ring-2 focus:ring-[#72383D]/30 cursor-pointer"
+                    >
+                      <option v-if="!currentStoryId" value="">New Draft</option>
+                      <option v-for="(ver, vIdx) in availableVersions" :key="ver.id" :value="ver.id">
+                        v{{ ver.version }}{{ vIdx === 0 ? ' (Latest)' : '' }} — {{ ver.title }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Story Composer Card -->
+                <div class="bg-white border-2 border-[#D1C7BD] rounded-2xl p-5 shadow-xs space-y-4">
+                  <!-- Title & AI Pencil Toolbar -->
+                  <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div class="flex-1">
+                      <label for="manga-story-title" class="block text-xs font-bold uppercase tracking-wider text-[#72383D] mb-1">
+                        Story Title <span class="font-normal text-[#322D29]/55">(optional — auto-titled if blank)</span>
+                      </label>
+                      <input
+                        id="manga-story-title"
+                        v-model="titleDraft"
+                        type="text"
+                        :disabled="isAnalyzing"
+                        placeholder="e.g., Leo's Courage at School"
+                        class="w-full px-3.5 py-2 rounded-xl border border-[#D1C7BD] bg-[#FBF8F3] text-sm font-serif font-bold text-[#1E1B18] focus:outline-none focus:border-[#72383D]"
+                      />
+                    </div>
+
+                    <!-- AI Pencil Icon Button -->
                     <button
                       type="button"
-                      @click="downloadDataUrl(characterReferences[idx].image, `${char.name}_reference.jpg`, characterReferences[idx].r2Key)"
-                      class="flex-1 px-2.5 py-1.5 rounded-lg border border-[#D1C7BD] bg-[#FAF6EE] hover:bg-[#EFE9E1] text-[11px] font-bold text-[#322D29] transition-colors cursor-pointer"
+                      @click="handleAiGenerateStory"
+                      :disabled="isGenerating"
+                      class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#72383D] to-[#542529] hover:from-[#8B444A] hover:to-[#72383D] text-white text-xs font-bold uppercase tracking-wider shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer shrink-0"
+                      title="Auto-generate a story from today's Mass readings using AI"
                     >
-                      Download
+                      <span
+                        v-if="isAnalyzing"
+                        class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+                      ></span>
+                      <!-- AI Pencil + Sparkles SVG Icon -->
+                      <svg
+                        v-else
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                        <path d="M5 3v4" />
+                        <path d="M3 5h4" />
+                        <path d="M19 14v3" />
+                        <path d="M17.5 15.5h3" />
+                      </svg>
+                      <span>{{ isAnalyzing ? 'Writing Story...' : 'AI Auto-Write Story' }}</span>
                     </button>
+                  </div>
+
+                  <!-- Story Textarea -->
+                  <div class="space-y-1.5">
+                    <div class="flex items-center justify-between gap-2">
+                      <label for="manga-story-textarea" class="text-xs font-bold uppercase tracking-wider text-[#72383D]">
+                        Story Narrative *
+                      </label>
+                      <div class="flex items-center gap-3">
+                        <button
+                          v-if="storyDraft.trim()"
+                          type="button"
+                          @click="storyDraft = ''"
+                          :disabled="isAnalyzing"
+                          class="text-[11px] font-bold text-[#72383D] hover:underline cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                        <span
+                          class="text-xs font-bold"
+                          :class="storyWordCount > 500 ? 'text-red-700' : 'text-[#322D29]/65'"
+                        >
+                          {{ storyWordCount }} / 500 words
+                        </span>
+                      </div>
+                    </div>
+
+                    <div class="relative">
+                      <textarea
+                        id="manga-story-textarea"
+                        v-model="storyDraft"
+                        rows="8"
+                        :disabled="isAnalyzing"
+                        placeholder="Write or paste your story here (up to 500 words)...&#10;&#10;Or click the AI Auto-Write Story pencil button above to automatically craft a story from today's Mass readings that you can review and edit!"
+                        class="w-full rounded-xl border-2 border-[#D1C7BD] bg-[#FBF8F3] p-4 text-sm sm:text-base font-comic text-[#1E1B18] focus:outline-none focus:border-[#72383D] leading-relaxed disabled:opacity-60"
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  <!-- Moral Lesson & Setting (Optional / Editable) -->
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-[#D1C7BD]/60">
+                    <div>
+                      <label for="manga-moral-lesson" class="block text-[11px] font-bold uppercase tracking-wider text-[#322D29]/75 mb-1">
+                        Lesson / Takeaway <span class="font-normal text-[#322D29]/50">(optional)</span>
+                      </label>
+                      <input
+                        id="manga-moral-lesson"
+                        v-model="moralLessonDraft"
+                        type="text"
+                        :disabled="isAnalyzing"
+                        placeholder="e.g., Forgiving from the heart brings peace."
+                        class="w-full px-3 py-2 rounded-xl border border-[#D1C7BD] bg-[#FBF8F3] text-xs sm:text-sm text-[#1E1B18] focus:outline-none focus:border-[#72383D]"
+                      />
+                    </div>
+                    <div>
+                      <label for="manga-setting-location" class="block text-[11px] font-bold uppercase tracking-wider text-[#322D29]/75 mb-1">
+                        Setting / Location <span class="font-normal text-[#322D29]/50">(optional)</span>
+                      </label>
+                      <input
+                        id="manga-setting-location"
+                        v-model="settingDraft.location"
+                        type="text"
+                        :disabled="isAnalyzing"
+                        placeholder="e.g., Parish church and neighborhood park"
+                        class="w-full px-3 py-2 rounded-xl border border-[#D1C7BD] bg-[#FBF8F3] text-xs sm:text-sm text-[#1E1B18] focus:outline-none focus:border-[#72383D]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Step 1 Footer -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+                  <p class="text-xs text-[#322D29]/65">
+                    Next, we’ll extract the characters from your story so you can customize their look.
+                  </p>
+                  <button
+                    type="button"
+                    @click="handleStep1Next"
+                    :disabled="!canProceedStep1"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#72383D] to-[#542529] hover:from-[#8B444A] hover:to-[#72383D] text-white text-xs font-bold uppercase tracking-wider shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    <span
+                      v-if="isAnalyzing"
+                      class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"
+                    ></span>
+                    <span>{{ isAnalyzing ? 'Analyzing Story...' : 'Next: Characters →' }}</span>
+                  </button>
+                </div>
+              </section>
+
+              <!-- STEP 2: GENERATE & ADJUST CHARACTER DESIGN -->
+              <section v-else-if="activeStep === 2 && storyAnalysis" class="space-y-5">
+                <div class="rounded-2xl bg-[#FAF6EE] border border-[#D1C7BD] p-4 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#72383D]">
+                      Step 2 of 3 · Character Design
+                    </span>
+                    <h3 class="text-base sm:text-lg font-serif font-bold text-[#322D29]">
+                      Generate &amp; Adjust Characters for “{{ storyAnalysis.title }}”
+                    </h3>
+                    <p class="text-xs text-[#322D29]/75 mt-0.5">
+                      Customize each character’s appearance, role, or reference photo, then generate or refine their character design sheets.
+                    </p>
+                  </div>
+
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <!-- Quick Art Style Toggle -->
+                    <div class="inline-flex rounded-xl border border-[#D1C7BD] bg-white p-0.5">
+                      <button
+                        type="button"
+                        @click="handleStyleChange('manga')"
+                        :disabled="isGenerating"
+                        class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors cursor-pointer"
+                        :class="style === 'manga' ? 'bg-[#72383D] text-white' : 'text-[#322D29]/75 hover:text-[#72383D]'"
+                      >
+                        🇯🇵 Manga
+                      </button>
+                      <button
+                        type="button"
+                        @click="handleStyleChange('comic')"
+                        :disabled="isGenerating"
+                        class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors cursor-pointer"
+                        :class="style === 'comic' ? 'bg-[#72383D] text-white' : 'text-[#322D29]/75 hover:text-[#72383D]'"
+                      >
+                        🦸 Comic
+                      </button>
+                    </div>
+
                     <button
-                      v-if="isAdmin"
                       type="button"
-                      @click="regenerateCharacter(idx, date)"
-                      :disabled="regeneratingCharacters.has(idx) || isGenerating"
-                      class="flex-1 px-2.5 py-1.5 rounded-lg bg-[#72383D]/10 hover:bg-[#72383D]/20 text-[11px] font-bold text-[#72383D] transition-colors disabled:opacity-50 cursor-pointer"
+                      @click="addCharacter"
+                      :disabled="charactersList.length >= 4 || isGenerating"
+                      class="px-3 py-1.5 rounded-xl border border-[#D1C7BD] bg-white hover:bg-[#EFE9E1] text-xs font-bold text-[#322D29] transition-colors disabled:opacity-40 cursor-pointer"
                     >
-                      Regenerate
+                      + Add Character ({{ charactersList.length }}/4)
+                    </button>
+
+                    <button
+                      type="button"
+                      @click="handleGenerateAllCharacters(false)"
+                      :disabled="!canProceedStep2 || isGenerating"
+                      class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#72383D] to-[#542529] hover:from-[#8B444A] hover:to-[#72383D] text-white text-xs font-bold uppercase tracking-wider shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
+                    >
+                      <span>🎨</span>
+                      <span>{{ allCharactersHaveImages ? 'Regenerate All Designs' : 'Generate All Designs' }}</span>
                     </button>
                   </div>
                 </div>
-              </div>
-            </section>
 
-            <!-- Stage 3 & 4: Separate Artwork & Narrative Comic Panels -->
-            <section v-if="storyBreakdown?.panels?.length" class="space-y-5">
-              <div class="manga-no-print flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h3 class="text-base sm:text-lg font-serif font-bold text-[#72383D]">
-                    Illustrated Story &amp; {{ style === 'manga' ? 'Manga' : 'Comic' }} Panels ({{ generatedPanels.length }}/{{ storyBreakdown.panels.length }})
-                  </h3>
-                  <p class="text-xs text-[#322D29]/65">
-                    Each story beat pairs an artwork panel with a separate comic-lettered narrative panel. Click any panel to enlarge{{ isAdmin ? ', download, or regenerate' : ' or download' }}.
+                <!-- Character Design Studio Cards -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div
+                    v-for="(char, idx) in storyAnalysis.characters"
+                    :key="idx"
+                    class="bg-white border-2 border-[#D1C7BD] rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row gap-4"
+                  >
+                    <!-- Left: Character Design Sheet Preview -->
+                    <div class="sm:w-44 shrink-0 flex flex-col gap-2">
+                      <div class="relative aspect-square w-full rounded-xl bg-[#EFE9E1] border border-[#D1C7BD] overflow-hidden flex items-center justify-center">
+                        <img
+                          v-if="characterReferences[idx]?.image"
+                          :src="characterReferences[idx].image"
+                          :alt="char.name || `Character ${idx + 1}`"
+                          class="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform"
+                          @click="openLightbox(characterReferences[idx].image, `${char.name} — Character Design`)"
+                        />
+                        <div
+                          v-else-if="regeneratingCharacters.has(idx)"
+                          class="flex flex-col items-center justify-center p-3 text-center space-y-2"
+                        >
+                          <div class="w-8 h-8 border-3 border-[#D1C7BD] border-t-[#72383D] rounded-full animate-spin"></div>
+                          <span class="text-[11px] text-[#72383D] font-semibold">Designing...</span>
+                        </div>
+                        <div v-else class="p-3 text-center space-y-1.5">
+                          <span class="text-2xl block opacity-60">👤</span>
+                          <p class="text-[11px] text-[#322D29]/60 font-medium">
+                            Not generated yet
+                          </p>
+                        </div>
+
+                        <!-- Regenerating Overlay -->
+                        <div
+                          v-if="regeneratingCharacters.has(idx) && characterReferences[idx]?.image"
+                          class="absolute inset-0 bg-black/55 flex flex-col items-center justify-center text-white space-y-2"
+                        >
+                          <div class="w-7 h-7 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span class="text-xs font-semibold">Updating...</span>
+                        </div>
+                      </div>
+
+                      <div class="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          @click="handleGenerateSingleCharacter(idx)"
+                          :disabled="!char.name.trim() || !char.physicalDescription.trim() || regeneratingCharacters.has(idx) || isGenerating"
+                          class="flex-1 px-2.5 py-1.5 rounded-lg bg-[#72383D] hover:bg-[#542529] text-white text-[11px] font-bold transition-colors disabled:opacity-50 cursor-pointer"
+                        >
+                          {{ characterReferences[idx]?.image ? 'Regenerate' : 'Generate' }}
+                        </button>
+                        <button
+                          v-if="characterReferences[idx]?.image"
+                          type="button"
+                          @click="downloadDataUrl(characterReferences[idx].image, `${char.name || 'character'}_design.jpg`, characterReferences[idx].r2Key)"
+                          class="px-2.5 py-1.5 rounded-lg border border-[#D1C7BD] bg-[#FAF6EE] hover:bg-[#EFE9E1] text-[11px] font-bold text-[#322D29] transition-colors cursor-pointer"
+                          title="Download character sheet"
+                        >
+                          ⬇
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Right: Editable Design Controls -->
+                    <div class="flex-1 space-y-2.5 min-w-0">
+                      <div class="flex items-center justify-between gap-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-[#72383D]">
+                          Character {{ idx + 1 }}
+                        </span>
+                        <button
+                          v-if="storyAnalysis.characters.length > 1"
+                          type="button"
+                          @click="removeCharacter(idx)"
+                          :disabled="isGenerating"
+                          class="text-[11px] font-bold text-red-700 hover:underline disabled:opacity-40 cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </div>
+
+                      <div class="grid grid-cols-2 gap-2">
+                        <div>
+                          <label class="block text-[10px] font-bold uppercase text-[#322D29]/65 mb-0.5">Name *</label>
+                          <input
+                            v-model="char.name"
+                            type="text"
+                            placeholder="Character name"
+                            class="w-full px-2.5 py-1.5 rounded-lg border border-[#D1C7BD] bg-[#FBF8F3] text-xs font-bold text-[#1E1B18] focus:outline-none focus:border-[#72383D]"
+                          />
+                        </div>
+                        <div>
+                          <label class="block text-[10px] font-bold uppercase text-[#322D29]/65 mb-0.5">Role</label>
+                          <input
+                            v-model="char.role"
+                            type="text"
+                            placeholder="Protagonist / Mentor"
+                            class="w-full px-2.5 py-1.5 rounded-lg border border-[#D1C7BD] bg-[#FBF8F3] text-xs text-[#1E1B18] focus:outline-none focus:border-[#72383D]"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label class="block text-[10px] font-bold uppercase text-[#322D29]/65 mb-0.5">
+                          Visual Design / Appearance *
+                        </label>
+                        <textarea
+                          v-model="char.physicalDescription"
+                          rows="3"
+                          placeholder="Age, hair style, outfit, colors, accessories, facial features..."
+                          class="w-full px-2.5 py-1.5 rounded-lg border border-[#D1C7BD] bg-[#FBF8F3] text-xs text-[#1E1B18] leading-relaxed focus:outline-none focus:border-[#72383D]"
+                        ></textarea>
+                      </div>
+
+                      <div>
+                        <label class="block text-[10px] font-bold uppercase text-[#322D29]/65 mb-0.5">Personality</label>
+                        <input
+                          v-model="char.personality"
+                          type="text"
+                          placeholder="e.g., Curious, gentle, hopeful"
+                          class="w-full px-2.5 py-1.5 rounded-lg border border-[#D1C7BD] bg-[#FBF8F3] text-xs text-[#1E1B18] focus:outline-none focus:border-[#72383D]"
+                        />
+                      </div>
+
+                      <!-- Optional Reference Photo & Refine Existing Toggle -->
+                      <div class="pt-1 flex flex-wrap items-center justify-between gap-2">
+                        <label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#D1C7BD] bg-[#FAF6EE] hover:bg-[#EFE9E1] text-[11px] font-bold text-[#322D29] cursor-pointer">
+                          <span>📷 {{ characterUploads[idx]?.image ? 'Change Photo' : 'Reference Photo' }}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            class="hidden"
+                            @change="handleCharacterRefUpload(idx, $event)"
+                          />
+                        </label>
+
+                        <div v-if="characterUploads[idx]?.image" class="flex items-center gap-1.5">
+                          <img
+                            :src="characterUploads[idx].image"
+                            :alt="char.name || 'Reference'"
+                            class="w-7 h-7 rounded-md object-cover border border-[#D1C7BD]"
+                          />
+                          <button
+                            type="button"
+                            @click="clearCharacterRefUpload(idx)"
+                            class="text-[11px] font-bold text-red-700 hover:underline cursor-pointer"
+                          >
+                            Clear
+                          </button>
+                        </div>
+
+                        <label
+                          v-else-if="characterReferences[idx]?.image"
+                          class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#322D29]/80 cursor-pointer select-none"
+                          title="Pass the current character sheet as a reference when regenerating so tweaks keep the same face/identity"
+                        >
+                          <input
+                            v-model="refineFromExisting[idx]"
+                            type="checkbox"
+                            class="rounded border-[#D1C7BD] text-[#72383D] focus:ring-[#72383D]"
+                          />
+                          <span>Refine current look</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Step 2 Footer -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[#D1C7BD]/70">
+                  <button
+                    type="button"
+                    @click="activeStep = 1"
+                    :disabled="isGenerating"
+                    class="px-4 py-2 rounded-xl border border-[#D1C7BD] bg-white hover:bg-[#EFE9E1] text-xs font-bold uppercase tracking-wider text-[#322D29] transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    ← Back to Story
+                  </button>
+
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span v-if="!allCharactersHaveImages" class="text-xs text-[#322D29]/70">
+                      {{ generatedCharacterCount }}/{{ charactersList.length }} character sheets ready
+                    </span>
+                    <button
+                      v-if="!allCharactersHaveImages"
+                      type="button"
+                      @click="handleGenerateAllCharacters(true)"
+                      :disabled="!canProceedStep2 || isGenerating"
+                      class="px-4 py-2 rounded-xl border border-[#72383D] bg-[#FAF6EE] hover:bg-[#EFE9E1] text-[#72383D] text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
+                    >
+                      Generate Missing Designs
+                    </button>
+                    <button
+                      type="button"
+                      @click="handleStep2Next"
+                      :disabled="!canProceedStep2"
+                      class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#72383D] to-[#542529] hover:from-[#8B444A] hover:to-[#72383D] text-white text-xs font-bold uppercase tracking-wider shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      <span>{{ allCharactersHaveImages ? 'Next: Generate Panels →' : 'Continue to Panels →' }}</span>
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <!-- STEP 3: PLAN & GENERATE PANELS -->
+              <section v-else-if="activeStep === 3 && storyAnalysis" class="space-y-5">
+                <!-- Story Header Summary -->
+                <div class="bg-white/95 border-2 border-[#1E1B18] rounded-2xl p-5 shadow-[3px_3px_0_#1E1B18] space-y-3">
+                  <div class="flex flex-wrap items-start justify-between gap-2 border-b border-[#D1C7BD]/60 pb-3">
+                    <div>
+                      <span class="font-comic font-bold text-xs uppercase tracking-[0.16em] text-[#72383D] block">
+                        Step 3 of 3 · Panels · {{ formattedDate }}
+                      </span>
+                      <h3 class="manga-print-title text-2xl sm:text-3xl font-comic-display text-[#1E1B18] mt-1">
+                        {{ storyAnalysis.title }}
+                      </h3>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs font-comic font-bold text-[#322D29]/80 bg-[#FAF6EE] px-3 py-1 rounded-full border border-[#1E1B18]/40">
+                      <span>📍 {{ storyAnalysis.setting.location || 'Daily Life' }}</span>
+                      <span v-if="storyAnalysis.setting.mood">· {{ storyAnalysis.setting.mood }}</span>
+                    </div>
+                  </div>
+
+                  <div
+                    v-if="moralLesson"
+                    class="p-3 rounded-xl bg-[#FFFDF5] border-2 border-[#1E1B18] border-l-4 border-l-[#72383D] text-sm text-[#1E1B18]"
+                  >
+                    <span class="font-comic font-bold uppercase tracking-wider text-xs text-[#72383D] block mb-0.5">
+                      Lesson Applied from Today's Readings
+                    </span>
+                    <p class="font-comic font-bold italic leading-relaxed">{{ moralLesson }}</p>
+                  </div>
+
+                  <details v-if="generatedStory" class="manga-no-print rounded-xl border border-[#D1C7BD]/80 bg-[#FAF6EE]/70 px-4 py-2">
+                    <summary class="cursor-pointer text-xs font-bold uppercase tracking-wider text-[#72383D] select-none">
+                      Read Full Story Text
+                    </summary>
+                    <div class="prose max-w-none text-sm sm:text-base font-comic leading-relaxed text-[#1E1B18] whitespace-pre-line mt-2.5 pt-2.5 border-t border-[#D1C7BD]/60">
+                      {{ generatedStory }}
+                    </div>
+                  </details>
+                </div>
+
+                <!-- Planning Storyboard Spinner -->
+                <div
+                  v-if="isChunking && !storyBreakdown?.panels?.length"
+                  class="manga-no-print py-14 flex flex-col items-center justify-center text-center space-y-3 bg-white/80 border border-[#D1C7BD] rounded-2xl"
+                >
+                  <div class="w-10 h-10 border-4 border-[#D1C7BD] border-t-[#72383D] rounded-full animate-spin"></div>
+                  <h4 class="font-serif text-base font-bold text-[#72383D]">
+                    Planning Storyboard &amp; Comic Layout...
+                  </h4>
+                  <p class="text-xs text-[#322D29]/70 max-w-md">
+                    Breaking your story into panels with camera angles, dialogue, and narrative captions.
                   </p>
                 </div>
 
-                <div class="flex items-center gap-2 flex-wrap">
-                  <!-- Layout Mode Switcher -->
-                  <div class="inline-flex rounded-xl border border-[#D1C7BD] bg-white p-0.5">
-                    <button
-                      type="button"
-                      @click="layoutMode = 'storybook'"
-                      class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer"
-                      :class="layoutMode === 'storybook' ? 'bg-[#72383D] text-white' : 'text-[#322D29]/75 hover:text-[#72383D]'"
-                    >
-                      📖 Story + Panels
-                    </button>
-                    <button
-                      type="button"
-                      @click="layoutMode = 'grid'"
-                      class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer"
-                      :class="layoutMode === 'grid' ? 'bg-[#72383D] text-white' : 'text-[#322D29]/75 hover:text-[#72383D]'"
-                    >
-                      🎞️ Comic Grid
-                    </button>
-                  </div>
-
-                  <button
-                    v-if="generatedPanels.length > 0"
-                    type="button"
-                    @click="printMangaA4"
-                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border-2 border-[#1E1B18] bg-[#FFFDF5] hover:bg-[#EFE9E1] text-[#1E1B18] text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0_#1E1B18] cursor-pointer"
-                    title="Print or Save as A4 PDF"
-                  >
-                    <span>🖨️</span>
-                    <span>Print A4</span>
-                  </button>
-
-                  <button
-                    v-if="generatedPanels.length > 0"
-                    type="button"
-                    @click="downloadCompositeComicPage"
-                    :disabled="isDownloadingComposite"
-                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#72383D] to-[#542529] hover:from-[#8B444A] hover:to-[#72383D] text-white text-xs font-bold uppercase tracking-wider shadow-xs cursor-pointer disabled:opacity-50"
-                  >
-                    <span>📥</span>
-                    <span>{{ isDownloadingComposite ? 'Creating Page...' : 'Download Full Comic Page' }}</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Separate Artwork & Narrative Panels (Default Storybook Layout) -->
-              <div v-if="layoutMode === 'storybook'" class="space-y-6">
-                <article
-                  v-for="(panel, idx) in storyBreakdown.panels"
-                  :key="panel.panelNumber"
-                  class="manga-print-row grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5 items-stretch"
-                >
-                  <!-- 1) Standalone Artwork Panel -->
-                  <div
-                    class="md:col-span-6 manga-print-col-6 comic-panel-frame bg-white rounded-2xl overflow-hidden flex flex-col"
-                    :class="idx % 2 === 1 ? 'md:order-2' : 'md:order-1'"
-                  >
-                    <div class="px-4 py-2 bg-[#1E1B18] text-white flex items-center justify-between text-xs">
-                      <span class="font-comic-display text-sm sm:text-base tracking-wider uppercase">
-                        Panel {{ panel.panelNumber }}
-                      </span>
-                      <span class="manga-no-print text-white/75 text-[11px]">{{ panel.cameraAngle }} · {{ panel.visualMood }}</span>
-                    </div>
-
-                    <div class="relative aspect-square w-full bg-[#F5F0E6] flex items-center justify-center overflow-hidden flex-1">
-                      <img
-                        v-if="getGeneratedPanelImage(panel.panelNumber)"
-                        :src="getGeneratedPanelImage(panel.panelNumber)"
-                        :alt="`Panel ${panel.panelNumber}`"
-                        class="w-full h-full object-contain cursor-pointer hover:scale-[1.01] transition-transform"
-                        @click="openLightbox(getGeneratedPanelImage(panel.panelNumber)!, getPanelLightboxCaption(panel))"
-                      />
-                      <div
-                        v-else
-                        class="p-6 text-center space-y-3 max-w-sm"
-                      >
-                        <div
-                          v-if="isGeneratingPanels"
-                          class="w-10 h-10 mx-auto border-3 border-[#D1C7BD] border-t-[#72383D] rounded-full animate-spin"
-                        ></div>
-                        <p class="text-xs font-semibold text-[#72383D] uppercase tracking-wider">
-                          {{ isGeneratingPanels ? `Illustrating Panel ${panel.panelNumber}...` : 'Storyboard Layout' }}
-                        </p>
-                        <p class="text-xs text-[#322D29]/80 leading-relaxed">
-                          {{ panel.sceneDescription }}
-                        </p>
-                      </div>
-
-                      <!-- Regenerating Overlay -->
-                      <div
-                        v-if="regeneratingPanels.has(panel.panelNumber)"
-                        class="absolute inset-0 bg-black/55 flex flex-col items-center justify-center text-white space-y-2"
-                      >
-                        <div class="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span class="text-xs font-semibold">Regenerating Panel {{ panel.panelNumber }}...</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- 2) Separate Narrative Text Panel -->
-                  <div
-                    class="md:col-span-6 manga-print-col-6 comic-narrative-panel rounded-2xl overflow-hidden flex flex-col justify-between"
-                    :class="idx % 2 === 1 ? 'md:order-1' : 'md:order-2'"
-                  >
+                <!-- Panel Controls Bar -->
+                <div v-else-if="storyBreakdown?.panels?.length" class="space-y-5">
+                  <div class="manga-no-print flex flex-wrap items-center justify-between gap-3 bg-[#FAF6EE] border border-[#D1C7BD] rounded-2xl p-4">
                     <div>
-                      <div class="px-4 py-2 bg-[#72383D] text-white flex items-center justify-between gap-2">
-                        <span class="font-comic-display text-sm sm:text-base tracking-wider uppercase">
-                          Story · Part {{ panel.panelNumber }} of {{ storyBreakdown.panels.length }}
-                        </span>
-                        <span
-                          v-if="panel.characters?.length"
-                          class="text-xs font-comic font-bold text-white/90 truncate max-w-[200px]"
-                          :title="panel.characters.join(', ')"
+                      <h4 class="text-base font-serif font-bold text-[#72383D]">
+                        {{ style === 'manga' ? 'Manga' : 'Comic' }} Panels ({{ generatedPanelCount }}/{{ plannedPanelCount }})
+                      </h4>
+                      <p class="text-xs text-[#322D29]/70">
+                        Review or edit any panel’s scene &amp; dialogue below, then generate all panels or one panel at a time.
+                      </p>
+                    </div>
+
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span
+                        v-if="saveFeedback"
+                        class="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg"
+                      >
+                        ✓ {{ saveFeedback }}
+                      </span>
+
+                      <div v-if="availableVersions.length > 1" class="inline-flex items-center gap-1.5">
+                        <label for="manga-modal-version-select" class="text-[11px] font-bold uppercase tracking-wider text-[#72383D]">
+                          Version
+                        </label>
+                        <select
+                          id="manga-modal-version-select"
+                          :value="currentStoryId || ''"
+                          @change="handleVersionChange"
+                          :disabled="isGenerating"
+                          class="px-2.5 py-1.5 rounded-xl border border-[#D1C7BD] bg-white text-xs font-bold text-[#322D29] focus:outline-none focus:ring-2 focus:ring-[#72383D]/30 cursor-pointer"
                         >
-                          {{ panel.characters.join(', ') }}
-                        </span>
+                          <option v-for="(ver, vIdx) in availableVersions" :key="ver.id" :value="ver.id">
+                            v{{ ver.version }}{{ vIdx === 0 ? ' (Latest)' : '' }} — {{ ver.title }}
+                          </option>
+                        </select>
                       </div>
 
-                      <div class="p-5 sm:p-6 space-y-4">
-                        <p class="manga-print-narrative-text font-comic font-bold text-lg sm:text-xl leading-relaxed text-[#1E1B18]">
-                          {{ getPanelNarrative(panel) }}
-                        </p>
-
-                        <div
-                          v-if="panel.dialogue"
-                          class="manga-print-dialogue-text p-3.5 rounded-2xl bg-white border-2 border-[#1E1B18] text-base sm:text-lg font-comic font-bold italic text-[#1E1B18] shadow-[2px_2px_0_#1E1B18]"
+                      <div class="inline-flex rounded-xl border border-[#D1C7BD] bg-white p-0.5">
+                        <button
+                          type="button"
+                          @click="layoutMode = 'grid'"
+                          class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                          :class="layoutMode === 'grid' ? 'bg-[#72383D] text-white' : 'text-[#322D29]/75 hover:text-[#72383D]'"
                         >
-                          💬 “{{ panel.dialogue }}”
+                          🎞️ Comic Layout
+                        </button>
+                        <button
+                          type="button"
+                          @click="layoutMode = 'storybook'"
+                          class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                          :class="layoutMode === 'storybook' ? 'bg-[#72383D] text-white' : 'text-[#322D29]/75 hover:text-[#72383D]'"
+                        >
+                          📖 Story + Panels
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        @click="handleReplanStoryboard"
+                        :disabled="isGenerating"
+                        class="px-3 py-2 rounded-xl border border-[#D1C7BD] bg-white hover:bg-[#EFE9E1] text-xs font-bold text-[#322D29] transition-colors disabled:opacity-50 cursor-pointer"
+                        title="Re-generate panel breakdown from the story"
+                      >
+                        Re-plan Layout
+                      </button>
+
+                      <button
+                        v-if="!allPanelsGenerated"
+                        type="button"
+                        @click="handleGenerateAllPanels(generatedPanelCount > 0)"
+                        :disabled="isGenerating"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#72383D] to-[#542529] hover:from-[#8B444A] hover:to-[#72383D] text-white text-xs font-bold uppercase tracking-wider shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
+                      >
+                        <span>🎨</span>
+                        <span>{{ generatedPanelCount > 0 ? 'Generate Remaining Panels' : 'Generate All Panels' }}</span>
+                      </button>
+
+                      <button
+                        v-else
+                        type="button"
+                        @click="handleGenerateAllPanels(false)"
+                        :disabled="isGenerating"
+                        class="px-3.5 py-2 rounded-xl border border-[#72383D] bg-white hover:bg-[#FAF6EE] text-[#72383D] text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
+                      >
+                        Regenerate All
+                      </button>
+
+                      <button
+                        v-if="generatedPanelCount > 0"
+                        type="button"
+                        @click="handleSaveEdits"
+                        :disabled="isGenerating || isSavingChanges"
+                        class="px-3.5 py-2 rounded-xl border border-emerald-600 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
+                      >
+                        {{ isSavingChanges ? 'Saving...' : 'Save' }}
+                      </button>
+
+                      <button
+                        v-if="generatedPanelCount > 0"
+                        type="button"
+                        @click="downloadMangaA4Pdf"
+                        :disabled="isExportingPdf"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#72383D] to-[#542529] hover:from-[#8B444A] hover:to-[#72383D] text-white text-xs font-bold uppercase tracking-wider shadow-xs cursor-pointer disabled:opacity-50"
+                      >
+                        <span>📄</span>
+                        <span>{{ isExportingPdf ? 'Creating PDF...' : 'A4 PDF' }}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Storybook Layout -->
+                  <div v-if="layoutMode === 'storybook'" class="space-y-6">
+                    <article
+                      v-for="(panel, idx) in storyBreakdown.panels"
+                      :key="panel.panelNumber"
+                      class="manga-print-row grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5 items-stretch"
+                    >
+                      <!-- Artwork Panel -->
+                      <div
+                        class="md:col-span-6 manga-print-col-6 comic-panel-frame bg-white rounded-2xl overflow-hidden flex flex-col"
+                        :class="idx % 2 === 1 ? 'md:order-2' : 'md:order-1'"
+                      >
+                        <div class="px-4 py-2 bg-[#1E1B18] text-white flex items-center justify-between text-xs">
+                          <span class="font-comic-display text-sm sm:text-base tracking-wider uppercase">
+                            Panel {{ panel.panelNumber }}
+                          </span>
+                          <span class="manga-no-print text-white/75 text-[11px]">{{ panel.cameraAngle }} · {{ panel.visualMood }}</span>
                         </div>
 
-                        <details
-                          v-if="panel.narrative && panel.sceneDescription"
-                          class="manga-no-print text-xs text-[#322D29]/65"
+                        <div
+                          class="relative w-full bg-[#F5F0E6] flex items-center justify-center overflow-hidden flex-1"
+                          :class="getTileAspectClass(panel.aspectRatio, panel.colSpan)"
                         >
-                          <summary class="cursor-pointer font-semibold hover:text-[#72383D] select-none">
-                            Visual scene direction
-                          </summary>
-                          <p class="mt-1.5 leading-relaxed pl-2 border-l border-[#D1C7BD]">
-                            {{ panel.sceneDescription }}
-                          </p>
-                        </details>
+                          <img
+                            v-if="getGeneratedPanelImage(panel.panelNumber)"
+                            :src="getGeneratedPanelImage(panel.panelNumber)"
+                            :alt="`Panel ${panel.panelNumber}`"
+                            class="w-full h-full object-contain cursor-pointer hover:scale-[1.01] transition-transform"
+                            @click="openLightbox(getGeneratedPanelImage(panel.panelNumber)!, getPanelLightboxCaption(panel))"
+                          />
+                          <div v-else class="p-6 text-center space-y-3 max-w-sm">
+                            <div
+                              v-if="regeneratingPanels.has(panel.panelNumber)"
+                              class="w-10 h-10 mx-auto border-3 border-[#D1C7BD] border-t-[#72383D] rounded-full animate-spin"
+                            ></div>
+                            <p class="text-xs font-semibold text-[#72383D] uppercase tracking-wider">
+                              {{ regeneratingPanels.has(panel.panelNumber) ? `Illustrating Panel ${panel.panelNumber}...` : 'Ready to Illustrate' }}
+                            </p>
+                            <p class="text-xs text-[#322D29]/80 leading-relaxed">
+                              {{ panel.sceneDescription }}
+                            </p>
+                          </div>
+
+                          <div
+                            v-if="regeneratingPanels.has(panel.panelNumber) && getGeneratedPanelImage(panel.panelNumber)"
+                            class="absolute inset-0 bg-black/55 flex flex-col items-center justify-center text-white space-y-2"
+                          >
+                            <div class="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span class="text-xs font-semibold">Regenerating Panel {{ panel.panelNumber }}...</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Narrative Panel + Admin Edit -->
+                      <div
+                        class="md:col-span-6 manga-print-col-6 comic-narrative-panel rounded-2xl overflow-hidden flex flex-col justify-between"
+                        :class="idx % 2 === 1 ? 'md:order-1' : 'md:order-2'"
+                      >
+                        <div>
+                          <div class="px-4 py-2 bg-[#72383D] text-white flex items-center justify-between gap-2">
+                            <span class="font-comic-display text-sm sm:text-base tracking-wider uppercase">
+                              Story · Part {{ panel.panelNumber }} of {{ storyBreakdown.panels.length }}
+                            </span>
+                            <span
+                              v-if="panel.characters?.length"
+                              class="text-xs font-comic font-bold text-white/90 truncate max-w-[200px]"
+                            >
+                              {{ panel.characters.join(', ') }}
+                            </span>
+                          </div>
+
+                          <div v-if="editingPanelNumber === panel.panelNumber" class="manga-no-print p-4 space-y-2.5 bg-[#FAF6EE]">
+                            <div>
+                              <label class="block text-[10px] font-bold uppercase text-[#72383D] mb-0.5">Narrative Caption</label>
+                              <textarea
+                                v-model="panel.narrative"
+                                rows="3"
+                                class="w-full px-2.5 py-1.5 rounded-lg border border-[#D1C7BD] bg-white text-xs text-[#1E1B18] focus:outline-none focus:border-[#72383D]"
+                              ></textarea>
+                            </div>
+                            <div>
+                              <label class="block text-[10px] font-bold uppercase text-[#72383D] mb-0.5">Speech Bubble Dialogue</label>
+                              <input
+                                v-model="panel.dialogue"
+                                type="text"
+                                class="w-full px-2.5 py-1.5 rounded-lg border border-[#D1C7BD] bg-white text-xs text-[#1E1B18] focus:outline-none focus:border-[#72383D]"
+                              />
+                            </div>
+                            <div>
+                              <label class="block text-[10px] font-bold uppercase text-[#72383D] mb-0.5">Visual Scene Direction</label>
+                              <textarea
+                                v-model="panel.sceneDescription"
+                                rows="2"
+                                class="w-full px-2.5 py-1.5 rounded-lg border border-[#D1C7BD] bg-white text-xs text-[#1E1B18] focus:outline-none focus:border-[#72383D]"
+                              ></textarea>
+                            </div>
+                          </div>
+
+                          <div v-else class="p-5 sm:p-6 space-y-4">
+                            <p class="manga-print-narrative-text font-comic font-bold text-lg sm:text-xl leading-relaxed text-[#1E1B18]">
+                              {{ getPanelNarrative(panel) }}
+                            </p>
+                            <div
+                              v-if="panel.dialogue"
+                              class="manga-print-dialogue-text p-3.5 rounded-2xl bg-white border-2 border-[#1E1B18] text-base sm:text-lg font-comic font-bold italic text-[#1E1B18] shadow-[2px_2px_0_#1E1B18]"
+                            >
+                              💬 “{{ panel.dialogue }}”
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="manga-no-print px-5 py-3 border-t border-[#D1C7BD]/70 bg-[#FAF6EE]/80 flex items-center justify-between gap-2 flex-wrap">
+                          <button
+                            type="button"
+                            @click="toggleEditPanel(panel.panelNumber)"
+                            class="px-3 py-1.5 rounded-lg border border-[#D1C7BD] bg-white hover:bg-[#EFE9E1] text-xs font-bold text-[#322D29] transition-colors cursor-pointer"
+                          >
+                            {{ editingPanelNumber === panel.panelNumber ? 'Done Editing' : 'Edit Scene / Text' }}
+                          </button>
+
+                          <div class="flex items-center gap-2">
+                            <button
+                              v-if="getGeneratedPanelImage(panel.panelNumber)"
+                              type="button"
+                              @click="downloadDataUrl(getGeneratedPanelImage(panel.panelNumber)!, `panel_${panel.panelNumber}_${date}.jpg`, getGeneratedPanel(panel.panelNumber)?.r2Key)"
+                              class="px-3 py-1.5 rounded-lg border border-[#D1C7BD] bg-white hover:bg-[#EFE9E1] text-xs font-bold text-[#322D29] transition-colors cursor-pointer"
+                            >
+                              Download
+                            </button>
+                            <button
+                              type="button"
+                              @click="regeneratePanel(panel.panelNumber, props.date)"
+                              :disabled="regeneratingPanels.has(panel.panelNumber) || isGenerating"
+                              class="px-3 py-1.5 rounded-lg bg-[#72383D] hover:bg-[#542529] text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
+                            >
+                              {{ getGeneratedPanelImage(panel.panelNumber) ? 'Regenerate' : 'Generate Panel' }}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  </div>
+
+                  <!-- Common Comic Page Layout (6-column variable-tile rows) -->
+                  <div v-else class="space-y-5">
+                    <div
+                      v-for="row in comicLayoutRows"
+                      :key="row.rowNumber"
+                      class="grid grid-cols-1 md:grid-cols-6 gap-4 items-stretch"
+                    >
+                      <div
+                        v-for="tile in row.tiles"
+                        :key="tile.panel.panelNumber"
+                        :class="[getTileColSpanClass(tile.colSpan), 'flex flex-col']"
+                      >
+                        <div class="comic-panel-frame bg-white rounded-2xl overflow-hidden flex flex-col h-full">
+                          <div class="px-3.5 py-2 bg-[#1E1B18] text-white flex items-center justify-between gap-2 text-xs">
+                            <span class="font-comic-display text-sm tracking-wider uppercase">
+                              Panel {{ tile.panel.panelNumber }}
+                            </span>
+                            <span class="manga-no-print text-white/75 text-[10px] font-mono">
+                              {{ tile.aspectRatio }} · {{ tile.panel.cameraAngle }}
+                            </span>
+                          </div>
+
+                          <div
+                            class="relative w-full bg-[#F5F0E6] flex items-center justify-center overflow-hidden"
+                            :class="getTileAspectClass(tile.aspectRatio, tile.colSpan)"
+                          >
+                            <img
+                              v-if="getGeneratedPanelImage(tile.panel.panelNumber)"
+                              :src="getGeneratedPanelImage(tile.panel.panelNumber)"
+                              :alt="`Panel ${tile.panel.panelNumber}`"
+                              class="w-full h-full object-cover cursor-pointer hover:scale-[1.01] transition-transform"
+                              @click="openLightbox(getGeneratedPanelImage(tile.panel.panelNumber)!, getPanelLightboxCaption(tile.panel))"
+                            />
+                            <div v-else class="p-5 text-center space-y-2 max-w-sm">
+                              <div
+                                v-if="regeneratingPanels.has(tile.panel.panelNumber)"
+                                class="w-9 h-9 mx-auto border-3 border-[#D1C7BD] border-t-[#72383D] rounded-full animate-spin"
+                              ></div>
+                              <p class="text-xs font-semibold text-[#72383D] uppercase tracking-wider">
+                                {{ regeneratingPanels.has(tile.panel.panelNumber) ? `Illustrating Panel ${tile.panel.panelNumber}...` : `Ready (${tile.aspectRatio})` }}
+                              </p>
+                              <p class="text-xs text-[#322D29]/80 leading-relaxed line-clamp-4">
+                                {{ tile.panel.sceneDescription }}
+                              </p>
+                            </div>
+
+                            <div
+                              v-if="regeneratingPanels.has(tile.panel.panelNumber) && getGeneratedPanelImage(tile.panel.panelNumber)"
+                              class="absolute inset-0 bg-black/55 flex flex-col items-center justify-center text-white space-y-2"
+                            >
+                              <div class="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              <span class="text-xs font-semibold">Regenerating Panel {{ tile.panel.panelNumber }}...</span>
+                            </div>
+                          </div>
+
+                          <div class="p-3.5 sm:p-4 bg-[#FFFDF5] border-t-2 border-[#1E1B18] flex-1 flex flex-col justify-between gap-2.5">
+                            <div v-if="editingPanelNumber === tile.panel.panelNumber" class="manga-no-print space-y-2">
+                              <div>
+                                <label class="block text-[10px] font-bold uppercase text-[#72383D]">Narrative</label>
+                                <textarea
+                                  v-model="tile.panel.narrative"
+                                  rows="2"
+                                  class="w-full px-2 py-1 rounded-lg border border-[#D1C7BD] bg-white text-xs text-[#1E1B18] focus:outline-none focus:border-[#72383D]"
+                                ></textarea>
+                              </div>
+                              <div>
+                                <label class="block text-[10px] font-bold uppercase text-[#72383D]">Dialogue</label>
+                                <input
+                                  v-model="tile.panel.dialogue"
+                                  type="text"
+                                  class="w-full px-2 py-1 rounded-lg border border-[#D1C7BD] bg-white text-xs text-[#1E1B18] focus:outline-none focus:border-[#72383D]"
+                                />
+                              </div>
+                              <div>
+                                <label class="block text-[10px] font-bold uppercase text-[#72383D]">Scene Prompt</label>
+                                <textarea
+                                  v-model="tile.panel.sceneDescription"
+                                  rows="2"
+                                  class="w-full px-2 py-1 rounded-lg border border-[#D1C7BD] bg-white text-xs text-[#1E1B18] focus:outline-none focus:border-[#72383D]"
+                                ></textarea>
+                              </div>
+                            </div>
+
+                            <div v-else class="space-y-2">
+                              <p class="manga-print-narrative-text font-comic font-bold text-sm sm:text-base text-[#1E1B18] leading-snug">
+                                {{ getPanelNarrative(tile.panel) }}
+                              </p>
+                              <div
+                                v-if="tile.panel.dialogue"
+                                class="manga-print-dialogue-text px-3 py-2 rounded-xl bg-white border-2 border-[#1E1B18] text-xs sm:text-sm font-comic font-bold italic text-[#1E1B18] shadow-[2px_2px_0_#1E1B18]"
+                              >
+                                💬 “{{ tile.panel.dialogue }}”
+                              </div>
+                            </div>
+
+                            <div class="manga-no-print pt-2 border-t border-[#D1C7BD]/60 flex items-center justify-between gap-1.5 flex-wrap">
+                              <button
+                                type="button"
+                                @click="toggleEditPanel(tile.panel.panelNumber)"
+                                class="px-2 py-1 rounded-lg border border-[#D1C7BD] bg-white hover:bg-[#EFE9E1] text-[11px] font-bold text-[#322D29] transition-colors cursor-pointer"
+                              >
+                                {{ editingPanelNumber === tile.panel.panelNumber ? 'Done' : 'Edit' }}
+                              </button>
+
+                              <div class="flex items-center gap-1.5">
+                                <button
+                                  v-if="getGeneratedPanelImage(tile.panel.panelNumber)"
+                                  type="button"
+                                  @click="downloadDataUrl(getGeneratedPanelImage(tile.panel.panelNumber)!, `panel_${tile.panel.panelNumber}_${date}.jpg`, getGeneratedPanel(tile.panel.panelNumber)?.r2Key)"
+                                  class="px-2.5 py-1 rounded-lg border border-[#D1C7BD] bg-white hover:bg-[#EFE9E1] text-[11px] font-bold text-[#322D29] transition-colors cursor-pointer"
+                                >
+                                  Download
+                                </button>
+                                <button
+                                  type="button"
+                                  @click="regeneratePanel(tile.panel.panelNumber, props.date)"
+                                  :disabled="regeneratingPanels.has(tile.panel.panelNumber) || isGenerating"
+                                  class="px-2.5 py-1 rounded-lg bg-[#72383D] hover:bg-[#542529] text-white text-[11px] font-bold transition-colors disabled:opacity-50 cursor-pointer"
+                                >
+                                  {{ getGeneratedPanelImage(tile.panel.panelNumber) ? 'Regenerate' : 'Generate' }}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-
-                    <!-- Panel Actions -->
-                    <div
-                      v-if="getGeneratedPanelImage(panel.panelNumber)"
-                      class="manga-no-print px-5 py-3 border-t border-[#D1C7BD]/70 bg-[#FAF6EE]/80 flex items-center justify-end gap-2"
-                    >
-                      <button
-                        type="button"
-                        @click="downloadDataUrl(getGeneratedPanelImage(panel.panelNumber)!, `panel_${panel.panelNumber}_${date}.jpg`, getGeneratedPanel(panel.panelNumber)?.r2Key)"
-                        class="px-3 py-1.5 rounded-lg border border-[#D1C7BD] bg-white hover:bg-[#EFE9E1] text-xs font-bold text-[#322D29] transition-colors cursor-pointer"
-                      >
-                        Download Panel
-                      </button>
-                      <button
-                        v-if="isAdmin"
-                        type="button"
-                        @click="regeneratePanel(panel.panelNumber, date)"
-                        :disabled="regeneratingPanels.has(panel.panelNumber) || isGenerating"
-                        class="px-3 py-1.5 rounded-lg bg-[#72383D] hover:bg-[#542529] text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
-                      >
-                        Regenerate
-                      </button>
-                    </div>
                   </div>
-                </article>
-              </div>
+                </div>
 
-              <!-- 2-Column Comic Grid Layout (Separate Artwork Panel + Separate Narrative Panel per beat) -->
-              <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Fallback if chunking failed -->
                 <div
-                  v-for="panel in storyBreakdown.panels"
-                  :key="panel.panelNumber"
-                  class="flex flex-col gap-3"
+                  v-else
+                  class="manga-no-print py-12 flex flex-col items-center justify-center text-center space-y-3 bg-white/80 border border-[#D1C7BD] rounded-2xl"
                 >
-                  <!-- 1) Standalone Artwork Panel -->
-                  <div class="comic-panel-frame bg-white rounded-2xl overflow-hidden flex flex-col">
-                    <div class="px-4 py-2 bg-[#1E1B18] text-white flex items-center justify-between text-xs">
-                      <span class="font-comic-display text-sm sm:text-base tracking-wider uppercase">
-                        Panel {{ panel.panelNumber }}
-                      </span>
-                      <span class="manga-no-print text-white/75 text-[11px]">{{ panel.cameraAngle }} · {{ panel.visualMood }}</span>
-                    </div>
+                  <p class="text-sm font-serif font-bold text-[#322D29]">No storyboard panels planned yet.</p>
+                  <button
+                    type="button"
+                    @click="handleReplanStoryboard"
+                    :disabled="isGenerating"
+                    class="px-4 py-2 rounded-xl bg-[#72383D] hover:bg-[#542529] text-white text-xs font-bold uppercase tracking-wider cursor-pointer"
+                  >
+                    Plan Storyboard Panels
+                  </button>
+                </div>
 
-                    <div class="relative aspect-square w-full bg-[#F5F0E6] flex items-center justify-center overflow-hidden">
-                      <img
-                        v-if="getGeneratedPanelImage(panel.panelNumber)"
-                        :src="getGeneratedPanelImage(panel.panelNumber)"
-                        :alt="`Panel ${panel.panelNumber}`"
-                        class="w-full h-full object-contain cursor-pointer hover:scale-[1.01] transition-transform"
-                        @click="openLightbox(getGeneratedPanelImage(panel.panelNumber)!, getPanelLightboxCaption(panel))"
-                      />
-                      <div
-                        v-else
-                        class="p-6 text-center space-y-3 max-w-sm"
-                      >
-                        <div
-                          v-if="isGeneratingPanels"
-                          class="w-10 h-10 mx-auto border-3 border-[#D1C7BD] border-t-[#72383D] rounded-full animate-spin"
-                        ></div>
-                        <p class="text-xs font-semibold text-[#72383D] uppercase tracking-wider">
-                          {{ isGeneratingPanels ? `Illustrating Panel ${panel.panelNumber}...` : 'Storyboard Layout' }}
-                        </p>
-                        <p class="text-xs text-[#322D29]/80 leading-relaxed">
-                          {{ panel.sceneDescription }}
-                        </p>
-                      </div>
+                <!-- Step 3 Footer -->
+                <div class="manga-no-print flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[#D1C7BD]/70">
+                  <button
+                    type="button"
+                    @click="activeStep = 2"
+                    :disabled="isGenerating"
+                    class="px-4 py-2 rounded-xl border border-[#D1C7BD] bg-white hover:bg-[#EFE9E1] text-xs font-bold uppercase tracking-wider text-[#322D29] transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    ← Back to Characters
+                  </button>
 
-                      <!-- Regenerating Overlay -->
-                      <div
-                        v-if="regeneratingPanels.has(panel.panelNumber)"
-                        class="absolute inset-0 bg-black/55 flex flex-col items-center justify-center text-white space-y-2"
-                      >
-                        <div class="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span class="text-xs font-semibold">Regenerating Panel {{ panel.panelNumber }}...</span>
-                      </div>
-                    </div>
+                  <button
+                    type="button"
+                    @click="emit('close')"
+                    class="px-5 py-2 rounded-xl bg-[#322D29] hover:bg-[#1E1B18] text-white text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
+              </section>
+            </template>
+
+            <!-- ============================================================ -->
+            <!-- NON-ADMIN READ-ONLY VIEW                                     -->
+            <!-- ============================================================ -->
+            <template v-else-if="!isAdmin && !isLoadingInitial && storyAnalysis">
+              <section class="bg-white/95 border-2 border-[#1E1B18] rounded-2xl p-5 shadow-[3px_3px_0_#1E1B18] space-y-4">
+                <div class="flex flex-wrap items-start justify-between gap-2 border-b border-[#D1C7BD]/60 pb-3">
+                  <div>
+                    <span class="font-comic font-bold text-xs uppercase tracking-[0.16em] text-[#72383D] block">
+                      Custom Parable · Inspired by {{ formattedDate }} Readings
+                    </span>
+                    <h3 class="manga-print-title text-2xl sm:text-3xl font-comic-display text-[#1E1B18] mt-1">
+                      {{ storyAnalysis.title }}
+                    </h3>
                   </div>
+                  <div class="flex items-center gap-2 text-xs font-comic font-bold text-[#322D29]/80 bg-[#FAF6EE] px-3 py-1 rounded-full border border-[#1E1B18]/40">
+                    <span>📍 {{ storyAnalysis.setting.location }}</span>
+                    <span>·</span>
+                    <span>{{ storyAnalysis.setting.mood }}</span>
+                  </div>
+                </div>
 
-                  <!-- 2) Separate Narrative Text Panel -->
-                  <div class="comic-narrative-panel rounded-2xl overflow-hidden flex flex-col justify-between flex-1">
-                    <div>
-                      <div class="px-4 py-1.5 bg-[#72383D] text-white flex items-center justify-between text-xs">
-                        <span class="font-comic-display text-sm tracking-wider uppercase">
-                          Story · Part {{ panel.panelNumber }}
-                        </span>
-                        <span v-if="panel.characters?.length" class="font-comic font-bold text-white/90 truncate max-w-[180px]">
-                          {{ panel.characters.join(', ') }}
-                        </span>
+                <div
+                  v-if="moralLesson"
+                  class="p-3.5 rounded-xl bg-[#FFFDF5] border-2 border-[#1E1B18] border-l-4 border-l-[#72383D] text-sm sm:text-base text-[#1E1B18]"
+                >
+                  <span class="font-comic font-bold uppercase tracking-wider text-xs text-[#72383D] block mb-0.5">
+                    Lesson Applied from Today's Readings
+                  </span>
+                  <p class="font-comic font-bold italic leading-relaxed">{{ moralLesson }}</p>
+                </div>
+
+                <details v-if="generatedStory" class="manga-no-print rounded-xl border border-[#D1C7BD]/80 bg-[#FAF6EE]/70 px-4 py-2.5">
+                  <summary class="cursor-pointer text-xs font-bold uppercase tracking-wider text-[#72383D] select-none">
+                    Read Full Unabridged Story Text
+                  </summary>
+                  <div class="prose max-w-none text-base font-comic leading-relaxed text-[#1E1B18] whitespace-pre-line mt-3 pt-3 border-t border-[#D1C7BD]/60">
+                    {{ generatedStory }}
+                  </div>
+                </details>
+              </section>
+
+              <section v-if="storyBreakdown?.panels?.length" class="space-y-5">
+                <div class="manga-no-print flex flex-wrap items-center justify-between gap-3">
+                  <h3 class="text-base sm:text-lg font-serif font-bold text-[#72383D]">
+                    Illustrated Story &amp; {{ style === 'manga' ? 'Manga' : 'Comic' }} Panels
+                  </h3>
+
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <div v-if="availableVersions.length > 1" class="inline-flex items-center gap-1.5">
+                      <label for="reader-version-select" class="text-[11px] font-bold uppercase tracking-wider text-[#72383D]">
+                        Version
+                      </label>
+                      <select
+                        id="reader-version-select"
+                        :value="currentStoryId || ''"
+                        @change="handleVersionChange"
+                        class="px-2.5 py-1.5 rounded-xl border border-[#D1C7BD] bg-white text-xs font-bold text-[#322D29] focus:outline-none cursor-pointer"
+                      >
+                        <option v-for="(ver, vIdx) in availableVersions" :key="ver.id" :value="ver.id">
+                          v{{ ver.version }}{{ vIdx === 0 ? ' (Latest)' : '' }} — {{ ver.title }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <div class="inline-flex rounded-xl border border-[#D1C7BD] bg-white p-0.5">
+                      <button
+                        type="button"
+                        @click="layoutMode = 'grid'"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                        :class="layoutMode === 'grid' ? 'bg-[#72383D] text-white' : 'text-[#322D29]/75 hover:text-[#72383D]'"
+                      >
+                        🎞️ Comic Layout
+                      </button>
+                      <button
+                        type="button"
+                        @click="layoutMode = 'storybook'"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                        :class="layoutMode === 'storybook' ? 'bg-[#72383D] text-white' : 'text-[#322D29]/75 hover:text-[#72383D]'"
+                      >
+                        📖 Story + Panels
+                      </button>
+                    </div>
+
+                    <button
+                      v-if="generatedPanels.length > 0"
+                      type="button"
+                      @click="downloadMangaA4Pdf"
+                      :disabled="isExportingPdf"
+                      class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#72383D] to-[#542529] hover:from-[#8B444A] hover:to-[#72383D] text-white text-xs font-bold uppercase tracking-wider shadow-xs cursor-pointer disabled:opacity-50"
+                    >
+                      <span>📄</span>
+                      <span>{{ isExportingPdf ? 'Creating A4 PDF...' : 'Download A4 PDF' }}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Storybook Layout -->
+                <div v-if="layoutMode === 'storybook'" class="space-y-6">
+                  <article
+                    v-for="(panel, idx) in storyBreakdown.panels"
+                    :key="panel.panelNumber"
+                    class="manga-print-row grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5 items-stretch"
+                  >
+                    <div
+                      class="md:col-span-6 manga-print-col-6 comic-panel-frame bg-white rounded-2xl overflow-hidden flex flex-col"
+                      :class="idx % 2 === 1 ? 'md:order-2' : 'md:order-1'"
+                    >
+                      <div class="px-4 py-2 bg-[#1E1B18] text-white flex items-center justify-between text-xs">
+                        <span class="font-comic-display text-sm sm:text-base tracking-wider uppercase">Panel {{ panel.panelNumber }}</span>
+                        <span class="manga-no-print text-white/75 text-[11px]">{{ panel.cameraAngle }} · {{ panel.visualMood }}</span>
                       </div>
-
-                      <div class="p-4 sm:p-5 space-y-3">
-                        <p class="manga-print-narrative-text font-comic font-bold text-base sm:text-lg text-[#1E1B18] leading-relaxed">
-                          {{ getPanelNarrative(panel) }}
-                        </p>
-                        <div
-                          v-if="panel.dialogue"
-                          class="manga-print-dialogue-text p-3 rounded-xl bg-white border-2 border-[#1E1B18] text-sm sm:text-base font-comic font-bold italic text-[#1E1B18] shadow-[2px_2px_0_#1E1B18]"
-                        >
-                          💬 “{{ panel.dialogue }}”
-                        </div>
-                        <details
-                          v-if="panel.narrative && panel.sceneDescription"
-                          class="manga-no-print text-xs text-[#322D29]/65"
-                        >
-                          <summary class="cursor-pointer font-semibold hover:text-[#72383D] select-none">
-                            Visual scene direction
-                          </summary>
-                          <p class="mt-1 leading-relaxed pl-2 border-l border-[#D1C7BD]">
-                            {{ panel.sceneDescription }}
-                          </p>
-                        </details>
+                      <div
+                        class="relative w-full bg-[#F5F0E6] flex items-center justify-center overflow-hidden flex-1"
+                        :class="getTileAspectClass(panel.aspectRatio, panel.colSpan)"
+                      >
+                        <img
+                          v-if="getGeneratedPanelImage(panel.panelNumber)"
+                          :src="getGeneratedPanelImage(panel.panelNumber)"
+                          :alt="`Panel ${panel.panelNumber}`"
+                          class="w-full h-full object-contain cursor-pointer"
+                          @click="openLightbox(getGeneratedPanelImage(panel.panelNumber)!, getPanelLightboxCaption(panel))"
+                        />
                       </div>
                     </div>
 
-                    <!-- Panel Actions -->
                     <div
-                      v-if="getGeneratedPanelImage(panel.panelNumber)"
-                      class="manga-no-print px-4 py-2.5 bg-[#FAF6EE] border-t border-[#D1C7BD]/70 flex items-center justify-end gap-2"
+                      class="md:col-span-6 manga-print-col-6 comic-narrative-panel rounded-2xl overflow-hidden flex flex-col justify-between"
+                      :class="idx % 2 === 1 ? 'md:order-1' : 'md:order-2'"
                     >
-                      <button
-                        type="button"
-                        @click="downloadDataUrl(getGeneratedPanelImage(panel.panelNumber)!, `panel_${panel.panelNumber}_${date}.jpg`, getGeneratedPanel(panel.panelNumber)?.r2Key)"
-                        class="px-3 py-1.5 rounded-lg border border-[#D1C7BD] bg-white hover:bg-[#EFE9E1] text-xs font-bold text-[#322D29] transition-colors cursor-pointer"
-                      >
-                        Download Panel
-                      </button>
-                      <button
-                        v-if="isAdmin"
-                        type="button"
-                        @click="regeneratePanel(panel.panelNumber, date)"
-                        :disabled="regeneratingPanels.has(panel.panelNumber) || isGenerating"
-                        class="px-3 py-1.5 rounded-lg bg-[#72383D] hover:bg-[#542529] text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
-                      >
-                        Regenerate
-                      </button>
+                      <div>
+                        <div class="px-4 py-2 bg-[#72383D] text-white flex items-center justify-between gap-2">
+                          <span class="font-comic-display text-sm sm:text-base tracking-wider uppercase">
+                            Story · Part {{ panel.panelNumber }} of {{ storyBreakdown.panels.length }}
+                          </span>
+                        </div>
+                        <div class="p-5 sm:p-6 space-y-4">
+                          <p class="manga-print-narrative-text font-comic font-bold text-lg sm:text-xl leading-relaxed text-[#1E1B18]">
+                            {{ getPanelNarrative(panel) }}
+                          </p>
+                          <div
+                            v-if="panel.dialogue"
+                            class="manga-print-dialogue-text p-3.5 rounded-2xl bg-white border-2 border-[#1E1B18] text-base sm:text-lg font-comic font-bold italic text-[#1E1B18] shadow-[2px_2px_0_#1E1B18]"
+                          >
+                            💬 “{{ panel.dialogue }}”
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+
+                <!-- Comic Grid Layout -->
+                <div v-else class="space-y-5">
+                  <div
+                    v-for="row in comicLayoutRows"
+                    :key="row.rowNumber"
+                    class="grid grid-cols-1 md:grid-cols-6 gap-4 items-stretch"
+                  >
+                    <div
+                      v-for="tile in row.tiles"
+                      :key="tile.panel.panelNumber"
+                      :class="[getTileColSpanClass(tile.colSpan), 'flex flex-col']"
+                    >
+                      <div class="comic-panel-frame bg-white rounded-2xl overflow-hidden flex flex-col h-full">
+                        <div class="px-3.5 py-2 bg-[#1E1B18] text-white flex items-center justify-between gap-2 text-xs">
+                          <span class="font-comic-display text-sm tracking-wider uppercase">Panel {{ tile.panel.panelNumber }}</span>
+                          <span class="manga-no-print text-white/75 text-[10px] font-mono">{{ tile.aspectRatio }} · {{ tile.panel.cameraAngle }}</span>
+                        </div>
+                        <div
+                          class="relative w-full bg-[#F5F0E6] flex items-center justify-center overflow-hidden"
+                          :class="getTileAspectClass(tile.aspectRatio, tile.colSpan)"
+                        >
+                          <img
+                            v-if="getGeneratedPanelImage(tile.panel.panelNumber)"
+                            :src="getGeneratedPanelImage(tile.panel.panelNumber)"
+                            :alt="`Panel ${tile.panel.panelNumber}`"
+                            class="w-full h-full object-cover cursor-pointer"
+                            @click="openLightbox(getGeneratedPanelImage(tile.panel.panelNumber)!, getPanelLightboxCaption(tile.panel))"
+                          />
+                        </div>
+                        <div class="p-3.5 sm:p-4 bg-[#FFFDF5] border-t-2 border-[#1E1B18] flex-1 flex flex-col gap-2">
+                          <p class="manga-print-narrative-text font-comic font-bold text-sm sm:text-base text-[#1E1B18] leading-snug">
+                            {{ getPanelNarrative(tile.panel) }}
+                          </p>
+                          <div
+                            v-if="tile.panel.dialogue"
+                            class="manga-print-dialogue-text px-3 py-2 rounded-xl bg-white border-2 border-[#1E1B18] text-xs sm:text-sm font-comic font-bold italic text-[#1E1B18] shadow-[2px_2px_0_#1E1B18]"
+                          >
+                            💬 “{{ tile.panel.dialogue }}”
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            </template>
           </div>
         </div>
 
