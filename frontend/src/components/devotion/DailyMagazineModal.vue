@@ -43,6 +43,9 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('click', handleDocumentClick);
   document.removeEventListener('keydown', handleDocumentKeydown);
+  if (typeof document !== 'undefined') {
+    document.body.classList.remove('magazine-modal-open');
+  }
 });
 
 const {
@@ -77,6 +80,9 @@ const syncMagazineData = async () => {
 watch(
   () => [props.isOpen, props.date] as const,
   ([open]) => {
+    if (typeof document !== 'undefined') {
+      document.body.classList.toggle('magazine-modal-open', open);
+    }
     if (open) {
       syncMagazineData();
     }
@@ -129,11 +135,11 @@ const openPrintView = (autoPrint: boolean) => {
     <transition name="fade">
       <div
         v-if="isOpen"
-        class="fixed inset-0 z-50 flex flex-col bg-[#24201C]/80 backdrop-blur-xs"
+        class="magazine-print-modal fixed inset-0 z-50 flex flex-col bg-[#24201C]/80 backdrop-blur-xs"
         @click.self="emit('close')"
       >
         <!-- Studio Toolbar -->
-        <header class="bg-[#FDFBF7] border-b border-[#D1C7BD] px-4 py-3 shadow-sm shrink-0">
+        <header class="print:hidden bg-[#FDFBF7] border-b border-[#D1C7BD] px-4 py-3 shadow-sm shrink-0">
           <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-3">
               <button
@@ -242,7 +248,7 @@ const openPrintView = (autoPrint: boolean) => {
         </header>
 
         <!-- Scrollable Magazine Preview -->
-        <div class="flex-grow overflow-y-auto p-4 sm:p-8">
+        <div class="magazine-print-modal-scroll flex-grow overflow-y-auto p-4 sm:p-8">
           <MagazineDocument
             v-if="readings"
             :date="date"

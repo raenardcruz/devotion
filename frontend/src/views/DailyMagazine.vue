@@ -147,7 +147,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#EFEAE2] print:bg-white py-6 print:py-0 px-3 sm:px-6 print:px-0">
+  <div class="min-h-screen print:min-h-0 bg-[#EFEAE2] print:bg-white py-6 print:py-0 px-3 sm:px-6 print:px-0">
     <!-- Non-printable Editorial Toolbar -->
     <div class="print:hidden max-w-[210mm] mx-auto mb-5 bg-[#FDFBF7] border border-[#D1C7BD] rounded-2xl p-3.5 shadow-sm flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-2.5">
@@ -273,13 +273,22 @@ onUnmounted(() => {
 <style>
 @page {
   size: A4 portrait;
-  margin: 14mm 15mm 16mm 15mm;
+  margin: 11mm 16mm 11mm 16mm;
 }
 
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 11mm 16mm 11mm 16mm;
+  }
+
   html,
   body {
     background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    overflow: visible !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }

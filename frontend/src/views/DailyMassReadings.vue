@@ -280,7 +280,7 @@ const availableTabs = computed(() => {
     <main class="flex-grow max-w-3xl mx-auto w-full px-4 py-8 flex flex-col">
       
       <!-- Page Header -->
-      <header class="text-center mb-8 animate-fade-in-down">
+      <header class="relative z-30 text-center mb-8 animate-fade-in-down">
           <span class="text-[#72383D] font-bold tracking-[0.25em] text-xs uppercase block mb-2">
             Liturgical Cycle
           </span>
@@ -327,7 +327,7 @@ const availableTabs = computed(() => {
                 <div
                   v-if="isActionsMenuOpen"
                   role="menu"
-                  class="absolute right-0 mt-2 w-64 rounded-2xl bg-[#FDFBF7] border border-[#D1C7BD] shadow-xl p-1.5 z-40 text-left"
+                  class="absolute right-0 mt-2 w-64 rounded-2xl bg-[#FDFBF7] border border-[#D1C7BD] shadow-xl p-1.5 z-50 text-left"
                 >
                   <button
                     v-if="readings"

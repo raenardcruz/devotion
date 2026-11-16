@@ -3,7 +3,7 @@
     <transition name="fade">
       <div
         v-if="isAccessModalOpen"
-        class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-[#201A17]/65 backdrop-blur-sm"
+        class="print:hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-[#201A17]/65 backdrop-blur-sm"
         role="dialog"
         aria-modal="true"
         aria-labelledby="access-gate-title"

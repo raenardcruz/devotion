@@ -3,7 +3,7 @@
   <transition name="avatar-appear">
     <div
       v-if="!isOpen"
-      class="fixed bottom-[5.25rem] right-4 sm:right-6 lg:bottom-7 lg:right-7 z-40 flex items-center gap-3 group"
+      class="print:hidden fixed bottom-[5.25rem] right-4 sm:right-6 lg:bottom-7 lg:right-7 z-40 flex items-center gap-3 group"
     >
       <!-- Hover Prompt Pill (Desktop) -->
       <div
@@ -47,7 +47,7 @@
     <transition name="modal-pop">
       <div
         v-if="isOpen"
-        class="fixed inset-0 z-[60] bg-[#F7F3EE] text-[#322D29] flex flex-col overflow-hidden selection:bg-[#72383D]/20"
+        class="print:hidden fixed inset-0 z-[60] bg-[#F7F3EE] text-[#322D29] flex flex-col overflow-hidden selection:bg-[#72383D]/20"
         role="dialog"
         aria-modal="true"
         aria-label="Magisterium AI Sanctuary"

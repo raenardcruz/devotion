@@ -537,11 +537,40 @@ button.btn-primary {
     margin: 12mm;
   }
 
+  html,
   body {
     background: #FFFFFF !important;
     color: #111111 !important;
+    min-height: 0 !important;
+    overflow: visible !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  body::before,
+  body::after,
+  .ambient-glow-bottom {
+    display: none !important;
+  }
+
+  /* When the magazine preview modal is open, print only the magazine modal content */
+  body.magazine-modal-open > *:not(.magazine-print-modal) {
+    display: none !important;
+  }
+
+  .magazine-print-modal {
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    background: #FFFFFF !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    backdrop-filter: none !important;
+  }
+
+  .magazine-print-modal-scroll {
+    overflow: visible !important;
+    padding: 0 !important;
   }
 
   /* When the manga modal is open, print only the manga modal content */

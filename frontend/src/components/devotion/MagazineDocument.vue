@@ -516,7 +516,7 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
             v-for="tile in row.tiles"
             :key="tile.panel.panelNumber"
             class="comic-tile"
-            :class="getTileColSpanClass(tile.colSpan)"
+            :class="[getTileColSpanClass(tile.colSpan), `comic-span-${tile.colSpan}`]"
           >
             <div class="comic-tile-bar">
               <span>PANEL {{ tile.panel.panelNumber }}</span>
@@ -1204,7 +1204,7 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
   cursor: pointer;
 }
 
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
   .magazine-sheet {
     padding: 6mm;
   }
@@ -1222,24 +1222,82 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
 @media print {
   .magazine-root {
     max-width: none;
+    width: 100%;
     margin: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   .magazine-sheet {
     border: none;
     border-radius: 0;
     box-shadow: none;
     padding: 0;
-    margin: 0 0 8mm 0;
+    margin: 0;
     background: #ffffff !important;
   }
-  .magazine-cover {
-    break-after: page;
-  }
-  .magazine-article {
-    break-after: page;
-  }
-  .magazine-comics-section {
+  .magazine-sheet + .magazine-sheet {
     break-before: page;
+    page-break-before: always;
+  }
+  .masthead-title {
+    font-size: 34pt;
+  }
+  .cover-lead-grid {
+    grid-template-columns: 1.35fr 1fr;
+    gap: 6mm;
+    padding-top: 4mm;
+  }
+  .magazine-cover .cover-masthead {
+    padding-bottom: 4mm;
+    margin-bottom: 4.5mm;
+  }
+  .magazine-cover .cover-figure {
+    margin-bottom: 4.5mm;
+  }
+  .magazine-cover .cover-image {
+    max-height: 118mm;
+  }
+  .magazine-cover .cover-footer {
+    margin-top: 4.5mm;
+  }
+  .magazine-columns {
+    column-count: 2 !important;
+    column-gap: 7mm;
+    column-rule: 1px solid rgba(209, 199, 189, 0.6);
+  }
+  .ai-commentary-header {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  .magisterium-sources {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .article-image-empty,
+  .mag-gen-btn,
+  .mag-gen-btn-sm,
+  .mag-regen-link {
+    display: none !important;
+  }
+  .comic-layout-row {
+    display: grid !important;
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    gap: 4mm !important;
+    align-items: stretch !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .comic-span-6 {
+    grid-column: span 6 / span 6 !important;
+  }
+  .comic-span-4 {
+    grid-column: span 4 / span 4 !important;
+  }
+  .comic-span-3 {
+    grid-column: span 3 / span 3 !important;
+  }
+  .comic-span-2 {
+    grid-column: span 2 / span 2 !important;
   }
 }
 </style>
