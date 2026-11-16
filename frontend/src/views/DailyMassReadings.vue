@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useDate } from '../composables/useDate';
 import { useDevotionApi } from '../composables/useDevotionApi';
 import { useAccessControl } from '../composables/useAccessControl';
@@ -49,10 +49,35 @@ const modalDate = ref(getLocalISOString());
 const isModalOpen = ref(false);
 const isStoryMangaModalOpen = ref(false);
 const isMagazineModalOpen = ref(false);
+const isActionsMenuOpen = ref(false);
+const actionsMenuRef = ref<HTMLElement | null>(null);
 const hasMangaStory = ref(false);
 const mangaRefreshKey = ref(0);
 
+const toggleActionsMenu = () => {
+  isActionsMenuOpen.value = !isActionsMenuOpen.value;
+};
+
+const closeActionsMenu = () => {
+  isActionsMenuOpen.value = false;
+};
+
+const handleDocumentClick = (event: MouseEvent) => {
+  if (!isActionsMenuOpen.value) return;
+  const target = event.target as Node | null;
+  if (actionsMenuRef.value && target && !actionsMenuRef.value.contains(target)) {
+    closeActionsMenu();
+  }
+};
+
+const handleDocumentKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && isActionsMenuOpen.value) {
+    closeActionsMenu();
+  }
+};
+
 const openMagazineModal = () => {
+  closeActionsMenu();
   isMagazineModalOpen.value = true;
 };
 
@@ -195,6 +220,13 @@ const selectedDateValue = computed(() => new Date(`${selectedDate.value}T12:00:0
 onMounted(() => {
   syncAdminState();
   fetchReadings();
+  document.addEventListener('click', handleDocumentClick);
+  document.addEventListener('keydown', handleDocumentKeydown);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleDocumentClick);
+  document.removeEventListener('keydown', handleDocumentKeydown);
 });
 
 // Dynamic date strings for header
@@ -258,7 +290,7 @@ const availableTabs = computed(() => {
           <p class="text-[#322D29]/70 text-sm">
             {{ formattedWeek }}
           </p>
-          <div class="mt-5 flex items-center justify-center gap-3 flex-wrap">
+          <div class="mt-5 flex items-center justify-center gap-2.5">
             <button
               @click="openModal"
               class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 hover:bg-white text-[#72383D] border border-[#D1C7BD] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-[#72383D]/30 active:scale-95 cursor-pointer"
@@ -272,43 +304,89 @@ const availableTabs = computed(() => {
               <span>Change Date</span>
             </button>
 
-            <button
-              @click="openLatinMassModal"
-              class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#72383D] to-[#542529] hover:from-[#8B444A] hover:to-[#72383D] text-white border border-[#542529] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-[#72383D]/30 active:scale-95 cursor-pointer"
-              title="Traditional Latin Mass (Divinum Officium) PDF with Orthodox Prayer Book styling"
-            >
-              <span class="text-sm font-serif">☦</span>
-              <span>Latin Mass (PDF)</span>
-            </button>
+            <!-- Settings & Editions Dropdown -->
+            <div ref="actionsMenuRef" class="relative">
+              <button
+                type="button"
+                @click="toggleActionsMenu"
+                aria-haspopup="menu"
+                :aria-expanded="isActionsMenuOpen"
+                title="Reading editions, PDF exports, and studio options"
+                class="inline-flex items-center gap-1.5 px-3 py-2 bg-white/85 hover:bg-white text-[#322D29] border border-[#D1C7BD] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-[#72383D]/30 active:scale-95 cursor-pointer"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#72383D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[#322D29]/60 transition-transform duration-150" :class="{ 'rotate-180': isActionsMenuOpen }">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
 
-            <button
-              v-if="readings && (isAdmin || hasMangaStory)"
-              @click="openStoryMangaModal"
-              class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#322D29] via-[#72383D] to-[#542529] hover:from-[#72383D] hover:to-[#322D29] text-white border border-[#72383D] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#72383D]/40 active:scale-95 cursor-pointer"
-              :title="isAdmin ? 'Step-by-step studio to write or AI-generate a story, adjust characters, and create manga panels' : 'Read today\'s illustrated story & manga'"
-            >
-              <span>{{ isAdmin ? '🎨' : '📖' }}</span>
-              <span>{{ isAdmin ? 'Generate Story & Manga' : 'Read Story & Manga' }}</span>
-            </button>
+              <transition name="fade">
+                <div
+                  v-if="isActionsMenuOpen"
+                  role="menu"
+                  class="absolute right-0 mt-2 w-64 rounded-2xl bg-[#FDFBF7] border border-[#D1C7BD] shadow-xl p-1.5 z-40 text-left"
+                >
+                  <button
+                    v-if="readings"
+                    type="button"
+                    role="menuitem"
+                    @click="openMagazineModal"
+                    class="w-full flex items-start gap-2.5 px-3 py-2.5 rounded-xl hover:bg-[#FAF6EE] transition-colors text-left cursor-pointer"
+                  >
+                    <span class="text-base leading-none mt-0.5">📰</span>
+                    <div>
+                      <span class="block text-xs font-bold text-[#72383D]">Magazine (PDF)</span>
+                      <span class="block text-[11px] text-[#322D29]/65">Readings, AI commentaries &amp; comics</span>
+                    </div>
+                  </button>
 
-            <button
-              v-if="readings"
-              @click="openMagazineModal"
-              class="inline-flex items-center gap-2 px-4 py-2 bg-[#FAF6EE] hover:bg-[#F3EBD8] text-[#72383D] border border-[#C5A059] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C5A059]/40 active:scale-95 cursor-pointer"
-              title="Print-ready editorial magazine PDF with readings, AI commentaries, illustrations, and comics"
-            >
-              <span>📰</span>
-              <span>Magazine (PDF)</span>
-            </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    @click="closeActionsMenu(); openLatinMassModal()"
+                    class="w-full flex items-start gap-2.5 px-3 py-2.5 rounded-xl hover:bg-[#FAF6EE] transition-colors text-left cursor-pointer"
+                  >
+                    <span class="text-base font-serif text-[#72383D] leading-none mt-0.5">☦</span>
+                    <div>
+                      <span class="block text-xs font-bold text-[#322D29]">Latin Mass (PDF)</span>
+                      <span class="block text-[11px] text-[#322D29]/65">1962 Roman Missal · Prayer Book</span>
+                    </div>
+                  </button>
 
-            <a
-              :href="`/kindle?date=${selectedDate}`"
-              class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 hover:bg-white text-[#322D29] border border-[#D1C7BD] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-[#72383D]/30 active:scale-95 cursor-pointer"
-              title="Simplified E-Ink / Kindle Edition without animations"
-            >
-              <span>📖</span>
-              <span>Kindle View</span>
-            </a>
+                  <button
+                    v-if="readings && (isAdmin || hasMangaStory)"
+                    type="button"
+                    role="menuitem"
+                    @click="closeActionsMenu(); openStoryMangaModal()"
+                    class="w-full flex items-start gap-2.5 px-3 py-2.5 rounded-xl hover:bg-[#FAF6EE] transition-colors text-left cursor-pointer"
+                  >
+                    <span class="text-base leading-none mt-0.5">{{ isAdmin ? '🎨' : '📖' }}</span>
+                    <div>
+                      <span class="block text-xs font-bold text-[#322D29]">{{ isAdmin ? 'Generate Story & Manga' : 'Read Story & Manga' }}</span>
+                      <span class="block text-[11px] text-[#322D29]/65">Illustrated daily parable</span>
+                    </div>
+                  </button>
+
+                  <div class="my-1 border-t border-[#D1C7BD]/60"></div>
+
+                  <a
+                    :href="`/kindle?date=${selectedDate}`"
+                    role="menuitem"
+                    @click="closeActionsMenu"
+                    class="w-full flex items-start gap-2.5 px-3 py-2.5 rounded-xl hover:bg-[#FAF6EE] transition-colors text-left cursor-pointer"
+                  >
+                    <span class="text-base leading-none mt-0.5">📖</span>
+                    <div>
+                      <span class="block text-xs font-bold text-[#322D29]">Kindle View</span>
+                      <span class="block text-[11px] text-[#322D29]/65">Simplified E-Ink edition</span>
+                    </div>
+                  </a>
+                </div>
+              </transition>
+            </div>
           </div>
       </header>
 
