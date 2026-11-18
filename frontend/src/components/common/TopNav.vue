@@ -52,6 +52,14 @@
         >
           Bible Study
         </router-link>
+        <router-link 
+          v-if="isAdmin"
+          to="/admin" 
+          class="text-[11px] font-semibold tracking-[0.12em] uppercase transition-colors py-1"
+          :class="[isAdminActive ? 'text-[#5C282D] font-bold border-b-2 border-[#5C282D]' : 'text-[#322D29]/65 hover:text-[#5C282D]']"
+        >
+          Admin
+        </router-link>
       </nav>
 
       <!-- Mobile Quick Link to Magisterium / Search -->
@@ -128,6 +136,7 @@
               <CatechismIllustration v-else-if="item.icon === 'shield'" class="w-8 h-8" />
               <EarlyChurchIllustration v-else-if="item.icon === 'scroll'" class="w-8 h-8" />
               <BibleStudyIllustration v-else-if="item.icon === 'context'" class="w-8 h-8" />
+              <svg v-else-if="item.icon === 'admin'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             </div>
             <div class="text-left flex-1 min-w-0">
               <div class="text-sm font-semibold tracking-wide leading-none mb-1">{{ item.label }}</div>
@@ -148,8 +157,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import { useAccessControl } from '../../composables/useAccessControl';
 import RosaryIllustration from '../icons/RosaryIllustration.vue';
 import MassReadingsIllustration from '../icons/MassReadingsIllustration.vue';
 import OpenLectionaryHeroIcon from '../icons/OpenLectionaryHeroIcon.vue';
@@ -158,7 +168,12 @@ import EarlyChurchIllustration from '../icons/EarlyChurchIllustration.vue';
 import BibleStudyIllustration from '../icons/BibleStudyIllustration.vue';
 
 const route = useRoute();
+const { isAdmin, syncAdminState } = useAccessControl();
 const isSidebarOpen = ref(false);
+
+onMounted(() => {
+  syncAdminState();
+});
 
 // Touch gesture state for swipe-to-close drawer
 let touchStartX = 0;
@@ -205,6 +220,7 @@ const isHomeActive = computed(() => route.path === '/');
 const isReadingsActive = computed(() => route.path.startsWith('/daily-readings'));
 const isDevotionsActive = computed(() => devotionChildRoutes.some(path => route.path.startsWith(path)));
 const isBibleStudyActive = computed(() => route.path.startsWith('/bible-study'));
+const isAdminActive = computed(() => route.path.startsWith('/admin'));
 
 const isNavItemActive = (itemPath: string) => {
   if (itemPath === '/') return route.path === '/';
@@ -212,7 +228,7 @@ const isNavItemActive = (itemPath: string) => {
   return route.path.startsWith(itemPath);
 };
 
-const navItems = [
+const baseNavItems = [
   {
     path: '/',
     label: 'Home',
@@ -256,6 +272,21 @@ const navItems = [
     icon: 'context'
   }
 ];
+
+const navItems = computed(() => {
+  if (!isAdmin.value) {
+    return baseNavItems;
+  }
+  return [
+    ...baseNavItems,
+    {
+      path: '/admin',
+      label: 'Admin',
+      desc: 'Settings, AI usage & access control',
+      icon: 'admin'
+    }
+  ];
+});
 </script>
 
 <style scoped>

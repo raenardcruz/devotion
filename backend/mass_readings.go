@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly"
 )
 
@@ -83,25 +84,8 @@ func get_mass_readings(dateStr string) (GetMassReadingsResponse, error) {
 
 	var readings []Readings
 
-	// Target .container blocks containing .name and .address matching catholic-mass-readings & USCCB layout
-	c.OnHTML(".container", func(e *colly.HTMLElement) {
-		typeText := strings.TrimSpace(e.ChildText(".name"))
-		if typeText == "" {
-			typeText = strings.TrimSpace(e.ChildText("h3.name"))
-		}
-
-		citation := strings.TrimSpace(e.ChildText(".address a"))
-		if citation == "" {
-			citation = strings.TrimSpace(e.ChildText(".address"))
-		}
-		citation = cleanScrapedText(citation)
-
-		if typeText != "" && citation != "" {
-			readings = append(readings, Readings{
-				Type:     typeText,
-				Citation: citation,
-			})
-		}
+	c.OnHTML("html", func(e *colly.HTMLElement) {
+		readings = extractMassReadings(e.DOM)
 	})
 
 	c.OnError(func(r *colly.Response, err error) {
@@ -110,6 +94,7 @@ func get_mass_readings(dateStr string) (GetMassReadingsResponse, error) {
 
 	var lastErr error
 	for _, url := range urlsToTry {
+		readings = nil
 		log.Printf("Fetching readings from %s...", url)
 		err := c.Visit(url)
 		if err == nil && len(readings) > 0 {
@@ -129,6 +114,62 @@ func get_mass_readings(dateStr string) (GetMassReadingsResponse, error) {
 	}
 
 	return GetMassReadingsResponse{Readings: readings}, nil
+}
+
+// extractMassReadings pairs each .name heading with its own .address citation
+// rather than querying a shared outer .container that wraps all readings.
+func extractMassReadings(root *goquery.Selection) []Readings {
+	var readings []Readings
+
+	root.Find(".name").Each(func(_ int, nameSel *goquery.Selection) {
+		typeText := cleanScrapedText(nameSel.Text())
+		if typeText == "" {
+			return
+		}
+
+		addrSel := findAssociatedAddress(nameSel)
+		if addrSel == nil || addrSel.Length() == 0 {
+			return
+		}
+
+		citation := cleanScrapedText(addrSel.Text())
+		if citation != "" {
+			readings = append(readings, Readings{
+				Type:     typeText,
+				Citation: citation,
+			})
+		}
+	})
+
+	return readings
+}
+
+func findAssociatedAddress(nameSel *goquery.Selection) *goquery.Selection {
+	curr := nameSel.Parent()
+	for depth := 0; depth < 4 && curr.Length() > 0; depth++ {
+		if curr.Find(".name").Length() > 1 {
+			break
+		}
+		if addr := curr.Find(".address"); addr.Length() > 0 {
+			return addr.First()
+		}
+		curr = curr.Parent()
+	}
+
+	// Fallback for flat sibling layouts where .name and .address share a parent container.
+	for next := nameSel.Next(); next.Length() > 0; next = next.Next() {
+		if next.Is(".name") || next.Find(".name").Length() > 0 {
+			break
+		}
+		if next.Is(".address") {
+			return next
+		}
+		if addr := next.Find(".address"); addr.Length() > 0 {
+			return addr.First()
+		}
+	}
+
+	return nil
 }
 
 func cleanScrapedText(s string) string {

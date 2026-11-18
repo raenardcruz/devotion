@@ -284,6 +284,36 @@ func InitDB() {
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		UNIQUE (story_date, style, version)
+	);
+
+	CREATE TABLE IF NOT EXISTS ai_usage_logs (
+		id SERIAL PRIMARY KEY,
+		provider VARCHAR(50) NOT NULL,
+		model VARCHAR(120) NOT NULL DEFAULT '',
+		feature VARCHAR(80) NOT NULL DEFAULT '',
+		operation VARCHAR(80) NOT NULL DEFAULT '',
+		input_tokens INT NOT NULL DEFAULT 0,
+		output_tokens INT NOT NULL DEFAULT 0,
+		thoughts_tokens INT NOT NULL DEFAULT 0,
+		cached_tokens INT NOT NULL DEFAULT 0,
+		total_tokens INT NOT NULL DEFAULT 0,
+		image_count INT NOT NULL DEFAULT 0,
+		estimated_cost_usd DOUBLE PRECISION NOT NULL DEFAULT 0,
+		created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+	);
+	CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_created_at ON ai_usage_logs (created_at);
+	CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_provider_model ON ai_usage_logs (provider, model);
+
+	CREATE TABLE IF NOT EXISTS ai_model_pricing (
+		id SERIAL PRIMARY KEY,
+		provider VARCHAR(50) NOT NULL DEFAULT 'gemini',
+		model VARCHAR(120) NOT NULL,
+		input_per_million DOUBLE PRECISION NOT NULL DEFAULT 0,
+		output_per_million DOUBLE PRECISION NOT NULL DEFAULT 0,
+		cached_per_million DOUBLE PRECISION NOT NULL DEFAULT 0,
+		image_cost_each DOUBLE PRECISION NOT NULL DEFAULT 0,
+		updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+		UNIQUE (provider, model)
 	);`
 
 	if _, err := db.Exec(createTableQuery); err != nil {

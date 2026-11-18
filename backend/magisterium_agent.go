@@ -167,6 +167,13 @@ func ExecuteMagisteriumRAG(ctx context.Context, query string, numResults int, ap
 		}
 	}
 
+	RecordAIUsage(AIUsageRecord{
+		Provider:  "magisterium",
+		Model:     "magisterium-search-v1",
+		Feature:   "magisterium_rag",
+		Operation: "search",
+	})
+
 	log.Printf("[ExecuteMagisteriumRAG] Successfully retrieved %d citations for query: %q", len(citations), trimmedQuery)
 	return citations, usageInfo, nil
 }

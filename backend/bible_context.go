@@ -83,9 +83,13 @@ func get_bible_context(ctx context.Context, args GetBibleContextArgs) (BibleCont
 			return BibleContext{}, fmt.Errorf("failed to create gemini model: %w", err)
 		}
 		seq := gModel.GenerateContent(ctx, req, false)
+		var lastUsage *genai.GenerateContentResponseUsageMetadata
 		for resp, err := range seq {
 			if err != nil {
 				return BibleContext{}, fmt.Errorf("error generating bible context with gemini: %w", err)
+			}
+			if resp.UsageMetadata != nil {
+				lastUsage = resp.UsageMetadata
 			}
 			if resp.Content != nil {
 				for _, part := range resp.Content.Parts {
@@ -95,6 +99,18 @@ func get_bible_context(ctx context.Context, args GetBibleContextArgs) (BibleCont
 				}
 			}
 		}
+		inTok, outTok, thTok, caTok, totTok := tokenCountsFromGenAI(lastUsage)
+		RecordAIUsage(AIUsageRecord{
+			Provider:       "gemini",
+			Model:          selectedModelName,
+			Feature:        "bible_context",
+			Operation:      "generate",
+			InputTokens:    inTok,
+			OutputTokens:   outTok,
+			ThoughtsTokens: thTok,
+			CachedTokens:   caTok,
+			TotalTokens:    totTok,
+		})
 	} else {
 		// Context generation defaults to Ollama
 		ollamaURL := os.Getenv("OLLAMA_URL")
@@ -110,9 +126,13 @@ func get_bible_context(ctx context.Context, args GetBibleContextArgs) (BibleCont
 		oModel := ollama.NewModel(selectedModelName, ollamaURL)
 		seq := oModel.GenerateContent(ctx, req, false)
 
+		var lastUsage *genai.GenerateContentResponseUsageMetadata
 		for resp, err := range seq {
 			if err != nil {
 				return BibleContext{}, fmt.Errorf("error generating bible context with ollama: %w", err)
+			}
+			if resp.UsageMetadata != nil {
+				lastUsage = resp.UsageMetadata
 			}
 			if resp.Content != nil {
 				for _, part := range resp.Content.Parts {
@@ -122,6 +142,18 @@ func get_bible_context(ctx context.Context, args GetBibleContextArgs) (BibleCont
 				}
 			}
 		}
+		inTok, outTok, thTok, caTok, totTok := tokenCountsFromGenAI(lastUsage)
+		RecordAIUsage(AIUsageRecord{
+			Provider:       "ollama",
+			Model:          selectedModelName,
+			Feature:        "bible_context",
+			Operation:      "generate",
+			InputTokens:    inTok,
+			OutputTokens:   outTok,
+			ThoughtsTokens: thTok,
+			CachedTokens:   caTok,
+			TotalTokens:    totTok,
+		})
 	}
 
 	rawContext := contextText.String()
@@ -314,13 +346,31 @@ Instructions:
 			gModel, err := geminiModel.NewModel(ctx, settings.GeminiModel, &genai.ClientConfig{APIKey: settings.GeminiAPIKey})
 			if err == nil {
 				seq := gModel.GenerateContent(ctx, reqVerification, false)
+				var lastUsage *genai.GenerateContentResponseUsageMetadata
 				for r, e := range seq {
-					if e == nil && r.Content != nil {
-						for _, p := range r.Content.Parts {
-							correctedText.WriteString(p.Text)
+					if e == nil && r != nil {
+						if r.UsageMetadata != nil {
+							lastUsage = r.UsageMetadata
+						}
+						if r.Content != nil {
+							for _, p := range r.Content.Parts {
+								correctedText.WriteString(p.Text)
+							}
 						}
 					}
 				}
+				inTok, outTok, thTok, caTok, totTok := tokenCountsFromGenAI(lastUsage)
+				RecordAIUsage(AIUsageRecord{
+					Provider:       "gemini",
+					Model:          settings.GeminiModel,
+					Feature:        "fact_checker",
+					Operation:      "verify",
+					InputTokens:    inTok,
+					OutputTokens:   outTok,
+					ThoughtsTokens: thTok,
+					CachedTokens:   caTok,
+					TotalTokens:    totTok,
+				})
 			}
 		} else {
 			ollamaURL := os.Getenv("OLLAMA_URL")
@@ -329,13 +379,31 @@ Instructions:
 			}
 			oModel := ollama.NewModel(settings.OllamaModel, ollamaURL)
 			seq := oModel.GenerateContent(ctx, reqVerification, false)
+			var lastUsage *genai.GenerateContentResponseUsageMetadata
 			for r, e := range seq {
-				if e == nil && r.Content != nil {
-					for _, p := range r.Content.Parts {
-						correctedText.WriteString(p.Text)
+				if e == nil && r != nil {
+					if r.UsageMetadata != nil {
+						lastUsage = r.UsageMetadata
+					}
+					if r.Content != nil {
+						for _, p := range r.Content.Parts {
+							correctedText.WriteString(p.Text)
+						}
 					}
 				}
 			}
+			inTok, outTok, thTok, caTok, totTok := tokenCountsFromGenAI(lastUsage)
+			RecordAIUsage(AIUsageRecord{
+				Provider:       "ollama",
+				Model:          settings.OllamaModel,
+				Feature:        "fact_checker",
+				Operation:      "verify",
+				InputTokens:    inTok,
+				OutputTokens:   outTok,
+				ThoughtsTokens: thTok,
+				CachedTokens:   caTok,
+				TotalTokens:    totTok,
+			})
 		}
 
 		finalContext := strings.TrimSpace(correctedText.String())
@@ -356,9 +424,13 @@ Instructions:
 		log.Printf("[FactCheckBibleContext] Fact checking context for %s using Ollama (%s)...\n", citation, selectedModelName)
 		oModel := ollama.NewModel(selectedModelName, ollamaURL)
 		seq := oModel.GenerateContent(ctx, req, false)
+		var lastUsage *genai.GenerateContentResponseUsageMetadata
 		for resp, err := range seq {
 			if err != nil {
 				return rawContext, extractCitationsFromContext(rawContext), fmt.Errorf("error generating fact-check correction with ollama: %w", err)
+			}
+			if resp.UsageMetadata != nil {
+				lastUsage = resp.UsageMetadata
 			}
 			if resp.Content != nil {
 				for _, part := range resp.Content.Parts {
@@ -368,6 +440,18 @@ Instructions:
 				}
 			}
 		}
+		inTok, outTok, thTok, caTok, totTok := tokenCountsFromGenAI(lastUsage)
+		RecordAIUsage(AIUsageRecord{
+			Provider:       "ollama",
+			Model:          selectedModelName,
+			Feature:        "fact_checker",
+			Operation:      "correct",
+			InputTokens:    inTok,
+			OutputTokens:   outTok,
+			ThoughtsTokens: thTok,
+			CachedTokens:   caTok,
+			TotalTokens:    totTok,
+		})
 	} else {
 		// Fact checking default: Gemini
 		apiKey := settings.GeminiAPIKey
@@ -389,9 +473,13 @@ Instructions:
 		}
 		seq := gModel.GenerateContent(ctx, req, false)
 
+		var lastUsage *genai.GenerateContentResponseUsageMetadata
 		for resp, err := range seq {
 			if err != nil {
 				return rawContext, extractCitationsFromContext(rawContext), fmt.Errorf("error generating fact-check correction: %w", err)
+			}
+			if resp.UsageMetadata != nil {
+				lastUsage = resp.UsageMetadata
 			}
 			if resp.Content != nil {
 				for _, part := range resp.Content.Parts {
@@ -401,6 +489,18 @@ Instructions:
 				}
 			}
 		}
+		inTok, outTok, thTok, caTok, totTok := tokenCountsFromGenAI(lastUsage)
+		RecordAIUsage(AIUsageRecord{
+			Provider:       "gemini",
+			Model:          selectedModelName,
+			Feature:        "fact_checker",
+			Operation:      "correct",
+			InputTokens:    inTok,
+			OutputTokens:   outTok,
+			ThoughtsTokens: thTok,
+			CachedTokens:   caTok,
+			TotalTokens:    totTok,
+		})
 	}
 
 	res := strings.TrimSpace(correctedText.String())

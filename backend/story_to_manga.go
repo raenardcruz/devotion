@@ -1098,6 +1098,18 @@ func generateStructuredJSON(ctx context.Context, prompt string, schema *genai.Sc
 				if genErr == nil && resp != nil {
 					text := resp.Text()
 					if strings.TrimSpace(text) != "" {
+						inTok, outTok, thTok, caTok, totTok := tokenCountsFromGenAI(resp.UsageMetadata)
+						RecordAIUsage(AIUsageRecord{
+							Provider:       "gemini",
+							Model:          m,
+							Feature:        "story_to_manga",
+							Operation:      "structured_json",
+							InputTokens:    inTok,
+							OutputTokens:   outTok,
+							ThoughtsTokens: thTok,
+							CachedTokens:   caTok,
+							TotalTokens:    totTok,
+						})
 						return text, nil
 					}
 				}
@@ -1132,9 +1144,13 @@ func generateStructuredJSON(ctx context.Context, prompt string, schema *genai.Sc
 	oModel := ollama.NewModel(ollamaModel, ollamaURL)
 	seq := oModel.GenerateContent(ctx, req, false)
 	var out strings.Builder
+	var lastUsage *genai.GenerateContentResponseUsageMetadata
 	for resp, err := range seq {
 		if err != nil {
 			return "", fmt.Errorf("error generating structured JSON with ollama (%s): %w", ollamaModel, err)
+		}
+		if resp.UsageMetadata != nil {
+			lastUsage = resp.UsageMetadata
 		}
 		if resp.Content != nil {
 			for _, part := range resp.Content.Parts {
@@ -1144,6 +1160,18 @@ func generateStructuredJSON(ctx context.Context, prompt string, schema *genai.Sc
 			}
 		}
 	}
+	inTok, outTok, thTok, caTok, totTok := tokenCountsFromGenAI(lastUsage)
+	RecordAIUsage(AIUsageRecord{
+		Provider:       "ollama",
+		Model:          ollamaModel,
+		Feature:        "story_to_manga",
+		Operation:      "structured_json",
+		InputTokens:    inTok,
+		OutputTokens:   outTok,
+		ThoughtsTokens: thTok,
+		CachedTokens:   caTok,
+		TotalTokens:    totTok,
+	})
 	return out.String(), nil
 }
 
@@ -1295,6 +1323,19 @@ func generateGeminiImage(ctx context.Context, requestedModel string, prompt stri
 							mimeType = "image/jpeg"
 						}
 						b64 := base64.StdEncoding.EncodeToString(part.InlineData.Data)
+						inTok, outTok, thTok, caTok, totTok := tokenCountsFromGenAI(resp.UsageMetadata)
+						RecordAIUsage(AIUsageRecord{
+							Provider:       "gemini",
+							Model:          m,
+							Feature:        "image_generation",
+							Operation:      "generate_image",
+							InputTokens:    inTok,
+							OutputTokens:   outTok,
+							ThoughtsTokens: thTok,
+							CachedTokens:   caTok,
+							TotalTokens:    totTok,
+							ImageCount:     1,
+						})
 						return fmt.Sprintf("data:%s;base64,%s", mimeType, b64), requestedModel, nil
 					}
 				}

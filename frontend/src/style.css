@@ -496,6 +496,39 @@ button.btn-primary {
   mask-image: linear-gradient(to bottom, transparent 0%, black 4%, black 92%, transparent 100%);
 }
 
+/* Scrollbar Utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(172, 156, 141, 0.55) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(172, 156, 141, 0.5);
+  border-radius: 9999px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(114, 56, 61, 0.55);
+}
+
 /* Settings Popover Spring Transition */
 .settings-pop-enter-active,
 .settings-pop-leave-active {

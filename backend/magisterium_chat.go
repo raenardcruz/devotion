@@ -349,9 +349,13 @@ Instructions:
 			return "", fmt.Errorf("failed to initialize Gemini model: %w", err)
 		}
 		seq := gModel.GenerateContent(ctx, req, streamEnabled)
+		var lastUsage *genai.GenerateContentResponseUsageMetadata
 		for resp, err := range seq {
 			if err != nil {
 				return "", fmt.Errorf("error generating summary with Gemini: %w", err)
+			}
+			if resp.UsageMetadata != nil {
+				lastUsage = resp.UsageMetadata
 			}
 			if resp.Content != nil {
 				for _, part := range resp.Content.Parts {
@@ -366,6 +370,18 @@ Instructions:
 				}
 			}
 		}
+		inTok, outTok, thTok, caTok, totTok := tokenCountsFromGenAI(lastUsage)
+		RecordAIUsage(AIUsageRecord{
+			Provider:       "gemini",
+			Model:          selectedModel,
+			Feature:        "magisterium_chat",
+			Operation:      "summarize",
+			InputTokens:    inTok,
+			OutputTokens:   outTok,
+			ThoughtsTokens: thTok,
+			CachedTokens:   caTok,
+			TotalTokens:    totTok,
+		})
 	} else {
 		// Default to Ollama
 		ollamaURL := os.Getenv("OLLAMA_URL")
@@ -379,9 +395,13 @@ Instructions:
 		log.Printf("[streamCitationsSummaryWithLLM] Summarizing Magisterium citations with Ollama (%s) [streaming=%t]...", selectedModel, streamEnabled)
 		oModel := ollama.NewModel(selectedModel, ollamaURL)
 		seq := oModel.GenerateContent(ctx, req, streamEnabled)
+		var lastUsage *genai.GenerateContentResponseUsageMetadata
 		for resp, err := range seq {
 			if err != nil {
 				return "", fmt.Errorf("error generating summary with Ollama: %w", err)
+			}
+			if resp.UsageMetadata != nil {
+				lastUsage = resp.UsageMetadata
 			}
 			if resp.Content != nil {
 				for _, part := range resp.Content.Parts {
@@ -396,6 +416,18 @@ Instructions:
 				}
 			}
 		}
+		inTok, outTok, thTok, caTok, totTok := tokenCountsFromGenAI(lastUsage)
+		RecordAIUsage(AIUsageRecord{
+			Provider:       "ollama",
+			Model:          selectedModel,
+			Feature:        "magisterium_chat",
+			Operation:      "summarize",
+			InputTokens:    inTok,
+			OutputTokens:   outTok,
+			ThoughtsTokens: thTok,
+			CachedTokens:   caTok,
+			TotalTokens:    totTok,
+		})
 	}
 
 	return strings.TrimSpace(summaryBuilder.String()), nil
@@ -469,9 +501,13 @@ Standalone Search Query:`, chatHistory.String(), latestQuestion)
 			return "", fmt.Errorf("failed to initialize Gemini model for query generation: %w", err)
 		}
 		seq := gModel.GenerateContent(ctx, req, false)
+		var lastUsage *genai.GenerateContentResponseUsageMetadata
 		for resp, err := range seq {
 			if err != nil {
 				return "", fmt.Errorf("error generating query with Gemini: %w", err)
+			}
+			if resp.UsageMetadata != nil {
+				lastUsage = resp.UsageMetadata
 			}
 			if resp.Content != nil {
 				for _, part := range resp.Content.Parts {
@@ -481,6 +517,18 @@ Standalone Search Query:`, chatHistory.String(), latestQuestion)
 				}
 			}
 		}
+		inTok, outTok, thTok, caTok, totTok := tokenCountsFromGenAI(lastUsage)
+		RecordAIUsage(AIUsageRecord{
+			Provider:       "gemini",
+			Model:          selectedModel,
+			Feature:        "magisterium_chat",
+			Operation:      "rewrite_query",
+			InputTokens:    inTok,
+			OutputTokens:   outTok,
+			ThoughtsTokens: thTok,
+			CachedTokens:   caTok,
+			TotalTokens:    totTok,
+		})
 	} else {
 		// Default to Ollama
 		ollamaURL := os.Getenv("OLLAMA_URL")
@@ -493,9 +541,13 @@ Standalone Search Query:`, chatHistory.String(), latestQuestion)
 		}
 		oModel := ollama.NewModel(selectedModel, ollamaURL)
 		seq := oModel.GenerateContent(ctx, req, false)
+		var lastUsage *genai.GenerateContentResponseUsageMetadata
 		for resp, err := range seq {
 			if err != nil {
 				return "", fmt.Errorf("error generating query with Ollama: %w", err)
+			}
+			if resp.UsageMetadata != nil {
+				lastUsage = resp.UsageMetadata
 			}
 			if resp.Content != nil {
 				for _, part := range resp.Content.Parts {
@@ -505,6 +557,18 @@ Standalone Search Query:`, chatHistory.String(), latestQuestion)
 				}
 			}
 		}
+		inTok, outTok, thTok, caTok, totTok := tokenCountsFromGenAI(lastUsage)
+		RecordAIUsage(AIUsageRecord{
+			Provider:       "ollama",
+			Model:          selectedModel,
+			Feature:        "magisterium_chat",
+			Operation:      "rewrite_query",
+			InputTokens:    inTok,
+			OutputTokens:   outTok,
+			ThoughtsTokens: thTok,
+			CachedTokens:   caTok,
+			TotalTokens:    totTok,
+		})
 	}
 
 	query := strings.TrimSpace(resultBuilder.String())
