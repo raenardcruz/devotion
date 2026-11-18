@@ -84,6 +84,9 @@ func main() {
 	http.Handle("/api/admin/access-requests", corsMiddleware(http.HandlerFunc(adminAccessRequestsHandler)))
 	http.Handle("/api/admin/access-requests/approve", corsMiddleware(http.HandlerFunc(adminApproveAccessRequestHandler)))
 	http.Handle("/api/admin/access-requests/reject", corsMiddleware(http.HandlerFunc(adminRejectAccessRequestHandler)))
+	http.Handle("/api/admin/ai-usage", corsMiddleware(http.HandlerFunc(adminAIUsageHandler)))
+	http.Handle("/api/admin/ai-usage/cleanup", corsMiddleware(http.HandlerFunc(adminAIUsageCleanupHandler)))
+	http.Handle("/api/admin/ai-pricing", corsMiddleware(http.HandlerFunc(adminAIPricingHandler)))
 
 	// Start Cron Jobs
 	startCronJobs(ctx)

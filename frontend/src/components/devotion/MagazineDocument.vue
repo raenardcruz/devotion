@@ -6,6 +6,12 @@ import {
   getTileAspectClass,
   getTileColSpanClass,
 } from '../../utils/mangaLayout';
+import {
+  computeArticleLayoutPlan,
+  computePopeQuoteLayout,
+  extractCoverDeckQuote,
+  type ArticleLayoutPlan,
+} from '../../utils/magazineLayout';
 import type {
   ComicStyle,
   MangaGeneratedPanel,
@@ -80,36 +86,10 @@ const emit = defineEmits<{
   ): void;
 }>();
 
-const cleanContext = (contextStr?: string): string => {
-  if (!contextStr) return '';
-  return contextStr.replace(/<details[\s\S]*?<\/details>/gi, '').trim();
-};
-
-const stripHtml = (html?: string): string => {
-  if (!html) return '';
-  return html
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-};
-
-const extractPullQuote = (reading?: MagazineReadingItem): string => {
-  if (!reading) return '';
-  const source = cleanContext(reading.context) || stripHtml(reading.text);
-  if (!source) return '';
-  const plain = source
-    .replace(/[#*_`>]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  const sentences = plain.match(/[^.!?]+[.!?]+/g) || [];
-  const candidate = sentences.find((s) => s.trim().length >= 55 && s.trim().length <= 185);
-  return candidate ? candidate.trim() : '';
-};
-
 const parseCitations = (reading?: MagazineReadingItem): MagisteriumCitation[] => {
   if (!reading) return [];
   if (reading.citations && reading.citations.length > 0) {
-    return reading.citations.slice(0, 3);
+    return reading.citations.slice(0, 4);
   }
   if (reading.context && reading.context.includes('<details')) {
     const out: MagisteriumCitation[] = [];
@@ -128,7 +108,7 @@ const parseCitations = (reading?: MagazineReadingItem): MagisteriumCitation[] =>
         });
       }
     }
-    return out.slice(0, 3);
+    return out.slice(0, 4);
   }
   return [];
 };
@@ -136,6 +116,7 @@ const parseCitations = (reading?: MagazineReadingItem): MagisteriumCitation[] =>
 const commentaryMarkdownOptions = {
   paragraphClass: 'mag-commentary-p',
   listClass: 'mag-commentary-ul',
+  orderedListClass: 'mag-commentary-ol',
   listItemClass: 'mag-commentary-li',
 };
 
@@ -146,8 +127,23 @@ const issueSubtitle = computed(() => {
   return `${weekday} of the Liturgical Year · Daily Liturgical Edition`;
 });
 
-const readingSections = computed(() => {
-  const list: Array<{
+const coverDeckQuote = computed(() =>
+  extractCoverDeckQuote(props.readings.gospel?.text, props.readings.gospel?.context)
+);
+
+interface EnrichedReadingSection {
+  key: Exclude<MagazineReadingKey, 'cover'>;
+  kicker: string;
+  label: string;
+  isPsalm: boolean;
+  reading: MagazineReadingItem;
+  imageSrc: string;
+  citations: MagisteriumCitation[];
+  layout: ArticleLayoutPlan;
+}
+
+const readingSections = computed<EnrichedReadingSection[]>(() => {
+  const rawList: Array<{
     key: Exclude<MagazineReadingKey, 'cover'>;
     kicker: string;
     label: string;
@@ -156,7 +152,7 @@ const readingSections = computed(() => {
   }> = [];
 
   if (props.readings.first_reading) {
-    list.push({
+    rawList.push({
       key: 'first_reading',
       kicker: 'Part I · First Reading',
       label: 'Sacred Scripture',
@@ -164,7 +160,7 @@ const readingSections = computed(() => {
     });
   }
   if (props.readings.responsorial_psalm) {
-    list.push({
+    rawList.push({
       key: 'responsorial_psalm',
       kicker: 'Responsorial Psalm',
       label: 'Liturgical Song',
@@ -173,7 +169,7 @@ const readingSections = computed(() => {
     });
   }
   if (props.readings.second_reading) {
-    list.push({
+    rawList.push({
       key: 'second_reading',
       kicker: 'Second Reading',
       label: 'Apostolic Epistle',
@@ -181,15 +177,42 @@ const readingSections = computed(() => {
     });
   }
   if (props.readings.gospel) {
-    list.push({
+    rawList.push({
       key: 'gospel',
       kicker: 'The Holy Gospel',
       label: 'Gospel Proclamation',
       reading: props.readings.gospel,
     });
   }
-  return list;
+
+  return rawList.map((item) => {
+    const imageSrc = props.includeImages ? props.resolveImageSrc(props.images[item.key]) : '';
+    const citations = parseCitations(item.reading);
+    const layout = computeArticleLayoutPlan({
+      readingText: item.reading.text,
+      exegesisRaw: item.reading.context,
+      isPsalm: Boolean(item.isPsalm),
+      hasImage: Boolean(imageSrc),
+      includeCommentaries: props.includeCommentaries,
+      citationCount: citations.length,
+    });
+
+    return {
+      key: item.key,
+      kicker: item.kicker,
+      label: item.label,
+      isPsalm: Boolean(item.isPsalm),
+      reading: item.reading,
+      imageSrc,
+      citations,
+      layout,
+    };
+  });
 });
+
+const popeQuoteLayout = computed(() =>
+  computePopeQuoteLayout(props.readings.pope_quote)
+);
 
 const coverImageSrc = computed(() => props.resolveImageSrc(props.images.cover));
 
@@ -298,8 +321,8 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
           <h2 class="cover-headline">
             {{ readings.gospel?.citation || formattedDate }}
           </h2>
-          <p v-if="extractPullQuote(readings.gospel)" class="cover-deck">
-            “{{ extractPullQuote(readings.gospel) }}”
+          <p v-if="coverDeckQuote" class="cover-deck">
+            “{{ coverDeckQuote }}”
           </p>
         </div>
 
@@ -337,11 +360,15 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
       </footer>
     </section>
 
-    <!-- ==================== INTERIOR: READINGS & AI COMMENTARIES ==================== -->
+    <!-- ==================== INTERIOR: READINGS & ADAPTIVE EXEGESIS ==================== -->
     <section
       v-for="sec in readingSections"
       :key="sec.key"
       class="magazine-sheet magazine-article"
+      :class="[
+        `article-scripture--${sec.layout.scriptureLayoutMode}`,
+        `article-exegesis--${sec.layout.exegesisLayoutMode}`,
+      ]"
     >
       <!-- Running Header -->
       <div class="running-header">
@@ -350,22 +377,31 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
       </div>
 
       <!-- Article Header -->
-      <header class="article-header">
-        <div class="article-kicker-row">
+      <header
+        class="article-header"
+        :class="{ 'article-header--centered': sec.layout.scriptureLayoutMode === 'psalm' }"
+      >
+        <div
+          class="article-kicker-row"
+          :class="{ 'article-kicker-row--centered': sec.layout.scriptureLayoutMode === 'psalm' }"
+        >
           <span class="mag-kicker">{{ sec.kicker }}</span>
           <span class="mag-badge">{{ sec.label }}</span>
         </div>
         <h2 class="article-title">{{ sec.reading.citation }}</h2>
       </header>
 
-      <!-- Reading Editorial Illustration -->
-      <figure v-if="includeImages && (resolveImageSrc(images[sec.key]) || interactive)" class="article-figure">
-        <template v-if="resolveImageSrc(images[sec.key])">
+      <!-- ========== SCRIPTURE OPENING: SPLIT LEAD (SHORT READING + IMAGE) ========== -->
+      <div
+        v-if="sec.layout.scriptureLayoutMode === 'split-lead'"
+        class="scripture-split-lead"
+      >
+        <figure class="article-figure article-figure--split">
           <div class="article-image-frame">
             <img
-              :src="resolveImageSrc(images[sec.key])"
+              :src="sec.imageSrc"
               :alt="`Illustration for ${sec.reading.citation}`"
-              class="article-image"
+              class="article-image article-image--split"
             />
           </div>
           <figcaption class="cover-caption-row">
@@ -390,79 +426,242 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
               {{ isGeneratingKey(sec.key) ? 'Regenerating...' : '↻ Regenerate' }}
             </button>
           </figcaption>
-        </template>
+        </figure>
 
-        <div v-else-if="interactive" class="article-image-empty print:hidden">
-          <span class="text-xs text-[#5C5149]">
-            No illustration generated yet for <strong>{{ sec.reading.citation }}</strong>
-          </span>
-          <button
-            type="button"
-            :disabled="isGeneratingKey(sec.key)"
-            @click="
-              emit('generate-image', {
-                key: sec.key,
-                citation: sec.reading.citation,
-                text: sec.reading.text,
-                context: sec.reading.context,
-              })
-            "
-            class="mag-gen-btn-sm"
-          >
-            {{ isGeneratingKey(sec.key) ? 'Generating...' : '✨ Generate Image' }}
-          </button>
-        </div>
-      </figure>
-
-      <!-- Scripture Body -->
-      <div
-        v-if="sec.isPsalm"
-        class="psalm-body"
-        v-html="sec.reading.text"
-      ></div>
-      <div
-        v-else
-        class="magazine-columns magazine-dropcap scripture-body"
-        v-html="sec.reading.text"
-      ></div>
-
-      <!-- Pull Quote -->
-      <blockquote v-if="extractPullQuote(sec.reading)" class="magazine-pullquote">
-        “{{ extractPullQuote(sec.reading) }}”
-      </blockquote>
-
-      <!-- AI Commentary Box -->
-      <aside
-        v-if="includeCommentaries && cleanContext(sec.reading.context)"
-        class="ai-commentary-box"
-      >
-        <div class="ai-commentary-header">
-          <span class="ai-commentary-kicker">Contextual Meditation</span>
-          <span class="ai-commentary-tag">AI-Assisted Theological Commentary</span>
-        </div>
         <div
-          class="ai-commentary-body"
-          v-html="renderMarkdown(cleanContext(sec.reading.context), commentaryMarkdownOptions)"
+          class="scripture-body scripture-body--split"
+          v-html="sec.layout.formattedScriptureHtml"
+        ></div>
+      </div>
+
+      <!-- ========== SCRIPTURE OPENING: STANDARD / PSALM / MEDIUM / LONG ========== -->
+      <template v-else>
+        <!-- Reading Editorial Illustration (or interactive prompt) -->
+        <figure
+          v-if="includeImages && (sec.imageSrc || interactive)"
+          class="article-figure"
+          :class="{
+            'article-figure--psalm': sec.layout.scriptureLayoutMode === 'psalm',
+            'article-figure--long': sec.layout.scriptureLayoutMode === 'two-column-long',
+          }"
+        >
+          <template v-if="sec.imageSrc">
+            <div class="article-image-frame">
+              <img
+                :src="sec.imageSrc"
+                :alt="`Illustration for ${sec.reading.citation}`"
+                class="article-image"
+                :class="{
+                  'article-image--panoramic': sec.layout.scriptureLayoutMode === 'two-column-long',
+                }"
+              />
+            </div>
+            <figcaption class="cover-caption-row">
+              <span class="mag-caption">
+                Editorial Sacred Art · {{ sec.reading.citation }}
+              </span>
+              <button
+                v-if="interactive"
+                type="button"
+                :disabled="isGeneratingKey(sec.key)"
+                @click="
+                  emit('generate-image', {
+                    key: sec.key,
+                    citation: sec.reading.citation,
+                    text: sec.reading.text,
+                    context: sec.reading.context,
+                    force: true,
+                  })
+                "
+                class="mag-regen-link print:hidden"
+              >
+                {{ isGeneratingKey(sec.key) ? 'Regenerating...' : '↻ Regenerate' }}
+              </button>
+            </figcaption>
+          </template>
+
+          <div v-else-if="interactive" class="article-image-empty print:hidden">
+            <span class="text-xs text-[#5C5149]">
+              No illustration generated yet for <strong>{{ sec.reading.citation }}</strong>
+            </span>
+            <button
+              type="button"
+              :disabled="isGeneratingKey(sec.key)"
+              @click="
+                emit('generate-image', {
+                  key: sec.key,
+                  citation: sec.reading.citation,
+                  text: sec.reading.text,
+                  context: sec.reading.context,
+                })
+              "
+              class="mag-gen-btn-sm"
+            >
+              {{ isGeneratingKey(sec.key) ? 'Generating...' : '✨ Generate Image' }}
+            </button>
+          </div>
+        </figure>
+
+        <!-- Psalm Poetic Body -->
+        <div
+          v-if="sec.layout.scriptureLayoutMode === 'psalm'"
+          class="psalm-body"
+          v-html="sec.layout.formattedScriptureHtml"
         ></div>
 
-        <!-- Magisterium Citations -->
+        <!-- Short Reading Proclamation (single-column centered measure, no cramped 2-col stub) -->
         <div
-          v-if="parseCitations(sec.reading).length > 0"
-          class="magisterium-sources"
-        >
-          <p class="magisterium-sources-title">Magisterium &amp; Scriptural Sources</p>
+          v-else-if="sec.layout.scriptureLayoutMode === 'single-column'"
+          class="scripture-proclamation scripture-body"
+          v-html="sec.layout.formattedScriptureHtml"
+        ></div>
+
+        <!-- Medium or Long Reading (balanced 2-column magazine flow) -->
+        <div
+          v-else
+          class="magazine-columns scripture-body"
+          :class="{ 'scripture-body--long': sec.layout.scriptureLayoutMode === 'two-column-long' }"
+          v-html="sec.layout.formattedScriptureHtml"
+        ></div>
+      </template>
+
+      <!-- Standalone Scripture Pull Quote (only when editorially warranted, never redundant) -->
+      <blockquote v-if="sec.layout.scripturePullQuote" class="magazine-pullquote">
+        “{{ sec.layout.scripturePullQuote }}”
+      </blockquote>
+
+      <!-- ==================== EXEGESIS MODE 1: BRIEF MEDITATION CARD ==================== -->
+      <aside
+        v-if="sec.layout.exegesisLayoutMode === 'brief-card'"
+        class="exegesis-card"
+        :class="{
+          'exegesis-card--centered': !sec.layout.briefCardHasSideSources,
+          'exegesis-card--with-sources': sec.layout.briefCardHasSideSources,
+        }"
+      >
+        <div class="exegesis-card-header">
+          <span class="exegesis-kicker">{{ sec.layout.exegesisKicker }}</span>
+          <span class="exegesis-tag">AI-Assisted Theological Commentary</span>
+        </div>
+
+        <div :class="{ 'exegesis-card-grid': sec.layout.briefCardHasSideSources }">
           <div
-            v-for="(cit, cIdx) in parseCitations(sec.reading)"
-            :key="cIdx"
-            class="magisterium-source-item"
+            class="exegesis-body exegesis-card-body"
+            v-html="renderMarkdown(sec.layout.exegesisMarkdown, commentaryMarkdownOptions)"
+          ></div>
+
+          <div
+            v-if="sec.citations.length > 0"
+            class="exegesis-card-sources"
           >
-            <span class="font-bold text-[#72383D]">{{ cIdx + 1 }}. {{ cit.document_title || cit.title }}</span>
-            <span v-if="cit.author || cit.ref" class="text-[#5C5149]">
-              — {{ [cit.author, cit.ref].filter(Boolean).join(', ') }}
-            </span>
+            <p class="magisterium-sources-title">Magisterium &amp; Sources</p>
+            <div
+              v-for="(cit, cIdx) in sec.citations"
+              :key="cIdx"
+              class="magisterium-source-item"
+            >
+              <span class="source-title">{{ cIdx + 1 }}. {{ cit.document_title || cit.title }}</span>
+              <span v-if="cit.author || cit.ref" class="source-meta">
+                — {{ [cit.author, cit.ref].filter(Boolean).join(', ') }}
+              </span>
+            </div>
           </div>
         </div>
       </aside>
+
+      <!-- ==================== EXEGESIS MODE 2: EDITORIAL FEATURE ESSAY ==================== -->
+      <div
+        v-else-if="sec.layout.exegesisLayoutMode === 'editorial-essay'"
+        class="exegesis-essay"
+        :class="{ 'exegesis-essay--page-break': sec.layout.exegesisStartsNewPageInPrint }"
+      >
+        <!-- Print-only continuation running header when essay starts cleanly on a new page -->
+        <div
+          v-if="sec.layout.exegesisStartsNewPageInPrint"
+          class="exegesis-print-running-header"
+        >
+          <span>LIGHT OF THE LITURGY · {{ formattedDate.toUpperCase() }}</span>
+          <span>EXEGESIS · {{ sec.reading.citation.toUpperCase() }}</span>
+        </div>
+
+        <!-- Ornamental Editorial Rule separating Scripture from Exegesis -->
+        <div
+          class="exegesis-ornament-rule"
+          :class="{ 'exegesis-ornament-rule--hide-print': sec.layout.exegesisStartsNewPageInPrint }"
+          aria-hidden="true"
+        >
+          <span class="exegesis-ornament-line"></span>
+          <span class="exegesis-ornament-glyph">☩</span>
+          <span class="exegesis-ornament-line"></span>
+        </div>
+
+        <!-- Essay Masthead -->
+        <header class="exegesis-essay-header">
+          <div>
+            <span class="exegesis-kicker">{{ sec.layout.exegesisKicker }}</span>
+            <p class="exegesis-essay-sub">
+              Theological &amp; Scriptural Reflection on {{ sec.reading.citation }}
+            </p>
+          </div>
+          <span class="exegesis-tag">AI-Assisted Commentary</span>
+        </header>
+
+        <!-- Thematic Sections / Balanced Editorial Beats -->
+        <div class="exegesis-blocks-stack">
+          <template v-for="block in sec.layout.exegesisBlocks" :key="block.id">
+            <!-- Mid-essay interlude pull quote for long unstructured exegesis -->
+            <blockquote
+              v-if="block.precedingPullQuote"
+              class="magazine-pullquote magazine-pullquote--interlude"
+            >
+              “{{ block.precedingPullQuote }}”
+            </blockquote>
+
+            <div
+              class="exegesis-section-block"
+              :class="{ 'exegesis-section-block--standfirst': block.isStandfirst }"
+            >
+              <h3 v-if="block.heading" class="exegesis-subhead">
+                <span class="exegesis-subhead-mark" aria-hidden="true">◆</span>
+                <span>{{ block.heading }}</span>
+              </h3>
+
+              <div
+                class="exegesis-body"
+                :class="{
+                  'exegesis-standfirst': block.isStandfirst,
+                  'exegesis-columns': block.useTwoColumns,
+                  'exegesis-single': !block.useTwoColumns && !block.isStandfirst,
+                }"
+                v-html="renderMarkdown(block.markdown, commentaryMarkdownOptions)"
+              ></div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Compact Magisterium & Scriptural Sources Strip -->
+        <footer
+          v-if="sec.citations.length > 0"
+          class="exegesis-sources-footer"
+        >
+          <p class="magisterium-sources-title">Magisterium &amp; Scriptural Sources</p>
+          <div
+            class="magisterium-sources-grid"
+            :class="{ 'magisterium-sources-grid--single': sec.citations.length === 1 }"
+          >
+            <div
+              v-for="(cit, cIdx) in sec.citations"
+              :key="cIdx"
+              class="magisterium-source-item"
+            >
+              <span class="source-title">{{ cIdx + 1 }}. {{ cit.document_title || cit.title }}</span>
+              <span v-if="cit.author || cit.ref" class="source-meta">
+                — {{ [cit.author, cit.ref].filter(Boolean).join(', ') }}
+              </span>
+            </div>
+          </div>
+        </footer>
+      </div>
     </section>
 
     <!-- ==================== WORDS OF THE POPES ==================== -->
@@ -478,7 +677,16 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
         </div>
         <h2 class="article-title">Papal Reflection on Today's Liturgy</h2>
       </header>
-      <div class="magazine-columns magazine-dropcap scripture-body" v-html="readings.pope_quote"></div>
+      <div
+        v-if="popeQuoteLayout.isShort"
+        class="scripture-proclamation scripture-body"
+        v-html="popeQuoteLayout.formattedHtml"
+      ></div>
+      <div
+        v-else
+        class="magazine-columns scripture-body"
+        v-html="popeQuoteLayout.formattedHtml"
+      ></div>
       <p class="mag-caption mt-4">Source: Vatican News Daily Liturgy</p>
     </section>
 
@@ -572,11 +780,27 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
   font-family: 'EB Garamond', 'Cardo', 'Libre Caslon Text', Georgia, serif;
 }
 
+/* Harmonize API.Bible verse numbers with warm editorial palette */
+.magazine-root :deep(.v) {
+  font-family: 'Source Sans 3', 'Inter', sans-serif !important;
+  font-size: 7.2pt !important;
+  font-weight: 700 !important;
+  color: #8b5a5e !important;
+  vertical-align: super !important;
+  line-height: 0 !important;
+  margin-right: 2px !important;
+  margin-left: 1px !important;
+}
+
+.magazine-root :deep(.v.mag-v-lead) {
+  display: none !important;
+}
+
 .magazine-sheet {
   background: #ffffff;
   border: 1px solid #e4ddd3;
   border-radius: 4px;
-  padding: 16mm 16mm 14mm 16mm;
+  padding: 15mm 16mm 14mm 16mm;
   margin-bottom: 10mm;
   box-shadow: 0 8px 28px rgba(30, 27, 24, 0.08);
 }
@@ -683,7 +907,7 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
 
 .mag-caption {
   font-family: 'Source Sans 3', 'Inter', sans-serif;
-  font-size: 8.5pt;
+  font-size: 8.2pt;
   font-style: italic;
   color: #5c5149;
 }
@@ -798,11 +1022,17 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
   color: #72383d;
   border-bottom: 1px solid #d1c7bd;
   padding-bottom: 2mm;
-  margin-bottom: 5mm;
+  margin-bottom: 4.5mm;
 }
 
 .article-header {
   margin-bottom: 4.5mm;
+  padding-bottom: 3mm;
+  border-bottom: 1px solid #ece5dc;
+}
+
+.article-header--centered {
+  text-align: center;
 }
 
 .article-kicker-row {
@@ -810,6 +1040,11 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+}
+
+.article-kicker-row--centered {
+  justify-content: center;
+  gap: 10px;
 }
 
 .mag-kicker {
@@ -844,10 +1079,19 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
   margin: 1.5mm 0 0 0;
 }
 
-/* Article Figure */
+/* Article Figure & Split Lead */
 .article-figure {
   margin: 0 0 5mm 0;
   break-inside: avoid;
+}
+
+.article-figure--psalm {
+  max-width: 132mm;
+  margin: 0 auto 5.5mm auto;
+}
+
+.article-figure--split {
+  margin: 0;
 }
 
 .article-image-frame {
@@ -863,6 +1107,14 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
   display: block;
 }
 
+.article-image--split {
+  aspect-ratio: 4 / 3;
+}
+
+.article-image--panoramic {
+  aspect-ratio: 2 / 1;
+}
+
 .article-image-empty {
   display: flex;
   align-items: center;
@@ -874,7 +1126,28 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
   border-radius: 6px;
 }
 
-/* Multi-Column Editorial Scripture Body & Drop Cap */
+/* Split Lead: Short Reading paired cleanly beside its Sacred Art */
+.scripture-split-lead {
+  display: grid;
+  grid-template-columns: 0.92fr 1.08fr;
+  gap: 6.5mm;
+  align-items: center;
+  margin-bottom: 5mm;
+}
+
+/* Short Reading Proclamation Band (no image) */
+.scripture-proclamation {
+  max-width: 140mm;
+  margin: 0 auto 4mm auto;
+  padding: 3.5mm 5.5mm;
+  border-left: 2.5px solid #c5a059;
+  background: linear-gradient(90deg, rgba(250, 246, 238, 0.65) 0%, rgba(255, 255, 255, 0) 100%);
+  font-size: 11.4pt !important;
+  line-height: 1.66 !important;
+  text-align: left !important;
+}
+
+/* Multi-Column Editorial Scripture Body */
 .magazine-columns {
   column-count: 2;
   column-gap: 7mm;
@@ -883,29 +1156,87 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
 
 .scripture-body {
   font-family: 'EB Garamond', 'Cardo', Georgia, serif;
-  font-size: 11pt;
-  line-height: 1.58;
+  font-size: 10.8pt;
+  line-height: 1.56;
   text-align: justify;
   hyphens: auto;
   color: #24201c;
 }
 
-.scripture-body :deep(p) {
-  margin-bottom: 2.5mm;
+.scripture-body--split {
+  font-size: 10.9pt;
+  line-height: 1.62;
+  padding-left: 4mm;
+  border-left: 1.5px solid rgba(197, 160, 89, 0.55);
 }
 
-.magazine-dropcap::first-letter,
-.magazine-dropcap :deep(p:first-of-type)::first-letter {
+.scripture-body--long {
+  font-size: 10.3pt;
+  line-height: 1.52;
+}
+
+.scripture-body :deep(p) {
+  margin-bottom: 2.4mm;
+}
+
+.scripture-body :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+/* API.Bible internal subheadings and poetic lines inside prose readings */
+.scripture-body :deep(.s),
+.scripture-body :deep(.s1),
+.scripture-body :deep(.s2),
+.scripture-body :deep(.ms),
+.scripture-body :deep(.ms1) {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 3.2em;
+  font-size: 10.4pt;
   font-weight: 700;
-  line-height: 0.82;
+  font-style: italic;
+  color: #72383d;
+  text-align: left;
+  margin: 3mm 0 1.4mm 0;
+  break-after: avoid;
+}
+
+.scripture-body :deep(.q1) {
+  padding-left: 4mm;
+  text-indent: -2mm;
+  margin-bottom: 1mm;
+  text-align: left;
+}
+
+.scripture-body :deep(.q2),
+.scripture-body :deep(.q3) {
+  padding-left: 7mm;
+  text-indent: -2mm;
+  margin-bottom: 1mm;
+  text-align: left;
+}
+
+/* Illuminated Magazine Drop Cap (explicitly wrapped around opening letter) */
+.scripture-body :deep(.mag-dropcap-letter) {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 3.1em;
+  font-weight: 700;
+  line-height: 0.8;
   float: left;
   padding-right: 0.09em;
-  padding-top: 0.04em;
+  padding-top: 0.05em;
   color: #72383d;
 }
 
+.scripture-body :deep(.mag-dropcap-quote) {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.45em;
+  font-weight: 700;
+  line-height: 0.9;
+  float: left;
+  padding-right: 0.03em;
+  color: #c5a059;
+}
+
+/* Psalm Poetic Layout */
 .psalm-body {
   font-family: 'EB Garamond', 'Cardo', Georgia, serif;
   font-size: 11.2pt;
@@ -913,18 +1244,23 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
   text-align: center;
   white-space: pre-line;
   color: #24201c;
-  max-width: 140mm;
+  max-width: 132mm;
   margin: 0 auto;
+}
+
+.psalm-body :deep(p) {
+  margin-bottom: 2.2mm;
 }
 
 /* Editorial Pull Quote */
 .magazine-pullquote {
-  margin: 5mm 0;
-  padding: 3.5mm 6mm;
+  margin: 5mm auto;
+  padding: 3.2mm 6.5mm;
+  max-width: 152mm;
   border-top: 1px solid #c5a059;
   border-bottom: 1px solid #c5a059;
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 12.5pt;
+  font-size: 12pt;
   font-style: italic;
   line-height: 1.45;
   text-align: center;
@@ -932,88 +1268,303 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
   break-inside: avoid;
 }
 
-/* AI Commentary Sidebar Box */
-.ai-commentary-box {
-  margin-top: 5mm;
+.magazine-pullquote--interlude {
+  margin: 4.5mm auto;
+  font-size: 11.5pt;
+  background: linear-gradient(90deg, transparent, rgba(250, 246, 238, 0.7), transparent);
+}
+
+/* ==================== EXEGESIS MODE 1: BRIEF MEDITATION CARD ==================== */
+.exegesis-card {
+  margin-top: 5.5mm;
   background: #faf6ee;
   border: 1px solid #dfd6c9;
   border-left: 3.5px solid #72383d;
-  padding: 4.5mm 5mm;
-  break-inside: avoid;
+  padding: 4.5mm 5.5mm;
 }
 
-.ai-commentary-header {
+.exegesis-card--centered {
+  max-width: 152mm;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.exegesis-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   border-bottom: 1px solid #e4ddd3;
   padding-bottom: 2mm;
-  margin-bottom: 2.5mm;
+  margin-bottom: 2.8mm;
 }
 
-.ai-commentary-kicker {
+.exegesis-card-grid {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  gap: 5.5mm;
+  align-items: start;
+}
+
+.exegesis-card-sources {
+  border-left: 1px solid #dfd6c9;
+  padding-left: 4.5mm;
+}
+
+/* ==================== EXEGESIS MODE 2: EDITORIAL FEATURE ESSAY ==================== */
+.exegesis-essay {
+  margin-top: 5.5mm;
+}
+
+.exegesis-print-running-header {
+  display: none;
+}
+
+.exegesis-ornament-rule {
+  display: flex;
+  align-items: center;
+  gap: 4mm;
+  margin: 5mm 0 4mm 0;
+}
+
+.exegesis-ornament-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(197, 160, 89, 0.25), #c5a059, rgba(197, 160, 89, 0.25));
+}
+
+.exegesis-ornament-glyph {
+  font-size: 11pt;
+  color: #72383d;
+  line-height: 1;
+}
+
+.exegesis-essay-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1.5px solid #1e1b18;
+  padding-bottom: 2.5mm;
+  margin-bottom: 4.5mm;
+  break-after: avoid;
+}
+
+.exegesis-kicker {
+  display: block;
   font-family: 'Source Sans 3', sans-serif;
   font-size: 8.5pt;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.17em;
   text-transform: uppercase;
   color: #72383d;
 }
 
-.ai-commentary-tag {
+.exegesis-essay-sub {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 11pt;
+  font-style: italic;
+  color: #4b433c;
+  margin: 0.8mm 0 0 0;
+  line-height: 1.25;
+}
+
+.exegesis-tag {
   font-family: 'Source Sans 3', sans-serif;
   font-size: 7.5pt;
   font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: #5c5149;
+  white-space: nowrap;
 }
 
-.ai-commentary-body {
-  font-family: 'EB Garamond', Georgia, serif;
-  font-size: 10.5pt;
+.exegesis-blocks-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4.5mm;
+}
+
+.exegesis-section-block--standfirst {
+  margin-bottom: 0.5mm;
+}
+
+.exegesis-subhead {
+  display: flex;
+  align-items: baseline;
+  gap: 2mm;
+  font-family: 'Playfair Display', Georgia, serif !important;
+  font-size: 11.4pt !important;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  line-height: 1.25;
+  color: #72383d;
+  margin: 0 0 2.2mm 0;
+  padding-bottom: 1.2mm;
+  border-bottom: 1px solid #eae2d7;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+.exegesis-subhead-mark {
+  font-size: 7pt;
+  color: #c5a059;
+  transform: translateY(-1px);
+  flex-shrink: 0;
+}
+
+/* Exegesis Body Typography (shared between brief card and essay) */
+.exegesis-body {
+  font-family: 'EB Garamond', 'Cardo', Georgia, serif;
+  font-size: 10.2pt;
   line-height: 1.54;
-  color: #2d2926;
+  color: #26221e;
 }
 
-.ai-commentary-body :deep(.mag-commentary-p) {
-  margin-bottom: 2mm;
+.exegesis-card-body {
+  font-size: 10.4pt;
+  line-height: 1.56;
 }
 
-.ai-commentary-body :deep(.mag-commentary-p:last-child) {
+.exegesis-standfirst {
+  font-size: 10.9pt;
+  font-style: italic;
+  line-height: 1.56;
+  color: #36302b;
+  padding-left: 3.5mm;
+  border-left: 2px solid #c5a059;
+  max-width: 158mm;
+}
+
+.exegesis-columns {
+  column-count: 2;
+  column-gap: 7mm;
+  column-rule: 1px solid rgba(209, 199, 189, 0.55);
+  text-align: justify;
+  hyphens: auto;
+}
+
+.exegesis-single {
+  max-width: 148mm;
+  text-align: left;
+}
+
+.exegesis-body :deep(.mag-commentary-p) {
+  margin-bottom: 2.2mm;
+}
+
+.exegesis-body :deep(.mag-commentary-p:last-child) {
   margin-bottom: 0;
 }
 
-.ai-commentary-body :deep(.mag-commentary-ul) {
+.exegesis-body :deep(.mag-commentary-ul),
+.exegesis-body :deep(.mag-commentary-ol) {
+  padding-left: 4.5mm;
+  margin: 1.5mm 0 2.2mm 0;
+  text-align: left;
+}
+
+.exegesis-body :deep(.mag-commentary-ul) {
   list-style: disc;
-  padding-left: 5mm;
-  margin: 2mm 0;
 }
 
-.ai-commentary-body :deep(.mag-commentary-li) {
-  margin-bottom: 1mm;
+.exegesis-body :deep(.mag-commentary-ol) {
+  list-style: decimal;
 }
 
-.magisterium-sources {
-  margin-top: 3mm;
-  padding-top: 2.5mm;
-  border-top: 1px dashed #d1c7bd;
+.exegesis-body :deep(.mag-commentary-li) {
+  margin-bottom: 1.4mm;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.exegesis-body :deep(.mag-commentary-li:last-child) {
+  margin-bottom: 0;
+}
+
+/* Override global Cinzel Decorative h3/h4/h5 if any nested markdown headers appear */
+.exegesis-body :deep(h3),
+.exegesis-body :deep(h4),
+.exegesis-body :deep(h5) {
+  font-family: 'Source Sans 3', 'Inter', sans-serif !important;
+  font-size: 8.8pt !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: #72383d !important;
+  margin: 3mm 0 1.4mm 0 !important;
+  line-height: 1.3 !important;
+  text-align: left;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+.exegesis-body :deep(strong) {
+  font-weight: 700;
+  color: #1e1b18;
+}
+
+.exegesis-body :deep(blockquote) {
+  margin: 2.2mm 0;
+  padding: 1.5mm 3mm;
+  border-left: 2px solid #72383d;
+  background: #faf6ee;
+  font-style: italic;
+  color: #36302b;
+  text-align: left;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Compact Magisterium & Scriptural Sources Strip */
+.exegesis-sources-footer {
+  margin-top: 5mm;
+  padding: 3.5mm 4.5mm;
+  background: #faf6ee;
+  border-top: 2px solid #c5a059;
+  border-bottom: 1px solid #dfd6c9;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 .magisterium-sources-title {
   font-family: 'Source Sans 3', sans-serif;
   font-size: 7.5pt;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: #5c5149;
-  margin-bottom: 1.5mm;
+  color: #72383d;
+  margin: 0 0 2mm 0;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+.magisterium-sources-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2mm 5mm;
+}
+
+.magisterium-sources-grid--single {
+  grid-template-columns: 1fr;
 }
 
 .magisterium-source-item {
   font-family: 'Source Sans 3', sans-serif;
-  font-size: 8.5pt;
-  line-height: 1.4;
+  font-size: 8.3pt;
+  line-height: 1.38;
   margin-bottom: 1mm;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.source-title {
+  font-weight: 700;
+  color: #72383d;
+}
+
+.source-meta {
+  color: #5c5149;
 }
 
 /* Comics Section at the End */
@@ -1134,7 +1685,11 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
 /* Colophon */
 .magazine-colophon {
   text-align: center;
-  padding: 6mm 10mm 10mm 10mm;
+  background: #ffffff;
+  border: 1px solid #e4ddd3;
+  border-radius: 4px;
+  padding: 8mm 12mm 10mm 12mm;
+  box-shadow: 0 8px 28px rgba(30, 27, 24, 0.08);
   break-inside: avoid;
 }
 
@@ -1208,11 +1763,31 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
   .magazine-sheet {
     padding: 6mm;
   }
-  .cover-lead-grid {
+  .cover-lead-grid,
+  .scripture-split-lead,
+  .exegesis-card-grid,
+  .magisterium-sources-grid {
     grid-template-columns: 1fr;
   }
-  .magazine-columns {
+  .exegesis-card-sources {
+    border-left: none;
+    border-top: 1px dashed #d1c7bd;
+    padding-left: 0;
+    padding-top: 3mm;
+  }
+  .scripture-body--split {
+    border-left: none;
+    padding-left: 0;
+  }
+  .magazine-columns,
+  .exegesis-columns {
     column-count: 1;
+    text-align: left;
+  }
+  .exegesis-essay-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
   }
   .masthead-title {
     font-size: 24pt;
@@ -1235,6 +1810,13 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
     margin: 0;
     background: #ffffff !important;
   }
+  .magazine-colophon {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 6mm 10mm 10mm 10mm;
+    background: #ffffff !important;
+  }
   .magazine-sheet + .magazine-sheet {
     break-before: page;
     page-break-before: always;
@@ -1255,24 +1837,95 @@ const isGeneratingKey = (key: MagazineReadingKey): boolean => {
     margin-bottom: 4.5mm;
   }
   .magazine-cover .cover-image {
-    max-height: 118mm;
+    max-height: 110mm;
   }
   .magazine-cover .cover-footer {
     margin-top: 4.5mm;
+  }
+  .article-image {
+    max-height: 76mm;
+  }
+  .article-image--panoramic {
+    max-height: 66mm;
+  }
+  .article-image--split {
+    max-height: 68mm;
+  }
+  .article-figure--psalm .article-image {
+    max-height: 66mm;
+  }
+  .scripture-split-lead {
+    display: grid !important;
+    grid-template-columns: 0.92fr 1.08fr !important;
+    gap: 6.5mm !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
   .magazine-columns {
     column-count: 2 !important;
     column-gap: 7mm;
     column-rule: 1px solid rgba(209, 199, 189, 0.6);
   }
-  .ai-commentary-header {
-    break-after: avoid;
-    page-break-after: avoid;
+  .exegesis-columns {
+    column-count: 2 !important;
+    column-gap: 7mm;
+    column-rule: 1px solid rgba(209, 199, 189, 0.55);
   }
-  .magisterium-sources {
+  .exegesis-card {
     break-inside: avoid;
     page-break-inside: avoid;
   }
+  .exegesis-card-grid {
+    display: grid !important;
+    grid-template-columns: 1.55fr 1fr !important;
+    gap: 5.5mm !important;
+  }
+  .exegesis-essay--page-break {
+    break-before: page;
+    page-break-before: always;
+    margin-top: 0;
+  }
+  .exegesis-print-running-header {
+    display: flex !important;
+    justify-content: space-between;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 7.5pt;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: #72383d;
+    border-bottom: 1px solid #d1c7bd;
+    padding-bottom: 2mm;
+    margin-bottom: 4.5mm;
+  }
+  .exegesis-ornament-rule--hide-print {
+    display: none !important;
+  }
+  .exegesis-essay-header {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  .exegesis-subhead {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  .article-header {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  .scripture-body :deep(p),
+  .exegesis-body :deep(.mag-commentary-p),
+  .exegesis-body :deep(.mag-commentary-li) {
+    orphans: 3;
+    widows: 3;
+  }
+  .magisterium-sources-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .magisterium-sources-grid--single {
+    grid-template-columns: 1fr !important;
+  }
+  .article-figure:has(> .article-image-empty):not(:has(> .article-image-frame)),
   .article-image-empty,
   .mag-gen-btn,
   .mag-gen-btn-sm,

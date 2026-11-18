@@ -1,6 +1,7 @@
 export interface MarkdownOptions {
   paragraphClass?: string;
   listClass?: string;
+  orderedListClass?: string;
   listItemClass?: string;
 }
 
@@ -44,31 +45,49 @@ export function renderMarkdown(markdown: string, options?: MarkdownOptions): str
 
   // Process line by line for paragraphs and lists
   const lines = html.split('\n');
-  let inList = false;
+  let listType: 'ul' | 'ol' | null = null;
   const processedLines: string[] = [];
   
   const paragraphClass = options?.paragraphClass ?? 'text-sm md:text-[15px] leading-relaxed text-parchment-neutral/80 mb-3';
   const listClass = options?.listClass ?? 'list-disc pl-5 space-y-1.5 my-3';
+  const orderedListClass = options?.orderedListClass ?? 'list-decimal pl-5 space-y-1.5 my-3';
   const listItemClass = options?.listItemClass ?? 'text-sm md:text-[14px] text-parchment-neutral/85';
+
+  const closeList = () => {
+    if (listType) {
+      processedLines.push(`</${listType}>`);
+      listType = null;
+    }
+  };
 
   for (let line of lines) {
     const trimmed = line.trim();
     
     // Check for bullet list item
-    const listMatch = trimmed.match(/^[\*\-]\s+(.*)$/);
-    if (listMatch) {
-      if (!inList) {
+    const ulMatch = trimmed.match(/^[\*\-]\s+(.*)$/);
+    if (ulMatch) {
+      if (listType !== 'ul') {
+        closeList();
         processedLines.push(`<ul class="${listClass}">`);
-        inList = true;
+        listType = 'ul';
       }
-      processedLines.push(`<li class="${listItemClass}">${listMatch[1]}</li>`);
+      processedLines.push(`<li class="${listItemClass}">${ulMatch[1]}</li>`);
       continue;
-    } else {
-      if (inList) {
-        processedLines.push('</ul>');
-        inList = false;
-      }
     }
+
+    // Check for ordered list item
+    const olMatch = trimmed.match(/^\d+\.\s+(.*)$/);
+    if (olMatch) {
+      if (listType !== 'ol') {
+        closeList();
+        processedLines.push(`<ol class="${orderedListClass}">`);
+        listType = 'ol';
+      }
+      processedLines.push(`<li class="${listItemClass}">${olMatch[1]}</li>`);
+      continue;
+    }
+
+    closeList();
     
     if (trimmed === '') {
       processedLines.push('');
@@ -76,16 +95,14 @@ export function renderMarkdown(markdown: string, options?: MarkdownOptions): str
     }
     
     // If it's already an HTML block tag, keep it
-    if (trimmed.startsWith('<h') || trimmed.startsWith('<blockquote') || trimmed.startsWith('</blockquote') || trimmed.startsWith('<ul') || trimmed.startsWith('</ul') || trimmed.startsWith('<details') || trimmed.startsWith('</details') || trimmed.startsWith('<summary') || trimmed.startsWith('</summary') || trimmed.startsWith('<div') || trimmed.startsWith('</div')) {
+    if (trimmed.startsWith('<h') || trimmed.startsWith('<blockquote') || trimmed.startsWith('</blockquote') || trimmed.startsWith('<ul') || trimmed.startsWith('</ul') || trimmed.startsWith('<ol') || trimmed.startsWith('</ol') || trimmed.startsWith('<details') || trimmed.startsWith('</details') || trimmed.startsWith('<summary') || trimmed.startsWith('</summary') || trimmed.startsWith('<div') || trimmed.startsWith('</div')) {
       processedLines.push(trimmed);
     } else {
       processedLines.push(`<p class="${paragraphClass}">${trimmed}</p>`);
     }
   }
   
-  if (inList) {
-    processedLines.push('</ul>');
-  }
+  closeList();
   
   return processedLines.filter(l => l !== '').join('\n');
 }

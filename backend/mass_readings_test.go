@@ -3,6 +3,8 @@ package main
 import (
 	"strings"
 	"testing"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 func TestGetMassReadingsRejectsInvalidDate(t *testing.T) {
@@ -64,5 +66,101 @@ func TestCategorizeReadings(t *testing.T) {
 	}
 	if devotion.Gospel == nil || devotion.Gospel.Citation != "Matthew 14:13-21" {
 		t.Errorf("Expected Gospel 'Matthew 14:13-21', got %v", devotion.Gospel)
+	}
+}
+
+func TestExtractMassReadingsDoesNotJoinAcrossContainer(t *testing.T) {
+	html := `
+	<html><body>
+	<div class="container">
+		<div class="page-header">
+			<h2 class="name">Wednesday of the Thirty-third Week in Ordinary Time</h2>
+		</div>
+		<div class="innerblock">
+			<div class="content-header">
+				<h3 class="name">Reading 1</h3>
+				<div class="address"><a href="/bible/revelation/4">Revelation 4:1-11</a></div>
+			</div>
+			<div class="content-body"><p>After this I had a vision...</p></div>
+		</div>
+		<div class="innerblock">
+			<div class="content-header">
+				<h3 class="name">Responsorial Psalm</h3>
+				<div class="address"><a href="/bible/psalms/150">Psalm 150:1b-2, 3-4, 5-6</a></div>
+			</div>
+		</div>
+		<div class="innerblock">
+			<div class="content-header">
+				<h3 class="name">Alleluia</h3>
+				<div class="address">See <a href="/bible/john/15">John 15:16</a></div>
+			</div>
+		</div>
+		<div class="innerblock">
+			<div class="content-header">
+				<h3 class="name">Gospel</h3>
+				<div class="address"><a href="/bible/luke/19">Luke 19:11-28</a></div>
+			</div>
+		</div>
+	</div>
+	</body></html>`
+
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	if err != nil {
+		t.Fatalf("failed to parse HTML: %v", err)
+	}
+
+	got := extractMassReadings(doc.Selection)
+	want := []Readings{
+		{Type: "Reading 1", Citation: "Revelation 4:1-11"},
+		{Type: "Responsorial Psalm", Citation: "Psalm 150:1b-2, 3-4, 5-6"},
+		{Type: "Alleluia", Citation: "See John 15:16"},
+		{Type: "Gospel", Citation: "Luke 19:11-28"},
+	}
+
+	if len(got) != len(want) {
+		t.Fatalf("expected %d readings, got %d: %+v", len(want), len(got), got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("reading[%d] = %+v, want %+v", i, got[i], want[i])
+		}
+	}
+}
+
+func TestExtractMassReadingsFlatSiblingsInContainer(t *testing.T) {
+	html := `
+	<html><body>
+	<div class="container">
+		<h3 class="name">Reading 1</h3>
+		<div class="address"><a href="/bible/isaiah/55">Isaiah 55:1-3</a></div>
+		<h3 class="name">Responsorial Psalm</h3>
+		<div class="address"><a href="/bible/psalms/145">Psalm 145:8-9, 15-16, 17-18</a></div>
+		<h3 class="name">Reading 2</h3>
+		<div class="address"><a href="/bible/romans/8">Romans 8:35, 37-39</a></div>
+		<h3 class="name">Gospel</h3>
+		<div class="address"><a href="/bible/matthew/14">Matthew 14:13-21</a></div>
+	</div>
+	</body></html>`
+
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	if err != nil {
+		t.Fatalf("failed to parse HTML: %v", err)
+	}
+
+	got := extractMassReadings(doc.Selection)
+	want := []Readings{
+		{Type: "Reading 1", Citation: "Isaiah 55:1-3"},
+		{Type: "Responsorial Psalm", Citation: "Psalm 145:8-9, 15-16, 17-18"},
+		{Type: "Reading 2", Citation: "Romans 8:35, 37-39"},
+		{Type: "Gospel", Citation: "Matthew 14:13-21"},
+	}
+
+	if len(got) != len(want) {
+		t.Fatalf("expected %d readings, got %d: %+v", len(want), len(got), got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("reading[%d] = %+v, want %+v", i, got[i], want[i])
+		}
 	}
 }

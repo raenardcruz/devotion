@@ -314,6 +314,23 @@ AFTER RECEIVING RAG RESULTS FROM THE AGENT:
 		defer wg.Done()
 		defer cancel()
 
+		var liveInputTokens, liveOutputTokens, liveThoughtsTokens, liveCachedTokens, liveTotalTokens int
+		defer func() {
+			if liveTotalTokens > 0 || liveInputTokens > 0 || liveOutputTokens > 0 {
+				RecordAIUsage(AIUsageRecord{
+					Provider:       "gemini",
+					Model:          liveModel,
+					Feature:        "magisterium_live",
+					Operation:      "live_session",
+					InputTokens:    liveInputTokens,
+					OutputTokens:   liveOutputTokens,
+					ThoughtsTokens: liveThoughtsTokens,
+					CachedTokens:   liveCachedTokens,
+					TotalTokens:    liveTotalTokens,
+				})
+			}
+		}()
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -329,6 +346,15 @@ AFTER RECEIVING RAG RESULTS FROM THE AGENT:
 					Error: fmt.Sprintf("Gemini Live session error: %v", err),
 				})
 				return
+			}
+
+			if serverMsg.UsageMetadata != nil {
+				inTok, outTok, thTok, caTok, totTok := tokenCountsFromLive(serverMsg.UsageMetadata)
+				liveInputTokens += inTok
+				liveOutputTokens += outTok
+				liveThoughtsTokens += thTok
+				liveCachedTokens += caTok
+				liveTotalTokens += totTok
 			}
 
 			// Handle Tool Calls (e.g. get_magisterium_rag)
