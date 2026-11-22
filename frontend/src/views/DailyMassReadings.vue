@@ -4,13 +4,13 @@ import { useDate } from '../composables/useDate';
 import { useDevotionApi } from '../composables/useDevotionApi';
 import { useAccessControl } from '../composables/useAccessControl';
 import { useStoryToManga } from '../composables/useStoryToManga';
-import { renderMarkdown } from '../utils/markdown';
 import TopNav from '../components/common/TopNav.vue';
 import BottomNav from '../components/common/BottomNav.vue';
 import ParchmentCard from '../components/common/ParchmentCard.vue';
 import AppTabs from '../components/common/AppTabs.vue';
 import CatechismBubble from '../components/catechism/CatechismBubble.vue';
 import FactCheckCitations, { type MagisteriumCitation } from '../components/common/FactCheckCitations.vue';
+import A2UIRenderer from '../components/common/A2UIRenderer.vue';
 import StoryToMangaModal from '../components/devotion/StoryToMangaModal.vue';
 import DailyMangaTab from '../components/devotion/DailyMangaTab.vue';
 import DailyMagazineModal from '../components/devotion/DailyMagazineModal.vue';
@@ -442,7 +442,7 @@ const availableTabs = computed(() => {
                     <h3 class="text-[#72383D] text-[10px] font-bold uppercase tracking-wider">Contextual Meditation</h3>
                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#EFE9E1] text-[#72383D] border border-[#D1C7BD]">🤖 AI-Assisted Reflection</span>
                   </div>
-                  <div class="text-[#322D29]/80 text-xs md:text-sm leading-relaxed" v-html="renderMarkdown(cleanContext(readings.first_reading.context), contextMarkdownOptions)"></div>
+                  <A2UIRenderer :content="cleanContext(readings.first_reading.context)" :markdown-options="contextMarkdownOptions" fallback-class="text-[#322D29]/80 text-xs md:text-sm leading-relaxed" />
                   <FactCheckCitations :citations="readings.first_reading.citations" :rawContextHtml="readings.first_reading.context" />
               </div>
             </ParchmentCard>
@@ -476,7 +476,7 @@ const availableTabs = computed(() => {
                     <h3 class="text-[#72383D] text-[10px] font-bold uppercase tracking-wider">Contextual Meditation</h3>
                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#EFE9E1] text-[#72383D] border border-[#D1C7BD]">🤖 AI-Assisted Reflection</span>
                   </div>
-                  <div class="text-[#322D29]/80 text-xs md:text-sm leading-relaxed" v-html="renderMarkdown(cleanContext(readings.second_reading.context), contextMarkdownOptions)"></div>
+                  <A2UIRenderer :content="cleanContext(readings.second_reading.context)" :markdown-options="contextMarkdownOptions" fallback-class="text-[#322D29]/80 text-xs md:text-sm leading-relaxed" />
                   <FactCheckCitations :citations="readings.second_reading.citations" :rawContextHtml="readings.second_reading.context" />
               </div>
             </ParchmentCard>
@@ -512,7 +512,7 @@ const availableTabs = computed(() => {
                     <h3 class="text-[#72383D] text-[10px] font-bold uppercase tracking-wider">Psalm Context</h3>
                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#EFE9E1] text-[#72383D] border border-[#D1C7BD]">🤖 AI-Assisted Reflection</span>
                   </div>
-                  <div class="text-[#322D29]/80 text-xs md:text-sm leading-relaxed" v-html="renderMarkdown(cleanContext(readings.responsorial_psalm.context), contextMarkdownOptions)"></div>
+                  <A2UIRenderer :content="cleanContext(readings.responsorial_psalm.context)" :markdown-options="contextMarkdownOptions" fallback-class="text-[#322D29]/80 text-xs md:text-sm leading-relaxed" />
                   <FactCheckCitations :citations="readings.responsorial_psalm.citations" :rawContextHtml="readings.responsorial_psalm.context" />
               </div>
             </ParchmentCard>
@@ -546,7 +546,7 @@ const availableTabs = computed(() => {
                     <h3 class="text-[#72383D] text-[10px] font-bold uppercase tracking-wider">Gospel Reflection</h3>
                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#EFE9E1] text-[#72383D] border border-[#D1C7BD]">🤖 AI-Assisted Reflection</span>
                   </div>
-                  <div class="text-[#322D29]/80 text-xs md:text-sm leading-relaxed" v-html="renderMarkdown(cleanContext(readings.gospel.context), contextMarkdownOptions)"></div>
+                  <A2UIRenderer :content="cleanContext(readings.gospel.context)" :markdown-options="contextMarkdownOptions" fallback-class="text-[#322D29]/80 text-xs md:text-sm leading-relaxed" />
                   <FactCheckCitations :citations="readings.gospel.citations" :rawContextHtml="readings.gospel.context" />
               </div>
             </ParchmentCard>

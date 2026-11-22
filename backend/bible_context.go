@@ -58,6 +58,8 @@ func get_bible_context(ctx context.Context, args GetBibleContextArgs) (BibleCont
 		prompt = strings.ReplaceAll(prompt, "{{passage_text}}", "")
 	}
 
+	prompt = prompt + "\n\n" + A2UIBibleContextInstruction()
+
 	req := &model.LLMRequest{
 		Contents: []*genai.Content{
 			genai.NewContentFromText(prompt, "user"),
@@ -156,7 +158,7 @@ func get_bible_context(ctx context.Context, args GetBibleContextArgs) (BibleCont
 		})
 	}
 
-	rawContext := contextText.String()
+	rawContext := NormalizeA2UIPayload(contextText.String())
 
 	if !settings.EnableFactChecker {
 		log.Printf("[get_bible_context] Fact checker is disabled in settings. Returning raw draft context for %s.\n", args.Citation)
@@ -205,8 +207,8 @@ Fact-Checking Instructions:
 2. Fact-check ALL statements across all categories: historical background, geographical & cultural details, linguistic analysis, literary structure, theological claims, scripture cross-references, and Catholic Church teaching/doctrine.
 3. Correct any factual errors, misquoted verses, misattributed author/saint quotes, or hallucinated Catechism (CCC) paragraph numbers.
 4. If an unverified exact CCC paragraph number is present, remove the specific number and refer to the general Catholic doctrine instead.
-5. CRITICAL: Preserve the exact tone, section headings, paragraph layout, and Markdown formatting (bold, italics, bullet lists) of the draft. Do NOT omit any sections or rewrite non-factual content—only correct factual, doctrinal, and citation inaccuracies across the entire context.
-6. Return ONLY the final, fully fact-checked context text with no added commentary or metadata.`, citation, rawContext, citation)
+5. CRITICAL: Preserve the exact tone, structure, and format of the draft. If the draft is formatted as A2UI JSONL, preserve the exact valid JSONL structure (surfaceUpdate, dataModelUpdate, beginRendering) and only update text values inside "literalString" or "contents" without adding markdown code fences. If the draft is Markdown, preserve its Markdown formatting. Do NOT omit any sections or rewrite non-factual content—only correct factual, doctrinal, and citation inaccuracies across the entire context.
+6. Return ONLY the final, fully fact-checked context with no added commentary or metadata.`, citation, rawContext, citation)
 
 	req := &model.LLMRequest{
 		Contents: []*genai.Content{
@@ -227,8 +229,9 @@ Fact-Checking Instructions:
 			return rawContext, extractCitationsFromContext(rawContext), nil
 		}
 
-		// Extract targeted text: search specifically for doctrine, CCC references, saints, and early Church writers from the raw context
-		targetedQuery := fmt.Sprintf("Catholic Church teaching, Catechism of the Catholic Church (CCC), Saints, and Doctors of the Church referenced for passage %s: %s", citation, rawContext)
+		// Extract targeted plain text (unwrapping A2UI JSONL if present) to search for doctrine, CCC references, saints, and early Church writers
+		plainContext := ExtractA2UIPlainText(rawContext)
+		targetedQuery := fmt.Sprintf("Catholic Church teaching, Catechism of the Catholic Church (CCC), Saints, and Doctors of the Church referenced for passage %s: %s", citation, plainContext)
 		if len(targetedQuery) > 800 {
 			targetedQuery = targetedQuery[:800]
 		}
@@ -332,7 +335,7 @@ Instructions:
 1. Review the ENTIRE draft context from start to finish for Scripture citation "%s", including historical context, literary structure, scriptural analysis, and theological statements.
 2. Cross-reference all Catholic teachings, CCC references, Saints/Doctors of the Church, and biblical claims against the authentic sources and scripture passage.
 3. Correct any misquotations, factual errors, wrong attributions, or hallucinated paragraph numbers anywhere in the text.
-4. Keep the original structure, headings, tone, and formatting of the entire draft context completely intact. Do NOT drop any sections.
+4. CRITICAL: Keep the original structure, tone, and formatting of the entire draft context completely intact. If the draft is formatted as A2UI JSONL, preserve the exact valid JSONL structure (surfaceUpdate, dataModelUpdate, beginRendering, component IDs, and icon names) and only edit text inside "literalString" or "contents" without adding markdown code fences. Do NOT drop any sections.
 5. Return ONLY the final fully fact-checked context with no additional commentary.`, citation, magisteriumEvidence, rawContext, citation)
 
 		reqVerification := &model.LLMRequest{
@@ -406,8 +409,11 @@ Instructions:
 			})
 		}
 
-		finalContext := strings.TrimSpace(correctedText.String())
-		if finalContext == "" {
+		finalContext := NormalizeA2UIPayload(correctedText.String())
+		if finalContext == "" || (IsA2UIPayload(rawContext) && !IsA2UIPayload(finalContext)) {
+			if finalContext != "" {
+				log.Printf("[FactCheckBibleContext] Warning: Magisterium verification broke A2UI structure for %s; falling back to valid draft A2UI.", citation)
+			}
 			finalContext = rawContext
 		}
 		return finalContext, retrievedCitationObjs, nil
@@ -503,8 +509,11 @@ Instructions:
 		})
 	}
 
-	res := strings.TrimSpace(correctedText.String())
-	if res == "" {
+	res := NormalizeA2UIPayload(correctedText.String())
+	if res == "" || (IsA2UIPayload(rawContext) && !IsA2UIPayload(res)) {
+		if res != "" {
+			log.Printf("[FactCheckBibleContext] Warning: fact-checker broke A2UI structure for %s; falling back to valid draft A2UI.", citation)
+		}
 		res = rawContext
 	}
 	return res, extractCitationsFromContext(res), nil
@@ -516,9 +525,11 @@ func extractCitationsFromContext(contextText string) []MagisteriumCitation {
 		return citations
 	}
 
+	plain := ExtractA2UIPlainText(contextText)
+
 	// Extract CCC references like CCC 1718 or Catechism 1718
 	cccRegex := regexp.MustCompile(`(?:Catechism(?: of the Catholic Church)?|CCC)\s*(?:§§?|paragraph|#)?\s*(\d+(?:-\d+)?)`)
-	matches := cccRegex.FindAllStringSubmatch(contextText, -1)
+	matches := cccRegex.FindAllStringSubmatch(plain, -1)
 	seen := make(map[string]bool)
 	for _, m := range matches {
 		if len(m) > 1 && !seen[m[1]] {

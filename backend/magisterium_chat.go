@@ -204,19 +204,22 @@ func magisteriumChatHandler(w http.ResponseWriter, r *http.Request) {
 				if r.Context().Err() != nil {
 					return
 				}
-				// Fallback to formatted citations
-				var parts []string
-				for idx, c := range citations {
-					header := fmt.Sprintf("**%d. %s**", idx+1, c.DocumentTitle)
-					if c.Author != "" {
-						header += fmt.Sprintf(" — *%s*", c.Author)
+				// Fallback to structured A2UI citations
+				answerText = BuildCitationsFallbackA2UI(citations)
+				if answerText == "" {
+					var parts []string
+					for idx, c := range citations {
+						header := fmt.Sprintf("**%d. %s**", idx+1, c.DocumentTitle)
+						if c.Author != "" {
+							header += fmt.Sprintf(" — *%s*", c.Author)
+						}
+						if c.Ref != "" {
+							header += fmt.Sprintf(" (%s)", c.Ref)
+						}
+						parts = append(parts, fmt.Sprintf("%s\n%s", header, c.Text))
 					}
-					if c.Ref != "" {
-						header += fmt.Sprintf(" (%s)", c.Ref)
-					}
-					parts = append(parts, fmt.Sprintf("%s\n%s", header, c.Text))
+					answerText = strings.Join(parts, "\n\n")
 				}
-				answerText = strings.Join(parts, "\n\n")
 				_ = sendSSE(map[string]any{
 					"type":  "chunk",
 					"delta": answerText,
@@ -246,18 +249,21 @@ func magisteriumChatHandler(w http.ResponseWriter, r *http.Request) {
 			answerText = summary
 		}
 	} else if strings.TrimSpace(answerText) == "" && len(citations) > 0 {
-		var parts []string
-		for idx, c := range citations {
-			header := fmt.Sprintf("**%d. %s**", idx+1, c.DocumentTitle)
-			if c.Author != "" {
-				header += fmt.Sprintf(" — *%s*", c.Author)
+		answerText = BuildCitationsFallbackA2UI(citations)
+		if answerText == "" {
+			var parts []string
+			for idx, c := range citations {
+				header := fmt.Sprintf("**%d. %s**", idx+1, c.DocumentTitle)
+				if c.Author != "" {
+					header += fmt.Sprintf(" — *%s*", c.Author)
+				}
+				if c.Ref != "" {
+					header += fmt.Sprintf(" (%s)", c.Ref)
+				}
+				parts = append(parts, fmt.Sprintf("%s\n%s", header, c.Text))
 			}
-			if c.Ref != "" {
-				header += fmt.Sprintf(" (%s)", c.Ref)
-			}
-			parts = append(parts, fmt.Sprintf("%s\n%s", header, c.Text))
+			answerText = strings.Join(parts, "\n\n")
 		}
-		answerText = strings.Join(parts, "\n\n")
 	}
 
 	if strings.TrimSpace(answerText) == "" {
@@ -321,7 +327,7 @@ Below are official search citations retrieved from Catholic Magisterial document
 Instructions:
 1. Provide a clear, cohesive, and comprehensive summary answering the user's question using ONLY the provided citations above.
 2. Maintain fidelity to Catholic doctrine. Refer back to the cited documents or authors inline (e.g. [1], [2] or naming the document) when summarizing.
-3. Structure your response with clean formatting (using markdown bolding and bullet points where helpful).`, userQuestion, citationText.String())
+3. %s`, userQuestion, citationText.String(), A2UIResponseInstruction())
 
 	req := &model.LLMRequest{
 		Contents: []*genai.Content{
@@ -430,7 +436,7 @@ Instructions:
 		})
 	}
 
-	return strings.TrimSpace(summaryBuilder.String()), nil
+	return NormalizeA2UIPayload(summaryBuilder.String()), nil
 }
 
 // summarizeCitationsWithLLM feeds Magisterium search citations into the selected LLM provider (Ollama or Gemini) to generate a synthesis summary.
@@ -457,8 +463,8 @@ func generateStandaloneQueryWithLLM(ctx context.Context, messages []MagisteriumC
 		if msg.Role == "assistant" {
 			roleLabel = "Assistant"
 		}
-		// Truncate message text if exceptionally long to conserve prompt budget
-		content := msg.Content
+		// Unwrap A2UI JSONL into readable prose before truncating for conversation history context
+		content := ExtractA2UIPlainText(msg.Content)
 		if len(content) > 1000 {
 			content = content[:1000] + "... [truncated]"
 		}

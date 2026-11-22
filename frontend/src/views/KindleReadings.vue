@@ -5,6 +5,7 @@ import { useDate } from '../composables/useDate';
 import { useDevotionApi } from '../composables/useDevotionApi';
 import { renderMarkdown } from '../utils/markdown';
 import type { MagisteriumCitation } from '../components/common/FactCheckCitations.vue';
+import A2UIRenderer from '../components/common/A2UIRenderer.vue';
 
 interface Reading {
   citation: string;
@@ -364,10 +365,12 @@ onMounted(() => {
               <h3 class="kindle-h3">{{ sec.meditationTitle }}</h3>
               <span class="kindle-badge">AI-Assisted Reflection</span>
             </div>
-            <div
-              class="kindle-meditation-body"
-              v-html="renderMarkdown(cleanContext(sec.reading.context), kindleMarkdownOptions)"
-            ></div>
+            <A2UIRenderer
+              :content="cleanContext(sec.reading.context)"
+              theme="kindle"
+              :markdown-options="kindleMarkdownOptions"
+              fallback-class="kindle-meditation-body"
+            />
 
             <!-- Fact-Checked Magisterium Citations -->
             <div v-if="getCitations(sec.reading).length > 0" class="kindle-citations-wrapper">
