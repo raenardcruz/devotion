@@ -58,6 +58,8 @@ func get_bible_context(ctx context.Context, args GetBibleContextArgs) (BibleCont
 		prompt = strings.ReplaceAll(prompt, "{{passage_text}}", "")
 	}
 
+	prompt = prompt + "\n\n" + A2UIBibleContextInstruction()
+
 	req := &model.LLMRequest{
 		Contents: []*genai.Content{
 			genai.NewContentFromText(prompt, "user"),
@@ -156,7 +158,7 @@ func get_bible_context(ctx context.Context, args GetBibleContextArgs) (BibleCont
 		})
 	}
 
-	rawContext := contextText.String()
+	rawContext := StripA2UICodeFences(contextText.String())
 
 	if !settings.EnableFactChecker {
 		log.Printf("[get_bible_context] Fact checker is disabled in settings. Returning raw draft context for %s.\n", args.Citation)
@@ -205,8 +207,8 @@ Fact-Checking Instructions:
 2. Fact-check ALL statements across all categories: historical background, geographical & cultural details, linguistic analysis, literary structure, theological claims, scripture cross-references, and Catholic Church teaching/doctrine.
 3. Correct any factual errors, misquoted verses, misattributed author/saint quotes, or hallucinated Catechism (CCC) paragraph numbers.
 4. If an unverified exact CCC paragraph number is present, remove the specific number and refer to the general Catholic doctrine instead.
-5. CRITICAL: Preserve the exact tone, section headings, paragraph layout, and Markdown formatting (bold, italics, bullet lists) of the draft. Do NOT omit any sections or rewrite non-factual content—only correct factual, doctrinal, and citation inaccuracies across the entire context.
-6. Return ONLY the final, fully fact-checked context text with no added commentary or metadata.`, citation, rawContext, citation)
+5. CRITICAL: Preserve the exact tone, structure, and format of the draft. If the draft is formatted as A2UI JSONL, preserve the exact valid JSONL structure (surfaceUpdate, dataModelUpdate, beginRendering) and only update text values inside "literalString" or "contents" without adding markdown code fences. If the draft is Markdown, preserve its Markdown formatting. Do NOT omit any sections or rewrite non-factual content—only correct factual, doctrinal, and citation inaccuracies across the entire context.
+6. Return ONLY the final, fully fact-checked context with no added commentary or metadata.`, citation, rawContext, citation)
 
 	req := &model.LLMRequest{
 		Contents: []*genai.Content{
@@ -503,7 +505,7 @@ Instructions:
 		})
 	}
 
-	res := strings.TrimSpace(correctedText.String())
+	res := StripA2UICodeFences(correctedText.String())
 	if res == "" {
 		res = rawContext
 	}

@@ -512,9 +512,14 @@
               <!-- Assistant Response Card -->
               <div v-else class="space-y-3">
                 <div class="bg-white/80 border border-[#D1C7BD]/80 rounded-3xl p-5 sm:p-7 backdrop-blur-md shadow-xs">
-                  <!-- Prose Answer -->
+                  <!-- Prose / A2UI Answer -->
                   <div class="text-[15px] leading-relaxed text-[#322D29]/95 font-serif">
-                    <span v-html="formatResponse(msg.content)"></span>
+                    <A2UIRenderer
+                      v-if="looksLikeA2UIStream(msg.content)"
+                      :content="msg.content"
+                      :is-streaming="isStreaming && activeMessages.indexOf(msg) === activeMessages.length - 1"
+                    />
+                    <span v-else v-html="formatResponse(msg.content)"></span>
                     <span
                       v-if="isStreaming && activeMessages.indexOf(msg) === activeMessages.length - 1"
                       class="inline-block w-2 h-4 ml-1 bg-[#72383D] animate-pulse align-middle rounded-xs"
@@ -883,6 +888,8 @@ import { useGeminiLive, type LiveTurnResult } from '../../composables/useGeminiL
 import { useMagisteriumModal } from '../../composables/useMagisteriumModal';
 import MagisteriumSynthesizer from './MagisteriumSynthesizer.vue';
 import MagisteriumAvatarIcon from '../icons/MagisteriumAvatarIcon.vue';
+import A2UIRenderer from '../common/A2UIRenderer.vue';
+import { looksLikeA2UIStream, extractA2UIPlainText } from '../../utils/a2ui';
 
 const props = withDefaults(defineProps<{
   isModal?: boolean;
@@ -1336,12 +1343,13 @@ const askSuggested = (question: string) => {
 
 const copyAssistantResponse = async (content: string) => {
   if (!content) return;
+  const plainText = extractA2UIPlainText(content);
   try {
     if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(content);
+      await navigator.clipboard.writeText(plainText);
     } else {
       const textArea = document.createElement('textarea');
-      textArea.value = content;
+      textArea.value = plainText;
       document.body.appendChild(textArea);
       textArea.select();
       document.execCommand('copy');

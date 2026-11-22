@@ -321,7 +321,7 @@ Below are official search citations retrieved from Catholic Magisterial document
 Instructions:
 1. Provide a clear, cohesive, and comprehensive summary answering the user's question using ONLY the provided citations above.
 2. Maintain fidelity to Catholic doctrine. Refer back to the cited documents or authors inline (e.g. [1], [2] or naming the document) when summarizing.
-3. Structure your response with clean formatting (using markdown bolding and bullet points where helpful).`, userQuestion, citationText.String())
+3. %s`, userQuestion, citationText.String(), A2UIResponseInstruction())
 
 	req := &model.LLMRequest{
 		Contents: []*genai.Content{
@@ -430,7 +430,7 @@ Instructions:
 		})
 	}
 
-	return strings.TrimSpace(summaryBuilder.String()), nil
+	return StripA2UICodeFences(summaryBuilder.String()), nil
 }
 
 // summarizeCitationsWithLLM feeds Magisterium search citations into the selected LLM provider (Ollama or Gemini) to generate a synthesis summary.

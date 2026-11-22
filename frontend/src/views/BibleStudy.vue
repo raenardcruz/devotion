@@ -3,13 +3,13 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useDevotionApi } from '../composables/useDevotionApi';
 import { useAccessControl } from '../composables/useAccessControl';
-import { renderMarkdown } from '../utils/markdown';
 import TopNav from '../components/common/TopNav.vue';
 import BottomNav from '../components/common/BottomNav.vue';
 import ParchmentCard from '../components/common/ParchmentCard.vue';
 import AppButton from '../components/common/AppButton.vue';
 import AppTabs from '../components/common/AppTabs.vue';
 import FactCheckCitations, { type MagisteriumCitation } from '../components/common/FactCheckCitations.vue';
+import A2UIRenderer from '../components/common/A2UIRenderer.vue';
 
 interface SavedVerse {
   id: string;
@@ -642,7 +642,7 @@ const getSnippet = (text: string) => {
                         🤖 AI-Generated
                       </span>
                     </div>
-                    <div class="prose max-w-none text-parchment-neutral/85" v-html="renderMarkdown(cleanContext(item.context))"></div>
+                    <A2UIRenderer :content="cleanContext(item.context)" fallback-class="prose max-w-none text-parchment-neutral/85" />
                     <FactCheckCitations :citations="item.citations" :rawContextHtml="item.context" />
                   </div>
                 </div>
