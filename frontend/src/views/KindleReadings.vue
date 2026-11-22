@@ -367,6 +367,7 @@ onMounted(() => {
             </div>
             <A2UIRenderer
               :content="cleanContext(sec.reading.context)"
+              theme="kindle"
               :markdown-options="kindleMarkdownOptions"
               fallback-class="kindle-meditation-body"
             />

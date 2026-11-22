@@ -111,7 +111,7 @@ func truncateForPrompt(input string, maxLen int) string {
 func buildReadingIllustrationPrompt(readingKey, citation, text, commentary string) string {
 	key := normalizeMagazineReadingKey(readingKey)
 	snippet := truncateForPrompt(text, 450)
-	contextSnippet := truncateForPrompt(commentary, 300)
+	contextSnippet := truncateForPrompt(ExtractA2UIPlainText(commentary), 300)
 
 	subjectLine := fmt.Sprintf("Sacred Scripture passage: %s.", citation)
 	if key == "cover" {

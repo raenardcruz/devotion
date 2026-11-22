@@ -518,6 +518,7 @@
                       v-if="looksLikeA2UIStream(msg.content)"
                       :content="msg.content"
                       :is-streaming="isStreaming && activeMessages.indexOf(msg) === activeMessages.length - 1"
+                      @citation-click="handleCitationClick(index, $event)"
                     />
                     <span v-else v-html="formatResponse(msg.content)"></span>
                     <span
@@ -545,12 +546,21 @@
                       <div
                         v-for="(cite, idx) in msg.citations"
                         :key="idx"
-                        class="p-3.5 bg-[#FAF7F2] border border-[#D1C7BD]/70 rounded-2xl space-y-2 hover:border-[#72383D]/40 transition-colors"
+                        :id="`mag-cite-${index}-${idx + 1}`"
+                        :class="[
+                          'p-3.5 bg-[#FAF7F2] border rounded-2xl space-y-2 transition-all duration-300',
+                          highlightedCitation?.msgIndex === index && highlightedCitation?.citeNumber === idx + 1
+                            ? 'border-[#72383D] ring-2 ring-[#72383D]/30 bg-[#F5ECD9]/50'
+                            : 'border-[#D1C7BD]/70 hover:border-[#72383D]/40'
+                        ]"
                       >
                         <div class="flex items-start justify-between gap-2">
                           <div class="space-y-0.5 min-w-0 flex-1">
-                            <h4 class="text-xs font-bold text-[#72383D] font-serif leading-snug">
-                              {{ cite.document_title || cite.title || 'Magisterial Citation' }}
+                            <h4 class="text-xs font-bold text-[#72383D] font-serif leading-snug flex items-center gap-1.5">
+                              <span class="inline-flex items-center justify-center px-1.5 py-0.2 text-[10px] font-mono font-bold rounded bg-[#EFE9E1] text-[#72383D] border border-[#D1C7BD] shrink-0">
+                                {{ idx + 1 }}
+                              </span>
+                              <span>{{ cite.document_title || cite.title || 'Magisterial Citation' }}</span>
                             </h4>
                             <div class="flex flex-wrap items-center gap-2 text-[11px] text-[#322D29]/70 font-serif">
                               <span v-if="cite.author" class="text-[#72383D] font-semibold">{{ cite.author }}</span>
@@ -1028,12 +1038,32 @@ const copyNotice = ref<string | null>(null);
 
 // Collapsible Citations State (Hidden by default)
 const expandedCitations = ref<Set<number>>(new Set());
+const highlightedCitation = ref<{ msgIndex: number; citeNumber: number } | null>(null);
+let highlightTimer: ReturnType<typeof setTimeout> | null = null;
 
 const toggleCitations = (msgIndex: number) => {
   if (expandedCitations.value.has(msgIndex)) {
     expandedCitations.value.delete(msgIndex);
   } else {
     expandedCitations.value.add(msgIndex);
+  }
+};
+
+const handleCitationClick = async (msgIndex: number, citeNumber: number) => {
+  const msg = activeMessages.value[msgIndex];
+  if (!msg?.citations || msg.citations.length === 0) return;
+  expandedCitations.value.add(msgIndex);
+  highlightedCitation.value = { msgIndex, citeNumber };
+  if (highlightTimer) {
+    clearTimeout(highlightTimer);
+  }
+  highlightTimer = setTimeout(() => {
+    highlightedCitation.value = null;
+  }, 2600);
+  await nextTick();
+  const targetEl = document.getElementById(`mag-cite-${msgIndex}-${citeNumber}`);
+  if (targetEl) {
+    targetEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 };
 
@@ -1509,6 +1539,10 @@ watch(liveError, (val) => {
 });
 
 onUnmounted(() => {
+  if (highlightTimer) {
+    clearTimeout(highlightTimer);
+    highlightTimer = null;
+  }
   stopGeneration();
   closeLiveSession();
 });
@@ -1647,7 +1681,7 @@ const sendMessage = async () => {
               streamScrollToBottom();
             } else if (event.type === 'done') {
               const msg = ensureAssistantMsg();
-              if (event.response && !msg.content) {
+              if (event.response) {
                 msg.content = event.response;
               }
               isStreaming.value = false;
@@ -1673,7 +1707,7 @@ const sendMessage = async () => {
               msg.content += event.delta || '';
             } else if (event.type === 'done') {
               const msg = ensureAssistantMsg();
-              if (event.response && !msg.content) {
+              if (event.response) {
                 msg.content = event.response;
               }
             }

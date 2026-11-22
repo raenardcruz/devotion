@@ -1,3 +1,5 @@
+import { a2uiToMarkdown } from './a2ui';
+
 export type ReadingLengthTier = 'short' | 'medium' | 'long';
 
 export type ScriptureLayoutMode =
@@ -52,10 +54,11 @@ const A4_PRINTABLE_HEIGHT_MM = 275;
 
 export function cleanContextMarkdown(contextStr?: string): string {
   if (!contextStr) return '';
-  return contextStr
+  const cleaned = contextStr
     .replace(/<details[\s\S]*?<\/details>/gi, '')
     .replace(/\r\n/g, '\n')
     .trim();
+  return a2uiToMarkdown(cleaned);
 }
 
 export function decodeBasicEntities(text: string): string {
