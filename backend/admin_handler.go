@@ -144,7 +144,7 @@ func adminOllamaModelsHandler(w http.ResponseWriter, r *http.Request) {
 		// Fallback model list if Ollama endpoint is unreachable
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"models": []string{"gemma4:cloud", "qwen2.5:4b", "llama3.2:3b", "mistral:latest"},
+			"models": GetSettings().OllamaModels,
 		})
 		return
 	}
@@ -168,7 +168,7 @@ func adminOllamaModelsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(modelNames) == 0 {
-		modelNames = []string{"gemma4:cloud", "qwen2.5:4b", "llama3.2:3b"}
+		modelNames = GetSettings().OllamaModels
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -183,16 +183,9 @@ func adminGeminiModelsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	geminiModels := []string{
-		"gemini-4-argon",
-		"gemini-3.8-flash",
-		"gemini-3.5-flash-lite",
-		"gemini-3.1-flash-lite",
-	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"models": geminiModels,
+		"models": GetSettings().GeminiModels,
 	})
 }
 
@@ -202,17 +195,9 @@ func adminGeminiLiveModelsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	liveModels := []string{
-		"gemini-3.8-live",
-		"gemini-3.8-live-extended-thinking",
-		"gemini-2.5-flash-native-audio",
-		"gemini-2.0-flash-exp",
-		"gemini-2.0-flash",
-	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"models": liveModels,
+		"models": GetSettings().GeminiLiveModels,
 	})
 }
 
@@ -222,16 +207,9 @@ func adminGeminiImageModelsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	imageModels := []string{
-		"gemini-nano-banana-2.1",
-		"gemini-2.5-flash-image-preview",
-		"gemini-2.0-flash-preview-image-generation",
-		"imagen-3.0-generate-002",
-	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"models": imageModels,
+		"models": GetSettings().GeminiImageModels,
 	})
 }
 

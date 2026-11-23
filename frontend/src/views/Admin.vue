@@ -58,6 +58,10 @@ interface Settings {
   gemini_image_model: string;
   ollama_model: string;
   context_model?: string;
+  gemini_models: string[];
+  gemini_live_models: string[];
+  gemini_image_models: string[];
+  ollama_models: string[];
   context_instruction: string;
   enable_fact_checker: boolean;
   r2_account_id: string;
@@ -171,6 +175,32 @@ const authError = ref<string | null>(null);
 const authLoading = ref(false);
 
 // Settings State
+const DEFAULT_GEMINI_MODELS = [
+  'gemini-4-argon',
+  'gemini-3.8-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
+];
+const DEFAULT_GEMINI_LIVE_MODELS = [
+  'gemini-3.8-live',
+  'gemini-3.8-live-extended-thinking',
+  'gemini-2.5-flash-native-audio',
+  'gemini-2.0-flash-exp',
+  'gemini-2.0-flash',
+];
+const DEFAULT_GEMINI_IMAGE_MODELS = [
+  'gemini-nano-banana-2.1',
+  'gemini-2.5-flash-image-preview',
+  'gemini-2.0-flash-preview-image-generation',
+  'imagen-3.0-generate-002',
+];
+const DEFAULT_OLLAMA_MODELS = [
+  'gemma4:cloud',
+  'qwen2.5:4b',
+  'llama3.2:3b',
+  'mistral:latest',
+];
+
 const defaultSettings = (): Settings => ({
   context_provider: 'ollama',
   fact_checker_provider: 'gemini',
@@ -182,6 +212,10 @@ const defaultSettings = (): Settings => ({
   gemini_live_model: 'gemini-3.8-live',
   gemini_image_model: 'gemini-nano-banana-2.1',
   ollama_model: 'gemma4:cloud',
+  gemini_models: [...DEFAULT_GEMINI_MODELS],
+  gemini_live_models: [...DEFAULT_GEMINI_LIVE_MODELS],
+  gemini_image_models: [...DEFAULT_GEMINI_IMAGE_MODELS],
+  ollama_models: [...DEFAULT_OLLAMA_MODELS],
   context_instruction: '',
   enable_fact_checker: true,
   r2_account_id: '',
@@ -195,26 +229,46 @@ const defaultSettings = (): Settings => ({
 const settings = ref<Settings>(defaultSettings());
 const savedSnapshot = ref<string>('');
 
-const geminiModelsList = ref<string[]>([
-  'gemini-4-argon',
-  'gemini-3.8-flash',
-  'gemini-3.5-flash-lite',
-  'gemini-3.1-flash-lite',
-]);
-const geminiLiveModelsList = ref<string[]>([
-  'gemini-3.8-live',
-  'gemini-3.8-live-extended-thinking',
-  'gemini-2.5-flash-native-audio',
-  'gemini-2.0-flash-exp',
-  'gemini-2.0-flash',
-]);
-const geminiImageModelsList = ref<string[]>([
-  'gemini-nano-banana-2.1',
-  'gemini-2.5-flash-image-preview',
-  'gemini-2.0-flash-preview-image-generation',
-  'imagen-3.0-generate-002',
-]);
-const ollamaModelsList = ref<string[]>([]);
+type ModelListKey = 'gemini_models' | 'gemini_live_models' | 'gemini_image_models' | 'ollama_models';
+type SelectedModelKey = 'gemini_model' | 'gemini_live_model' | 'gemini_image_model' | 'ollama_model';
+
+const managingModels = ref<Record<ModelListKey, boolean>>({
+  gemini_models: false,
+  gemini_live_models: false,
+  gemini_image_models: false,
+  ollama_models: false,
+});
+
+const newModelInputs = ref<Record<ModelListKey, string>>({
+  gemini_models: '',
+  gemini_live_models: '',
+  gemini_image_models: '',
+  ollama_models: '',
+});
+
+const addModelOption = (listKey: ModelListKey, selectedKey: SelectedModelKey) => {
+  const raw = newModelInputs.value[listKey] || '';
+  const trimmed = raw.trim();
+  if (!trimmed) return;
+
+  const current = settings.value[listKey] || [];
+  if (!current.includes(trimmed)) {
+    settings.value[listKey] = [...current, trimmed];
+  }
+  settings.value[selectedKey] = trimmed;
+  newModelInputs.value[listKey] = '';
+};
+
+const removeModelOption = (listKey: ModelListKey, selectedKey: SelectedModelKey, modelName: string) => {
+  const current = settings.value[listKey] || [];
+  if (current.length <= 1) return;
+  const next = current.filter((m) => m !== modelName);
+  settings.value[listKey] = next;
+  if (settings.value[selectedKey] === modelName && next.length > 0) {
+    settings.value[selectedKey] = next[0] as string;
+  }
+};
+
 const loadingOllamaModels = ref(false);
 const loadingSettings = ref(false);
 const saveLoading = ref(false);
@@ -706,22 +760,32 @@ const copyText = async (text: string, key: string) => {
   }
 };
 
+const normalizeClientModels = (list: string[] | undefined, selected: string, defaults: string[]): string[] => {
+  const base = Array.isArray(list) && list.length > 0 ? list : [...defaults];
+  const merged = [...base];
+  if (selected && !merged.includes(selected)) {
+    merged.unshift(selected);
+  }
+  return Array.from(new Set(merged.map((m) => m.trim()).filter(Boolean)));
+};
+
 const loadSettings = async () => {
   loadingSettings.value = true;
   try {
     const data = await fetchWithAuth<Settings>('/api/admin/settings');
     if (data) {
-      settings.value = { ...defaultSettings(), ...data };
-      if (!settings.value.gemini_image_model) {
-        settings.value.gemini_image_model = 'gemini-nano-banana-2.1';
+      const merged = { ...defaultSettings(), ...data };
+      if (!merged.gemini_image_model) {
+        merged.gemini_image_model = 'gemini-nano-banana-2.1';
       }
+      merged.gemini_models = normalizeClientModels(data.gemini_models, merged.gemini_model, DEFAULT_GEMINI_MODELS);
+      merged.gemini_live_models = normalizeClientModels(data.gemini_live_models, merged.gemini_live_model, DEFAULT_GEMINI_LIVE_MODELS);
+      merged.gemini_image_models = normalizeClientModels(data.gemini_image_models, merged.gemini_image_model, DEFAULT_GEMINI_IMAGE_MODELS);
+      merged.ollama_models = normalizeClientModels(data.ollama_models, merged.ollama_model, DEFAULT_OLLAMA_MODELS);
+      settings.value = merged;
       savedSnapshot.value = JSON.stringify(settings.value);
       showR2Config.value = !isR2FormConfigured.value;
     }
-    fetchGeminiModels();
-    fetchGeminiLiveModels();
-    fetchGeminiImageModels();
-    fetchOllamaModels();
   } catch (err: any) {
     console.error('Failed to load settings:', err);
   } finally {
@@ -735,51 +799,17 @@ const discardChanges = () => {
   message.value = null;
 };
 
-const fetchGeminiModels = async () => {
-  try {
-    const res = await fetchWithAuth<{ models: string[] }>('/api/admin/gemini-models');
-    if (res && res.models && res.models.length > 0) {
-      geminiModelsList.value = res.models;
-    }
-  } catch (err) {
-    console.error('Failed to fetch gemini models:', err);
-  }
-};
-
-const fetchGeminiLiveModels = async () => {
-  try {
-    const res = await fetchWithAuth<{ models: string[] }>('/api/admin/gemini-live-models');
-    if (res && res.models && res.models.length > 0) {
-      geminiLiveModelsList.value = res.models;
-    }
-  } catch (err) {
-    console.error('Failed to fetch gemini live models:', err);
-  }
-};
-
-const fetchGeminiImageModels = async () => {
-  try {
-    const res = await fetchWithAuth<{ models: string[] }>('/api/admin/gemini-image-models');
-    if (res && res.models && res.models.length > 0) {
-      geminiImageModelsList.value = res.models;
-    }
-  } catch (err) {
-    console.error('Failed to fetch gemini image models:', err);
-  }
-};
-
 const fetchOllamaModels = async () => {
   loadingOllamaModels.value = true;
   try {
     const res = await fetchWithAuth<{ models: string[] }>('/api/admin/ollama-models');
     if (res && res.models && res.models.length > 0) {
-      ollamaModelsList.value = res.models;
-    } else {
-      ollamaModelsList.value = ['gemma4:cloud', 'qwen2.5:4b', 'llama3.2:3b'];
+      const current = settings.value.ollama_models || [];
+      const merged = Array.from(new Set([...current, ...res.models.map((m) => m.trim()).filter(Boolean)]));
+      settings.value.ollama_models = merged;
     }
   } catch (err) {
     console.error('Failed to fetch ollama models:', err);
-    ollamaModelsList.value = ['gemma4:cloud', 'qwen2.5:4b', 'llama3.2:3b'];
   } finally {
     loadingOllamaModels.value = false;
   }
@@ -795,7 +825,12 @@ const saveSettings = async () => {
       body: JSON.stringify(settings.value),
     });
     if (res?.settings) {
-      settings.value = { ...defaultSettings(), ...res.settings };
+      const merged = { ...defaultSettings(), ...res.settings };
+      merged.gemini_models = normalizeClientModels(res.settings.gemini_models, merged.gemini_model, DEFAULT_GEMINI_MODELS);
+      merged.gemini_live_models = normalizeClientModels(res.settings.gemini_live_models, merged.gemini_live_model, DEFAULT_GEMINI_LIVE_MODELS);
+      merged.gemini_image_models = normalizeClientModels(res.settings.gemini_image_models, merged.gemini_image_model, DEFAULT_GEMINI_IMAGE_MODELS);
+      merged.ollama_models = normalizeClientModels(res.settings.ollama_models, merged.ollama_model, DEFAULT_OLLAMA_MODELS);
+      settings.value = merged;
     }
     savedSnapshot.value = JSON.stringify(settings.value);
     r2BackendConfigured.value = isR2FormConfigured.value;
@@ -1318,73 +1353,217 @@ const formatProviderLabel = (provider: string) => {
                 <div class="flex items-center justify-between gap-2">
                   <div>
                     <h3 class="font-serif text-base sm:text-lg font-bold text-[#322D29]">Models</h3>
-                    <p class="text-xs text-[#322D29]/60">Cloud Gemini and local Ollama models across text, voice, and manga.</p>
+                    <p class="text-xs text-[#322D29]/60">Cloud Gemini and local Ollama models across text, voice, and manga. Click Manage to add or remove model options.</p>
                   </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <!-- Gemini Text -->
-                  <div class="p-3.5 rounded-2xl border border-[#D1C7BD]/75 bg-white/70 space-y-2">
+                  <div class="p-3.5 rounded-2xl border border-[#D1C7BD]/75 bg-white/70 space-y-2.5">
                     <div class="flex items-center justify-between gap-2">
                       <label for="gemini-model-select" class="text-xs font-bold text-[#322D29]">
                         Gemini Text &amp; Context
                       </label>
-                      <span
-                        v-if="settings.context_provider === 'gemini' || settings.magisterium_llm_provider === 'gemini'"
-                        class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#72383D]/10 text-[#72383D]"
-                      >
-                        Active
-                      </span>
+                      <div class="flex items-center gap-1.5">
+                        <span
+                          v-if="settings.context_provider === 'gemini' || settings.magisterium_llm_provider === 'gemini'"
+                          class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#72383D]/10 text-[#72383D]"
+                        >
+                          Active
+                        </span>
+                        <button
+                          type="button"
+                          @click="managingModels.gemini_models = !managingModels.gemini_models"
+                          class="admin-inline-btn px-2 py-0.5 rounded-full text-[11px] font-semibold border transition-colors cursor-pointer"
+                          :class="managingModels.gemini_models ? 'border-[#72383D] bg-[#72383D]/10 text-[#72383D]' : 'border-[#D1C7BD] bg-white text-[#322D29]/75 hover:border-[#72383D] hover:text-[#72383D]'"
+                        >
+                          {{ managingModels.gemini_models ? 'Done' : 'Manage' }}
+                        </button>
+                      </div>
                     </div>
                     <select
                       id="gemini-model-select"
                       v-model="settings.gemini_model"
                       class="w-full px-3 py-2 border border-[#D1C7BD] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#72383D]/25 focus:border-[#72383D] text-[#322D29] text-xs sm:text-sm font-medium min-h-[42px]"
                     >
-                      <option v-for="m in geminiModelsList" :key="m" :value="m">{{ m }}</option>
+                      <option v-for="m in settings.gemini_models" :key="m" :value="m">{{ m }}</option>
                     </select>
+                    <div v-if="managingModels.gemini_models" class="pt-2 border-t border-[#D1C7BD]/50 space-y-2">
+                      <div class="flex flex-wrap gap-1.5">
+                        <span
+                          v-for="m in settings.gemini_models"
+                          :key="m"
+                          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-mono border"
+                          :class="settings.gemini_model === m ? 'border-[#72383D]/40 bg-[#72383D]/10 text-[#72383D] font-semibold' : 'border-[#D1C7BD]/80 bg-[#FAF7EE] text-[#322D29]/85'"
+                        >
+                          <span>{{ m }}</span>
+                          <button
+                            type="button"
+                            @click="removeModelOption('gemini_models', 'gemini_model', m)"
+                            :disabled="settings.gemini_models.length <= 1"
+                            :title="settings.gemini_models.length <= 1 ? 'At least one model is required' : `Remove ${m}`"
+                            class="ml-0.5 text-[#322D29]/50 hover:text-red-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer leading-none font-sans font-bold"
+                          >
+                            &times;
+                          </button>
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          v-model="newModelInputs.gemini_models"
+                          @keydown.enter.prevent="addModelOption('gemini_models', 'gemini_model')"
+                          placeholder="Add model ID (e.g. gemini-4-pro)"
+                          class="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border border-[#D1C7BD] bg-white text-xs font-mono text-[#322D29] focus:outline-none focus:border-[#72383D]"
+                        />
+                        <button
+                          type="button"
+                          @click="addModelOption('gemini_models', 'gemini_model')"
+                          :disabled="!newModelInputs.gemini_models.trim()"
+                          class="admin-inline-btn px-2.5 py-1.5 rounded-lg bg-[#72383D] text-white text-xs font-semibold hover:bg-[#5E2C30] disabled:opacity-40 cursor-pointer shrink-0"
+                        >
+                          + Add
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
                   <!-- Gemini Live -->
-                  <div class="p-3.5 rounded-2xl border border-[#D1C7BD]/75 bg-white/70 space-y-2">
+                  <div class="p-3.5 rounded-2xl border border-[#D1C7BD]/75 bg-white/70 space-y-2.5">
                     <div class="flex items-center justify-between gap-2">
                       <label for="gemini-live-model-select" class="text-xs font-bold text-[#322D29]">
                         Gemini Live (Voice Sanctuary)
                       </label>
-                      <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#EFE9E1] text-[#322D29]/70">
-                        Voice
-                      </span>
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#EFE9E1] text-[#322D29]/70">
+                          Voice
+                        </span>
+                        <button
+                          type="button"
+                          @click="managingModels.gemini_live_models = !managingModels.gemini_live_models"
+                          class="admin-inline-btn px-2 py-0.5 rounded-full text-[11px] font-semibold border transition-colors cursor-pointer"
+                          :class="managingModels.gemini_live_models ? 'border-[#72383D] bg-[#72383D]/10 text-[#72383D]' : 'border-[#D1C7BD] bg-white text-[#322D29]/75 hover:border-[#72383D] hover:text-[#72383D]'"
+                        >
+                          {{ managingModels.gemini_live_models ? 'Done' : 'Manage' }}
+                        </button>
+                      </div>
                     </div>
                     <select
                       id="gemini-live-model-select"
                       v-model="settings.gemini_live_model"
                       class="w-full px-3 py-2 border border-[#D1C7BD] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#72383D]/25 focus:border-[#72383D] text-[#322D29] text-xs sm:text-sm font-medium min-h-[42px]"
                     >
-                      <option v-for="m in geminiLiveModelsList" :key="m" :value="m">{{ m }}</option>
+                      <option v-for="m in settings.gemini_live_models" :key="m" :value="m">{{ m }}</option>
                     </select>
+                    <div v-if="managingModels.gemini_live_models" class="pt-2 border-t border-[#D1C7BD]/50 space-y-2">
+                      <div class="flex flex-wrap gap-1.5">
+                        <span
+                          v-for="m in settings.gemini_live_models"
+                          :key="m"
+                          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-mono border"
+                          :class="settings.gemini_live_model === m ? 'border-[#72383D]/40 bg-[#72383D]/10 text-[#72383D] font-semibold' : 'border-[#D1C7BD]/80 bg-[#FAF7EE] text-[#322D29]/85'"
+                        >
+                          <span>{{ m }}</span>
+                          <button
+                            type="button"
+                            @click="removeModelOption('gemini_live_models', 'gemini_live_model', m)"
+                            :disabled="settings.gemini_live_models.length <= 1"
+                            :title="settings.gemini_live_models.length <= 1 ? 'At least one model is required' : `Remove ${m}`"
+                            class="ml-0.5 text-[#322D29]/50 hover:text-red-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer leading-none font-sans font-bold"
+                          >
+                            &times;
+                          </button>
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          v-model="newModelInputs.gemini_live_models"
+                          @keydown.enter.prevent="addModelOption('gemini_live_models', 'gemini_live_model')"
+                          placeholder="Add live model ID"
+                          class="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border border-[#D1C7BD] bg-white text-xs font-mono text-[#322D29] focus:outline-none focus:border-[#72383D]"
+                        />
+                        <button
+                          type="button"
+                          @click="addModelOption('gemini_live_models', 'gemini_live_model')"
+                          :disabled="!newModelInputs.gemini_live_models.trim()"
+                          class="admin-inline-btn px-2.5 py-1.5 rounded-lg bg-[#72383D] text-white text-xs font-semibold hover:bg-[#5E2C30] disabled:opacity-40 cursor-pointer shrink-0"
+                        >
+                          + Add
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
                   <!-- Gemini Image -->
-                  <div class="p-3.5 rounded-2xl border border-[#D1C7BD]/75 bg-white/70 space-y-2">
+                  <div class="p-3.5 rounded-2xl border border-[#D1C7BD]/75 bg-white/70 space-y-2.5">
                     <div class="flex items-center justify-between gap-2">
                       <label for="gemini-image-model-select" class="text-xs font-bold text-[#322D29]">
                         Gemini Image (Story-to-Manga)
                       </label>
-                      <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#72383D]/10 text-[#72383D]">
-                        Image
-                      </span>
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#72383D]/10 text-[#72383D]">
+                          Image
+                        </span>
+                        <button
+                          type="button"
+                          @click="managingModels.gemini_image_models = !managingModels.gemini_image_models"
+                          class="admin-inline-btn px-2 py-0.5 rounded-full text-[11px] font-semibold border transition-colors cursor-pointer"
+                          :class="managingModels.gemini_image_models ? 'border-[#72383D] bg-[#72383D]/10 text-[#72383D]' : 'border-[#D1C7BD] bg-white text-[#322D29]/75 hover:border-[#72383D] hover:text-[#72383D]'"
+                        >
+                          {{ managingModels.gemini_image_models ? 'Done' : 'Manage' }}
+                        </button>
+                      </div>
                     </div>
                     <select
                       id="gemini-image-model-select"
                       v-model="settings.gemini_image_model"
                       class="w-full px-3 py-2 border border-[#D1C7BD] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#72383D]/25 focus:border-[#72383D] text-[#322D29] text-xs sm:text-sm font-medium min-h-[42px]"
                     >
-                      <option v-for="m in geminiImageModelsList" :key="m" :value="m">{{ m }}</option>
+                      <option v-for="m in settings.gemini_image_models" :key="m" :value="m">{{ m }}</option>
                     </select>
+                    <div v-if="managingModels.gemini_image_models" class="pt-2 border-t border-[#D1C7BD]/50 space-y-2">
+                      <div class="flex flex-wrap gap-1.5">
+                        <span
+                          v-for="m in settings.gemini_image_models"
+                          :key="m"
+                          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-mono border"
+                          :class="settings.gemini_image_model === m ? 'border-[#72383D]/40 bg-[#72383D]/10 text-[#72383D] font-semibold' : 'border-[#D1C7BD]/80 bg-[#FAF7EE] text-[#322D29]/85'"
+                        >
+                          <span>{{ m }}</span>
+                          <button
+                            type="button"
+                            @click="removeModelOption('gemini_image_models', 'gemini_image_model', m)"
+                            :disabled="settings.gemini_image_models.length <= 1"
+                            :title="settings.gemini_image_models.length <= 1 ? 'At least one model is required' : `Remove ${m}`"
+                            class="ml-0.5 text-[#322D29]/50 hover:text-red-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer leading-none font-sans font-bold"
+                          >
+                            &times;
+                          </button>
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          v-model="newModelInputs.gemini_image_models"
+                          @keydown.enter.prevent="addModelOption('gemini_image_models', 'gemini_image_model')"
+                          placeholder="Add image model ID"
+                          class="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border border-[#D1C7BD] bg-white text-xs font-mono text-[#322D29] focus:outline-none focus:border-[#72383D]"
+                        />
+                        <button
+                          type="button"
+                          @click="addModelOption('gemini_image_models', 'gemini_image_model')"
+                          :disabled="!newModelInputs.gemini_image_models.trim()"
+                          class="admin-inline-btn px-2.5 py-1.5 rounded-lg bg-[#72383D] text-white text-xs font-semibold hover:bg-[#5E2C30] disabled:opacity-40 cursor-pointer shrink-0"
+                        >
+                          + Add
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
                   <!-- Ollama Local -->
-                  <div class="p-3.5 rounded-2xl border border-[#D1C7BD]/75 bg-white/70 space-y-2">
+                  <div class="p-3.5 rounded-2xl border border-[#D1C7BD]/75 bg-white/70 space-y-2.5">
                     <div class="flex items-center justify-between gap-2">
                       <label for="ollama-model-select" class="text-xs font-bold text-[#322D29]">
                         Ollama Local Model
@@ -1415,6 +1594,14 @@ const formatProviderLabel = (provider: string) => {
                           </svg>
                           {{ loadingOllamaModels ? 'Syncing' : 'Refresh' }}
                         </button>
+                        <button
+                          type="button"
+                          @click="managingModels.ollama_models = !managingModels.ollama_models"
+                          class="admin-inline-btn px-2 py-0.5 rounded-full text-[11px] font-semibold border transition-colors cursor-pointer"
+                          :class="managingModels.ollama_models ? 'border-[#72383D] bg-[#72383D]/10 text-[#72383D]' : 'border-[#D1C7BD] bg-white text-[#322D29]/75 hover:border-[#72383D] hover:text-[#72383D]'"
+                        >
+                          {{ managingModels.ollama_models ? 'Done' : 'Manage' }}
+                        </button>
                       </div>
                     </div>
                     <select
@@ -1423,8 +1610,46 @@ const formatProviderLabel = (provider: string) => {
                       :disabled="loadingOllamaModels"
                       class="w-full px-3 py-2 border border-[#D1C7BD] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#72383D]/25 focus:border-[#72383D] text-[#322D29] text-xs sm:text-sm font-medium min-h-[42px] disabled:opacity-60"
                     >
-                      <option v-for="m in ollamaModelsList" :key="m" :value="m">{{ m }}</option>
+                      <option v-for="m in settings.ollama_models" :key="m" :value="m">{{ m }}</option>
                     </select>
+                    <div v-if="managingModels.ollama_models" class="pt-2 border-t border-[#D1C7BD]/50 space-y-2">
+                      <div class="flex flex-wrap gap-1.5">
+                        <span
+                          v-for="m in settings.ollama_models"
+                          :key="m"
+                          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-mono border"
+                          :class="settings.ollama_model === m ? 'border-[#72383D]/40 bg-[#72383D]/10 text-[#72383D] font-semibold' : 'border-[#D1C7BD]/80 bg-[#FAF7EE] text-[#322D29]/85'"
+                        >
+                          <span>{{ m }}</span>
+                          <button
+                            type="button"
+                            @click="removeModelOption('ollama_models', 'ollama_model', m)"
+                            :disabled="settings.ollama_models.length <= 1"
+                            :title="settings.ollama_models.length <= 1 ? 'At least one model is required' : `Remove ${m}`"
+                            class="ml-0.5 text-[#322D29]/50 hover:text-red-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer leading-none font-sans font-bold"
+                          >
+                            &times;
+                          </button>
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          v-model="newModelInputs.ollama_models"
+                          @keydown.enter.prevent="addModelOption('ollama_models', 'ollama_model')"
+                          placeholder="Add Ollama model tag"
+                          class="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border border-[#D1C7BD] bg-white text-xs font-mono text-[#322D29] focus:outline-none focus:border-[#72383D]"
+                        />
+                        <button
+                          type="button"
+                          @click="addModelOption('ollama_models', 'ollama_model')"
+                          :disabled="!newModelInputs.ollama_models.trim()"
+                          class="admin-inline-btn px-2.5 py-1.5 rounded-lg bg-[#72383D] text-white text-xs font-semibold hover:bg-[#5E2C30] disabled:opacity-40 cursor-pointer shrink-0"
+                        >
+                          + Add
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

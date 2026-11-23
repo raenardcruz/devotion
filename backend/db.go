@@ -16,25 +16,104 @@ import (
 )
 
 type Settings struct {
-	ContextProvider        string `json:"context_provider"`
-	FactCheckerProvider    string `json:"fact_checker_provider"`
-	MagisteriumLLMProvider string `json:"magisterium_llm_provider"`
-	GeminiAPIKey           string `json:"gemini_api_key"`
-	MagisteriumAPIKey      string `json:"magisterium_api_key"`
-	BibleAPIKey            string `json:"bible_api_key"`
-	GeminiModel            string `json:"gemini_model"`
-	GeminiLiveModel        string `json:"gemini_live_model"`
-	GeminiImageModel       string `json:"gemini_image_model"`
-	OllamaModel            string `json:"ollama_model"`
-	ContextModel           string `json:"context_model"`
-	ContextInstruction     string `json:"context_instruction"`
-	EnableFactChecker      bool   `json:"enable_fact_checker"`
-	R2AccountID            string `json:"r2_account_id"`
-	R2Endpoint             string `json:"r2_endpoint"`
-	R2Bucket               string `json:"r2_bucket"`
-	R2AccessKeyID          string `json:"r2_access_key_id"`
-	R2SecretAccessKey      string `json:"r2_secret_access_key"`
-	R2PublicURL            string `json:"r2_public_url"`
+	ContextProvider        string   `json:"context_provider"`
+	FactCheckerProvider    string   `json:"fact_checker_provider"`
+	MagisteriumLLMProvider string   `json:"magisterium_llm_provider"`
+	GeminiAPIKey           string   `json:"gemini_api_key"`
+	MagisteriumAPIKey      string   `json:"magisterium_api_key"`
+	BibleAPIKey            string   `json:"bible_api_key"`
+	GeminiModel            string   `json:"gemini_model"`
+	GeminiLiveModel        string   `json:"gemini_live_model"`
+	GeminiImageModel       string   `json:"gemini_image_model"`
+	OllamaModel            string   `json:"ollama_model"`
+	ContextModel           string   `json:"context_model"`
+	GeminiModels           []string `json:"gemini_models"`
+	GeminiLiveModels       []string `json:"gemini_live_models"`
+	GeminiImageModels      []string `json:"gemini_image_models"`
+	OllamaModels           []string `json:"ollama_models"`
+	ContextInstruction     string   `json:"context_instruction"`
+	EnableFactChecker      bool     `json:"enable_fact_checker"`
+	R2AccountID            string   `json:"r2_account_id"`
+	R2Endpoint             string   `json:"r2_endpoint"`
+	R2Bucket               string   `json:"r2_bucket"`
+	R2AccessKeyID          string   `json:"r2_access_key_id"`
+	R2SecretAccessKey      string   `json:"r2_secret_access_key"`
+	R2PublicURL            string   `json:"r2_public_url"`
+}
+
+var (
+	DefaultGeminiModels = []string{
+		"gemini-4-argon",
+		"gemini-3.8-flash",
+		"gemini-3.5-flash-lite",
+		"gemini-3.1-flash-lite",
+	}
+	DefaultGeminiLiveModels = []string{
+		"gemini-3.8-live",
+		"gemini-3.8-live-extended-thinking",
+		"gemini-2.5-flash-native-audio",
+		"gemini-2.0-flash-exp",
+		"gemini-2.0-flash",
+	}
+	DefaultGeminiImageModels = []string{
+		"gemini-nano-banana-2.1",
+		"gemini-2.5-flash-image-preview",
+		"gemini-2.0-flash-preview-image-generation",
+		"imagen-3.0-generate-002",
+	}
+	DefaultOllamaModels = []string{
+		"gemma4:cloud",
+		"qwen2.5:4b",
+		"llama3.2:3b",
+		"mistral:latest",
+	}
+)
+
+func copyStringSlice(items []string) []string {
+	out := make([]string, len(items))
+	copy(out, items)
+	return out
+}
+
+func normalizeModelList(models []string, fallback []string) []string {
+	seen := make(map[string]struct{}, len(models))
+	out := make([]string, 0, len(models))
+	for _, raw := range models {
+		trimmed := strings.TrimSpace(raw)
+		if trimmed == "" {
+			continue
+		}
+		if _, exists := seen[trimmed]; exists {
+			continue
+		}
+		seen[trimmed] = struct{}{}
+		out = append(out, trimmed)
+	}
+	if len(out) == 0 {
+		return copyStringSlice(fallback)
+	}
+	return out
+}
+
+func marshalModelList(models []string, fallback []string) string {
+	normalized := normalizeModelList(models, fallback)
+	b, err := json.Marshal(normalized)
+	if err != nil {
+		bFallback, _ := json.Marshal(fallback)
+		return string(bFallback)
+	}
+	return string(b)
+}
+
+func unmarshalModelList(raw []byte, fallback []string) []string {
+	if len(raw) == 0 {
+		return copyStringSlice(fallback)
+	}
+	var parsed []string
+	if err := json.Unmarshal(raw, &parsed); err != nil {
+		return copyStringSlice(fallback)
+	}
+	return normalizeModelList(parsed, fallback)
 }
 
 var (
@@ -72,6 +151,10 @@ func getDefaultSettings() Settings {
 		GeminiImageModel:       "gemini-nano-banana-2.1",
 		OllamaModel:            "gemma4:cloud",
 		ContextModel:           "gemma4:cloud",
+		GeminiModels:           copyStringSlice(DefaultGeminiModels),
+		GeminiLiveModels:       copyStringSlice(DefaultGeminiLiveModels),
+		GeminiImageModels:      copyStringSlice(DefaultGeminiImageModels),
+		OllamaModels:           copyStringSlice(DefaultOllamaModels),
 		ContextInstruction:     defaultInstruction,
 		EnableFactChecker:      true,
 		R2AccountID:            "",
@@ -338,6 +421,10 @@ func InitDB() {
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS r2_access_key_id TEXT NOT NULL DEFAULT '';`,
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS r2_secret_access_key TEXT NOT NULL DEFAULT '';`,
 		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS r2_public_url TEXT NOT NULL DEFAULT '';`,
+		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS gemini_models JSONB NOT NULL DEFAULT '["gemini-4-argon","gemini-3.8-flash","gemini-3.5-flash-lite","gemini-3.1-flash-lite"]'::jsonb;`,
+		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS gemini_live_models JSONB NOT NULL DEFAULT '["gemini-3.8-live","gemini-3.8-live-extended-thinking","gemini-2.5-flash-native-audio","gemini-2.0-flash-exp","gemini-2.0-flash"]'::jsonb;`,
+		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS gemini_image_models JSONB NOT NULL DEFAULT '["gemini-nano-banana-2.1","gemini-2.5-flash-image-preview","gemini-2.0-flash-preview-image-generation","imagen-3.0-generate-002"]'::jsonb;`,
+		`ALTER TABLE settings ADD COLUMN IF NOT EXISTS ollama_models JSONB NOT NULL DEFAULT '["gemma4:cloud","qwen2.5:4b","llama3.2:3b","mistral:latest"]'::jsonb;`,
 		`ALTER TABLE generated_manga_stories ADD COLUMN IF NOT EXISTS version INTEGER NOT NULL DEFAULT 1;`,
 		`ALTER TABLE generated_manga_stories DROP CONSTRAINT IF EXISTS generated_manga_stories_story_date_style_key;`,
 		`CREATE UNIQUE INDEX IF NOT EXISTS idx_generated_manga_stories_date_style_version ON generated_manga_stories (story_date, style, version);`,
@@ -350,35 +437,54 @@ func InitDB() {
 
 	// Insert initial default settings if empty
 	insertDefaultQuery := `
-	INSERT INTO settings (id, context_provider, fact_checker_provider, magisterium_llm_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, gemini_live_model, gemini_image_model, ollama_model, context_model, context_instruction, enable_fact_checker, r2_account_id, r2_endpoint, r2_bucket, r2_access_key_id, r2_secret_access_key, r2_public_url)
-	VALUES (1, 'ollama', 'gemini', 'ollama', '', '', '', 'gemini-3.1-flash-lite', 'gemini-3.8-live', 'gemini-nano-banana-2.1', 'gemma4:cloud', 'gemma4:cloud', $1, true, '', '', '', '', '', '')
+	INSERT INTO settings (id, context_provider, fact_checker_provider, magisterium_llm_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, gemini_live_model, gemini_image_model, ollama_model, context_model, gemini_models, gemini_live_models, gemini_image_models, ollama_models, context_instruction, enable_fact_checker, r2_account_id, r2_endpoint, r2_bucket, r2_access_key_id, r2_secret_access_key, r2_public_url)
+	VALUES (1, 'ollama', 'gemini', 'ollama', '', '', '', 'gemini-3.1-flash-lite', 'gemini-3.8-live', 'gemini-nano-banana-2.1', 'gemma4:cloud', 'gemma4:cloud', $1::jsonb, $2::jsonb, $3::jsonb, $4::jsonb, $5, true, '', '', '', '', '', '')
 	ON CONFLICT (id) DO NOTHING;`
 
-	if _, err := db.Exec(insertDefaultQuery, defaultInstruction); err != nil {
+	if _, err := db.Exec(
+		insertDefaultQuery,
+		marshalModelList(DefaultGeminiModels, DefaultGeminiModels),
+		marshalModelList(DefaultGeminiLiveModels, DefaultGeminiLiveModels),
+		marshalModelList(DefaultGeminiImageModels, DefaultGeminiImageModels),
+		marshalModelList(DefaultOllamaModels, DefaultOllamaModels),
+		defaultInstruction,
+	); err != nil {
 		log.Printf("[InitDB] Error inserting default settings: %v", err)
 	}
 }
 
+func ensureMemorySettingsDefaults() {
+	if memorySettings.GeminiImageModel == "" {
+		memorySettings.GeminiImageModel = "gemini-nano-banana-2.1"
+	}
+	memorySettings.GeminiModels = normalizeModelList(memorySettings.GeminiModels, DefaultGeminiModels)
+	memorySettings.GeminiLiveModels = normalizeModelList(memorySettings.GeminiLiveModels, DefaultGeminiLiveModels)
+	memorySettings.GeminiImageModels = normalizeModelList(memorySettings.GeminiImageModels, DefaultGeminiImageModels)
+	memorySettings.OllamaModels = normalizeModelList(memorySettings.OllamaModels, DefaultOllamaModels)
+}
+
 func GetSettings() Settings {
 	if db == nil || db.Ping() != nil {
-		if memorySettings.GeminiImageModel == "" {
-			memorySettings.GeminiImageModel = "gemini-nano-banana-2.1"
-		}
+		ensureMemorySettingsDefaults()
 		return memorySettings
 	}
 
-	query := `SELECT context_provider, fact_checker_provider, magisterium_llm_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, gemini_live_model, gemini_image_model, ollama_model, context_model, context_instruction, enable_fact_checker, r2_account_id, r2_endpoint, r2_bucket, r2_access_key_id, r2_secret_access_key, r2_public_url FROM settings WHERE id = 1`
+	query := `SELECT context_provider, fact_checker_provider, magisterium_llm_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, gemini_live_model, gemini_image_model, ollama_model, context_model, gemini_models, gemini_live_models, gemini_image_models, ollama_models, context_instruction, enable_fact_checker, r2_account_id, r2_endpoint, r2_bucket, r2_access_key_id, r2_secret_access_key, r2_public_url FROM settings WHERE id = 1`
 	row := db.QueryRow(query)
 
 	var s Settings
-	err := row.Scan(&s.ContextProvider, &s.FactCheckerProvider, &s.MagisteriumLLMProvider, &s.GeminiAPIKey, &s.MagisteriumAPIKey, &s.BibleAPIKey, &s.GeminiModel, &s.GeminiLiveModel, &s.GeminiImageModel, &s.OllamaModel, &s.ContextModel, &s.ContextInstruction, &s.EnableFactChecker, &s.R2AccountID, &s.R2Endpoint, &s.R2Bucket, &s.R2AccessKeyID, &s.R2SecretAccessKey, &s.R2PublicURL)
+	var geminiModelsRaw, geminiLiveModelsRaw, geminiImageModelsRaw, ollamaModelsRaw []byte
+	err := row.Scan(&s.ContextProvider, &s.FactCheckerProvider, &s.MagisteriumLLMProvider, &s.GeminiAPIKey, &s.MagisteriumAPIKey, &s.BibleAPIKey, &s.GeminiModel, &s.GeminiLiveModel, &s.GeminiImageModel, &s.OllamaModel, &s.ContextModel, &geminiModelsRaw, &geminiLiveModelsRaw, &geminiImageModelsRaw, &ollamaModelsRaw, &s.ContextInstruction, &s.EnableFactChecker, &s.R2AccountID, &s.R2Endpoint, &s.R2Bucket, &s.R2AccessKeyID, &s.R2SecretAccessKey, &s.R2PublicURL)
 	if err != nil {
 		log.Printf("[GetSettings] Warning scanning row: %v. Returning current memory settings.", err)
-		if memorySettings.GeminiImageModel == "" {
-			memorySettings.GeminiImageModel = "gemini-nano-banana-2.1"
-		}
+		ensureMemorySettingsDefaults()
 		return memorySettings
 	}
+
+	s.GeminiModels = unmarshalModelList(geminiModelsRaw, DefaultGeminiModels)
+	s.GeminiLiveModels = unmarshalModelList(geminiLiveModelsRaw, DefaultGeminiLiveModels)
+	s.GeminiImageModels = unmarshalModelList(geminiImageModelsRaw, DefaultGeminiImageModels)
+	s.OllamaModels = unmarshalModelList(ollamaModelsRaw, DefaultOllamaModels)
 
 	if s.ContextProvider == "" {
 		s.ContextProvider = "ollama"
@@ -390,16 +496,16 @@ func GetSettings() Settings {
 		s.MagisteriumLLMProvider = "ollama"
 	}
 	if s.GeminiModel == "" {
-		s.GeminiModel = "gemini-3.1-flash-lite"
+		s.GeminiModel = s.GeminiModels[0]
 	}
 	if s.GeminiLiveModel == "" {
-		s.GeminiLiveModel = "gemini-3.8-live"
+		s.GeminiLiveModel = s.GeminiLiveModels[0]
 	}
 	if s.GeminiImageModel == "" {
-		s.GeminiImageModel = "gemini-nano-banana-2.1"
+		s.GeminiImageModel = s.GeminiImageModels[0]
 	}
 	if s.OllamaModel == "" {
-		s.OllamaModel = "gemma4:cloud"
+		s.OllamaModel = s.OllamaModels[0]
 	}
 	if s.ContextProvider == "gemini" {
 		s.ContextModel = s.GeminiModel
@@ -415,6 +521,11 @@ func GetSettings() Settings {
 }
 
 func SaveSettings(s Settings) error {
+	s.GeminiModels = normalizeModelList(s.GeminiModels, DefaultGeminiModels)
+	s.GeminiLiveModels = normalizeModelList(s.GeminiLiveModels, DefaultGeminiLiveModels)
+	s.GeminiImageModels = normalizeModelList(s.GeminiImageModels, DefaultGeminiImageModels)
+	s.OllamaModels = normalizeModelList(s.OllamaModels, DefaultOllamaModels)
+
 	if s.ContextProvider == "" {
 		s.ContextProvider = "ollama"
 	}
@@ -425,16 +536,16 @@ func SaveSettings(s Settings) error {
 		s.MagisteriumLLMProvider = "ollama"
 	}
 	if s.GeminiModel == "" {
-		s.GeminiModel = "gemini-3.1-flash-lite"
+		s.GeminiModel = s.GeminiModels[0]
 	}
 	if s.GeminiLiveModel == "" {
-		s.GeminiLiveModel = "gemini-3.8-live"
+		s.GeminiLiveModel = s.GeminiLiveModels[0]
 	}
 	if s.GeminiImageModel == "" {
-		s.GeminiImageModel = "gemini-nano-banana-2.1"
+		s.GeminiImageModel = s.GeminiImageModels[0]
 	}
 	if s.OllamaModel == "" {
-		s.OllamaModel = "gemma4:cloud"
+		s.OllamaModel = s.OllamaModels[0]
 	}
 	if s.ContextProvider == "gemini" {
 		s.ContextModel = s.GeminiModel
@@ -453,8 +564,8 @@ func SaveSettings(s Settings) error {
 	}
 
 	query := `
-	INSERT INTO settings (id, context_provider, fact_checker_provider, magisterium_llm_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, gemini_live_model, gemini_image_model, ollama_model, context_model, context_instruction, enable_fact_checker, r2_account_id, r2_endpoint, r2_bucket, r2_access_key_id, r2_secret_access_key, r2_public_url, updated_at)
-	VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, CURRENT_TIMESTAMP)
+	INSERT INTO settings (id, context_provider, fact_checker_provider, magisterium_llm_provider, gemini_api_key, magisterium_api_key, bible_api_key, gemini_model, gemini_live_model, gemini_image_model, ollama_model, context_model, gemini_models, gemini_live_models, gemini_image_models, ollama_models, context_instruction, enable_fact_checker, r2_account_id, r2_endpoint, r2_bucket, r2_access_key_id, r2_secret_access_key, r2_public_url, updated_at)
+	VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13::jsonb, $14::jsonb, $15::jsonb, $16, $17, $18, $19, $20, $21, $22, $23, CURRENT_TIMESTAMP)
 	ON CONFLICT (id) DO UPDATE SET
 		context_provider = EXCLUDED.context_provider,
 		fact_checker_provider = EXCLUDED.fact_checker_provider,
@@ -467,6 +578,10 @@ func SaveSettings(s Settings) error {
 		gemini_image_model = EXCLUDED.gemini_image_model,
 		ollama_model = EXCLUDED.ollama_model,
 		context_model = EXCLUDED.context_model,
+		gemini_models = EXCLUDED.gemini_models,
+		gemini_live_models = EXCLUDED.gemini_live_models,
+		gemini_image_models = EXCLUDED.gemini_image_models,
+		ollama_models = EXCLUDED.ollama_models,
 		context_instruction = EXCLUDED.context_instruction,
 		enable_fact_checker = EXCLUDED.enable_fact_checker,
 		r2_account_id = EXCLUDED.r2_account_id,
@@ -477,7 +592,32 @@ func SaveSettings(s Settings) error {
 		r2_public_url = EXCLUDED.r2_public_url,
 		updated_at = CURRENT_TIMESTAMP;`
 
-	_, err := db.Exec(query, s.ContextProvider, s.FactCheckerProvider, s.MagisteriumLLMProvider, s.GeminiAPIKey, s.MagisteriumAPIKey, s.BibleAPIKey, s.GeminiModel, s.GeminiLiveModel, s.GeminiImageModel, s.OllamaModel, s.ContextModel, s.ContextInstruction, s.EnableFactChecker, s.R2AccountID, s.R2Endpoint, s.R2Bucket, s.R2AccessKeyID, s.R2SecretAccessKey, s.R2PublicURL)
+	_, err := db.Exec(
+		query,
+		s.ContextProvider,
+		s.FactCheckerProvider,
+		s.MagisteriumLLMProvider,
+		s.GeminiAPIKey,
+		s.MagisteriumAPIKey,
+		s.BibleAPIKey,
+		s.GeminiModel,
+		s.GeminiLiveModel,
+		s.GeminiImageModel,
+		s.OllamaModel,
+		s.ContextModel,
+		marshalModelList(s.GeminiModels, DefaultGeminiModels),
+		marshalModelList(s.GeminiLiveModels, DefaultGeminiLiveModels),
+		marshalModelList(s.GeminiImageModels, DefaultGeminiImageModels),
+		marshalModelList(s.OllamaModels, DefaultOllamaModels),
+		s.ContextInstruction,
+		s.EnableFactChecker,
+		s.R2AccountID,
+		s.R2Endpoint,
+		s.R2Bucket,
+		s.R2AccessKeyID,
+		s.R2SecretAccessKey,
+		s.R2PublicURL,
+	)
 	if err != nil {
 		log.Printf("[SaveSettings] Error saving settings to postgres: %v", err)
 		return err
