@@ -145,7 +145,7 @@ func mangaConfigHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"imageModel": imageModel,
-			"models":     SupportedGeminiImageModels,
+			"models":     settings.GeminiImageModels,
 		})
 
 	case http.MethodPost, http.MethodPut:
@@ -175,7 +175,7 @@ func mangaConfigHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"success":    true,
 			"imageModel": settings.GeminiImageModel,
-			"models":     SupportedGeminiImageModels,
+			"models":     GetSettings().GeminiImageModels,
 		})
 
 	default:
